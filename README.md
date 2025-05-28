@@ -1,31 +1,27 @@
 # Shraddha Portal - Frontend
 
-Shraddha Portal is a modern frontend application built with Vue 3 and Vite. It uses Vuetify for UI components, Pinia for state management, and TypeScript for type safety. This document provides a comprehensive overview of the setup, development, and tooling.
+**Shraddha Portal** is a modern frontend application built with Vue 3 and Vite. It uses **PrimeVue** for UI components, **Pinia** for state management, and **TypeScript** for type safety. This document outlines the project structure, setup, tooling, and configurations.
 
 ---
 
-## 🚀 Tech Stack
+## Tech Stack
 
 - **Framework**: Vue 3
 - **Bundler**: Vite
 - **Routing**: Vue Router
 - **State Management**: Pinia
-- **UI Library**: Vuetify
+- **UI Library**: PrimeVue
 - **Type Checking**: TypeScript (`vue-tsc`)
 - **Testing**:
-
-  - Unit Testing: Vitest
-  - E2E Testing: Playwright
-
-- **Linting**:
-
-  - ESLint + Oxlint
-
+  - Unit: Vitest
+  - E2E: Playwright
+- **Linting**: ESLint + Oxlint + Unused Imports Plugin
+- **Pre-commit Hooking**: Husky + lint-staged
 - **Formatting**: Prettier
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 shraddha-portal/
@@ -40,16 +36,16 @@ shraddha-portal/
 │   ├── App.vue            # Root component
 │   └── main.ts            # App entry point
 ├── tests/
-│   ├── unit/              # Unit tests
-│   └── e2e/               # End-to-end tests
+│   ├── unit/              # Unit tests (Vitest)
+│   └── e2e/               # E2E tests (Playwright)
 ├── vite.config.ts         # Vite configuration
 ├── tsconfig.json          # TypeScript configuration
-└── package.json
+└── package.json           # Project metadata and scripts
 ```
 
 ---
 
-## 🛠️ Setup
+## Setup
 
 ### Install Dependencies
 
@@ -77,7 +73,7 @@ npm run preview
 
 ---
 
-## ✅ Linting & Formatting
+## Linting & Formatting
 
 ### Lint All
 
@@ -85,10 +81,15 @@ npm run preview
 npm run lint
 ```
 
-### Fix Lint Issues
+### ESLint (Fix Issues)
 
 ```bash
 npm run lint:eslint
+```
+
+### Oxlint (Fix Issues)
+
+```bash
 npm run lint:oxlint
 ```
 
@@ -100,7 +101,17 @@ npm run format
 
 ---
 
-## 🧪 Testing
+## Type Checking
+
+Check for TypeScript errors:
+
+```bash
+npm run type-check
+```
+
+---
+
+## Testing
 
 ### Unit Tests (Vitest)
 
@@ -116,62 +127,86 @@ npm run test:e2e
 
 ---
 
-## 🧾 Type Checking
+## Pre-commit Hooks (Husky + lint-staged)
 
-Check for TypeScript errors:
+### Setup Git Hooks
 
 ```bash
-npm run type-check
+npm run prepare
 ```
+
+### What Runs on Commit
+
+`lint-staged` runs checks on staged files:
+
+```json
+{
+  "*.{ts,js,vue}": [
+    "prettier --check",
+    "eslint --fix",
+    "vue-tsc --noEmit",
+    "vitest related --passWithNoTests"
+  ],
+  "*.{json,css,scss,md}": ["prettier --check"]
+}
+```
+
+This ensures linting, formatting, type-checking, and tests pass before each commit.
 
 ---
 
-## 🔧 Configuration
+## Configuration Details
 
 ### Vite
 
-Configured in `vite.config.ts` with Vue and optional dev tools.
+Configured in `vite.config.ts` with Vue plugin and optional dev tools via `vite-plugin-vue-devtools`.
 
 ### TypeScript
 
-Inherits from `@tsconfig/node22` and `@vue/tsconfig`.
+- Base config: `@tsconfig/node22`
+- Vue-specific config: `@vue/tsconfig`
 
 ### ESLint
 
-Includes:
+Plugins and configs used:
 
 - `eslint-plugin-vue`
 - `@vue/eslint-config-typescript`
 - `eslint-plugin-oxlint`
 - `eslint-plugin-playwright`
+- `eslint-plugin-unused-imports`
 
 ### Prettier
 
-Prettier is configured to format all source files.
+Configured to format all code in `src/` and integrated with lint-staged.
 
 ---
 
-## 🎨 UI with Vuetify
+## UI with PrimeVue
 
-Vuetify components are used across the app. Ensure Vuetify is properly initialized in `main.ts`.
-
----
-
-## 🔁 Continuous Integration (Recommended)
-
-Add CI steps to run:
-
-- `npm run lint`
-- `npm run test:unit`
-- `npm run test:e2e`
-- `npm run build`
+PrimeVue and `@primeuix/themes` are used throughout the application. Ensure setup is correctly initialized in `main.ts`.
 
 ---
 
-## 📄 License
+## Continuous Integration (Recommended)
 
-This project is private and not licensed for public use.
+Automate the following steps:
+
+```bash
+npm run lint
+npm run test:unit
+npm run test:e2e
+npm run build
+```
 
 ---
 
-## 📬 Feedback & Contributions
+## License
+
+This project is **private** and not licensed for public use.
+
+---
+
+## Feedback & Contributions
+
+Internal use only. Contact the core development team for feedback or to contribute changes.
