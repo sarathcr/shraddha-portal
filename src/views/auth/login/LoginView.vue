@@ -4,7 +4,6 @@ import LoginForm from './components/LoginForm.vue'
 import type { LoginCredentials } from './models/login.models'
 
 const handleLogin = (credentials: LoginCredentials): void => {
-  // eslint-disable-next-line no-console
   console.log('Received login data:', credentials)
 }
 </script>
