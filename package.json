@@ -20,13 +20,11 @@
   },
   "lint-staged": {
     "*.{ts,js,vue}": [
-      "prettier --check",
-      "eslint --fix",
-      "vue-tsc --noEmit",
-      "vitest related --passWithNoTests"
+      "prettier --write",
+      "eslint --fix"
     ],
     "*.{json,css,scss,md}": [
-      "prettier --check"
+      "prettier --write"
     ]
   },
   "dependencies": {

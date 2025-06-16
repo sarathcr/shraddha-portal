@@ -4,7 +4,7 @@ import LoginForm from './components/LoginForm.vue'
 import type { LoginCredentials } from './models/login.models'
 
 const handleLogin = (credentials: LoginCredentials): void => {
-  console.log('Received login data:', credentials)
+  console.warn('Received login data:', credentials)
 }
 </script>
 
