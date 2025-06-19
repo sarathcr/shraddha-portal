@@ -1,9 +1,11 @@
-// stores/useSidebarStore.ts
+// stores/sidebar.ts
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 
+const isInitiallyDesktop = typeof window !== 'undefined' && window.innerWidth >= 1024
+
 export const useSidebarStore = defineStore('sidebar', () => {
-  const isSidebarVisible = ref(true)
+  const isSidebarVisible = ref(isInitiallyDesktop)
 
   function toggleSidebar(): void {
     isSidebarVisible.value = !isSidebarVisible.value

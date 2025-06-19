@@ -139,7 +139,7 @@ const menuItems = computed(() => {
 <style lang="scss">
 .sidebar-drawer {
   padding-top: 1.25rem;
-  border-radius: 6px;
+
   .p-drawer-header {
     display: none;
   }
@@ -171,6 +171,7 @@ const menuItems = computed(() => {
     height: calc(100vh - 123px) !important;
     top: 30px;
     left: 30px;
+    border-radius: 6px;
     width: 240px !important;
   }
 }
