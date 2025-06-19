@@ -2,9 +2,13 @@
 import AppLogo from '../../../components/AppLogo.vue'
 import LoginForm from './components/LoginForm.vue'
 import type { LoginCredentials } from './models/login.models'
+import { useRouter } from 'vue-router'
 
-const handleLogin = (credentials: LoginCredentials): void => {
-  console.warn('Received login data:', credentials)
+const router = useRouter()
+const handleLogin = async (credentials: LoginCredentials): Promise<void> => {
+  // eslint-disable-next-line no-console
+  console.log('Received login data:', credentials)
+  await router.push('/admin/dashboard')
 }
 </script>
 

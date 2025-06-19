@@ -3,6 +3,6 @@
     <div class="figure logo__figure">
       <img src="@/assets/logo.png" alt="Logo" />
     </div>
-    <h1 class="text-[24px] font-bold">SHRADDHA</h1>
+    <h1 class="text-[20px] font-bold">SHRADDHA</h1>
   </div>
 </template>

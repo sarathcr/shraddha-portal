@@ -26,6 +26,7 @@ export default defineComponent({
         password: password.value,
       }
       emit('submit', credentials)
+
       // Reset the form fields after submission
       username.value = ''
       password.value = ''
@@ -74,7 +75,7 @@ export default defineComponent({
           class="text-[14px] text-[var(--p-primary-500)] mb-4 block text-right"
           >Forgot Password?</a
         >
-        <PrimeButton class="w-full" label="Login" :loading="false" raised />
+        <PrimeButton type="submit" class="w-full" label="Login" :loading="false" raised />
       </form>
     </div>
   </div>

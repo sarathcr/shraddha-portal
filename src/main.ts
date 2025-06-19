@@ -10,7 +10,9 @@ import { myPreset } from './theme-preset'
 const app = createApp(App)
 app.use(PrimeVue, { theme: { preset: myPreset } })
 
-app.use(createPinia())
+const pinia = createPinia()
+app.use(pinia)
+
 app.use(router)
 
 app.mount('#app')

@@ -22,7 +22,11 @@
   --vt-c-text-dark-2: rgba(235, 235, 235, 0.64);
 
   --p-primary-500: #a855f7;
+  --p-primary-500-rgb: 99, 102, 241; /* Manually converted from #6366F1 */
+
   --p-primary-600: #9333ea; /* optional: a darker variant for hover/focus */
+  --p-secondary-500-rgb: 16, 185, 129; /* Manually converted from #10B981 */
+
   --p-secondary-500: #06b6d4;
   --p-secondary-600: #0891b2; /* optional */
 
@@ -38,6 +42,9 @@
   --color-text: var(--vt-c-text-light-1);
 
   --section-gap: 160px;
+
+  --bg-primary-opacity-20: rgba(var(--p-primary-500-rgb), 0.2);
+  --bg-secondary-opacity-20: rgba(var(--p-secondary-500-rgb), 0.2);
 }
 
 @media (prefers-color-scheme: dark) {
