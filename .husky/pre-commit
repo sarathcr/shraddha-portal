@@ -1,0 +1,23 @@
+#!/bin/sh
+
+# Type checking
+npx vue-tsc --noEmit --project tsconfig.app.json || exit 1
+
+# Lint + format staged files
+npx lint-staged || {
+  echo "Linting failed. Please fix the issues before committing."
+  exit 1
+}
+echo "Linting passed. Proceeding with commit."
+
+# ESLint full check
+npx eslint --ext .ts,.tsx,.vue src || exit 1
+
+# Prettier check on full codebase (or use only in lint-staged if preferred)
+npx prettier --check . || exit 1
+
+# Run unit tests
+npx vitest run --passWithNoTests || exit 1
+
+# Ensure app builds before commit
+npx vite build || exit 1
