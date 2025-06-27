@@ -3,6 +3,7 @@ export const ProductService = {
     id: string
     code: string
     name: string
+    role: string
     description: string
     image: string
     price: number
@@ -15,7 +16,8 @@ export const ProductService = {
       {
         id: '1000',
         code: 'f230fh0g3',
-        name: 'Bamboo Watch',
+        name: 'James Butt',
+        role: 'Secretary',
         description: 'Product Description',
         image: 'bamboo-watch.jpg',
         price: 65,
@@ -27,7 +29,8 @@ export const ProductService = {
       {
         id: '1001',
         code: 'nvklal433',
-        name: 'Black Watch',
+        name: 'Linda Smith',
+        role: 'Treasurer',
         description: 'Product Description',
         image: 'black-watch.jpg',
         price: 72,
@@ -39,7 +42,8 @@ export const ProductService = {
       {
         id: '1002',
         code: 'zz21cz3c1',
-        name: 'Blue Band',
+        name: 'Robert Green',
+        role: 'Assistant Treasurer',
         description: 'Product Description',
         image: 'blue-band.jpg',
         price: 79,
@@ -48,18 +52,20 @@ export const ProductService = {
         inventoryStatus: 'LOWSTOCK',
         rating: 3,
       },
-      // {
-      //   id: '1003',
-      //   code: '244wgerg2',
-      //   name: 'Blue T-Shirt',
-      //   description: 'Product Description',
-      //   image: 'blue-t-shirt.jpg',
-      //   price: 29,
-      //   category: 'Clothing',
-      //   quantity: 25,
-      //   inventoryStatus: 'INSTOCK',
-      //   rating: 5,
-      // },
+
+      {
+        id: '1003',
+        code: '244wgerg2',
+        name: 'Anita Patel',
+        role: 'Executive Committee member',
+        description: 'Product Description',
+        image: 'blue-t-shirt.jpg',
+        price: 29,
+        category: 'Clothing',
+        quantity: 25,
+        inventoryStatus: 'INSTOCK',
+        rating: 5,
+      },
       // {
       //   id: '1004',
       //   code: 'h456wer53',
