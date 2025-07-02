@@ -4,8 +4,8 @@ import HeaderView from '@/components/HeaderView.vue'
 import SidebarView from '@/components/SidebarView.vue'
 import { useSidebarStore } from '@/stores/sidebar'
 import { ProductService } from '@/services/ProductService'
-
-// PrimeVue
+import { createUser } from '@/views/admin/services/roles-and-access.services'
+import Dialog from 'primevue/dialog'
 import { FilterMatchMode, FilterOperator } from '@primevue/core/api'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
@@ -27,12 +27,22 @@ import InputIcon from 'primevue/inputicon'
 const sidebarStore = useSidebarStore()
 const screenWidth = ref(window.innerWidth)
 const isDesktop = computed((): boolean => screenWidth.value >= 1024)
+const visible = ref(false)
+
+const name = ref('')
+const employeeId = ref('')
+const email = ref('')
+const team = ref('')
+const role = ref('')
+
+const errorMessage = ref('')
+const successMessage = ref('')
 
 // Tabs
 const tabs = ref([
   { title: 'Users', value: '0' },
   { title: 'Create New Role', value: '1' },
-  { title: 'Create New Committee', value: '2' },
+  { title: 'Add Team', value: '2' },
 ])
 const selectedTab = ref<string | number>('0')
 
@@ -63,6 +73,62 @@ const onRowEditSave = ({ newData, index }: { newData: Product; index: number }):
 
 const onDeleteRow = (row: Product): void => {
   products.value = products.value.filter((p) => p.id !== row.id)
+}
+
+const handleCreateUser = async (): Promise<void> => {
+  errorMessage.value = ''
+  successMessage.value = ''
+
+  try {
+    const response = await createUser({
+      name: name.value,
+      employeeId: employeeId.value,
+      email: email.value,
+      team: team.value,
+      role: role.value,
+    })
+
+    products.value.push({
+      id: response.data.id,
+      name: response.data.name,
+      inventoryRole: response.data.role,
+    })
+
+    successMessage.value = response.message
+    visible.value = false
+
+    resetForm()
+  } catch (error: unknown) {
+    console.error('Create user error:', error)
+
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'error' in error &&
+      typeof (error as { error: { message?: string } }).error?.message === 'string'
+    ) {
+      errorMessage.value = (error as { error: { message: string } }).error.message
+    } else if (
+      typeof error === 'object' &&
+      error !== null &&
+      'message' in error &&
+      typeof (error as { message: string }).message === 'string'
+    ) {
+      errorMessage.value = (error as { message: string }).message
+    } else {
+      errorMessage.value = 'Failed to create user'
+    }
+  }
+}
+
+const resetForm = (): void => {
+  name.value = ''
+  employeeId.value = ''
+  email.value = ''
+  team.value = ''
+  role.value = ''
+  errorMessage.value = ''
+  successMessage.value = ''
 }
 
 // Fetch product data
@@ -134,8 +200,6 @@ const clearFilter = (): void => initFilters()
 const roleName = ref('')
 const permissions = ref<string[]>([])
 const description = ref('')
-const selectRole = ref('')
-const selectUser = ref('')
 </script>
 
 <template>
@@ -179,7 +243,87 @@ const selectUser = ref('')
                   <template #header>
                     <div class="flex justify-between">
                       <div class="card flex justify-center flex-wrap gap-4">
-                        <Button label="New" severity="info" raised />
+                        <Button
+                          label="new"
+                          @click="
+                            () => {
+                              visible = true
+                              resetForm()
+                            }
+                          "
+                          severity="info"
+                        />
+
+                        <Dialog
+                          v-model:visible="visible"
+                          header="Create user"
+                          :style="{ width: '50rem' }"
+                          :modal="true"
+                        >
+                          <div class="flex flex-col gap-4 mb-4">
+                            <label for="username" class="font-semibold">Username</label>
+                            <InputText
+                              id="username"
+                              v-model="name"
+                              class="flex-auto"
+                              autocomplete="off"
+                            />
+                          </div>
+
+                          <div class="flex flex-col gap-4 mb-4">
+                            <label for="employeeId" class="font-semibold">Employee Id</label>
+                            <InputText
+                              id="employeeId"
+                              v-model="employeeId"
+                              class="flex-auto"
+                              autocomplete="off"
+                            />
+                          </div>
+
+                          <div class="flex flex-col gap-4 mb-4">
+                            <label for="email" class="font-semibold">Email Id</label>
+                            <InputText
+                              id="email"
+                              v-model="email"
+                              class="flex-auto"
+                              autocomplete="off"
+                            />
+                          </div>
+
+                          <div class="flex flex-col gap-4 mb-4">
+                            <label for="team" class="font-semibold">Team</label>
+                            <InputText
+                              id="team"
+                              v-model="team"
+                              class="flex-auto"
+                              autocomplete="off"
+                            />
+                          </div>
+
+                          <div class="flex flex-col gap-4 mb-4">
+                            <label for="role" class="font-semibold">Role</label>
+                            <Select
+                              v-model="role"
+                              :options="roles"
+                              optionLabel="label"
+                              optionValue="value"
+                              placeholder="Select a Role"
+                              class="w-full"
+                            />
+                          </div>
+
+                          <div v-if="errorMessage" class="text-red-500 font-semibold">
+                            {{ errorMessage }}
+                          </div>
+                          <div v-if="successMessage" class="text-green-600 font-semibold">
+                            {{ successMessage }}
+                          </div>
+
+                          <div class="flex justify-end gap-2">
+                            <Button label="Cancel" severity="secondary" @click="visible = false" />
+                            <Button label="Save" @click="handleCreateUser" />
+                          </div>
+                        </Dialog>
                       </div>
                       <div class="flex justify-end gap-3">
                         <Button
@@ -264,15 +408,10 @@ const selectUser = ref('')
                   <Textarea v-model="description" rows="5" cols="30" placeholder="Description" />
                 </div>
               </TabPanel>
-
               <TabPanel value="2">
                 <template v-if="selectedTab === '2'">
                   <div class="flex flex-col gap-4">
-                    <div class="flex gap-4">
-                      <InputText v-model="selectRole" placeholder="Select Role" />
-                      <InputText v-model="selectUser" placeholder="Select User" />
-                    </div>
-                    <Textarea v-model="description" rows="5" cols="30" placeholder="Description" />
+                    <InputText v-model="roleName" placeholder="Add Team" />
                   </div>
                 </template>
               </TabPanel>

@@ -1,0 +1,10 @@
+[
+  {
+    "id": "user123",
+    "name": "Sajishna",
+    "employeeId": "IN0150",
+    "email": "sajishna@example.com",
+    "team": ".Net",
+    "role": "Secretary"
+  }
+]
