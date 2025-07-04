@@ -30,12 +30,12 @@ const router = createRouter({
           name: 'dashboard',
           component: DashboardView,
         },
+        {
+          path: '/admin/roles',
+          name: 'roles',
+          component: RolesView,
+        },
       ],
-    },
-    {
-      path: '/admin/roles',
-      name: 'roles',
-      component: RolesView,
     },
   ],
 })

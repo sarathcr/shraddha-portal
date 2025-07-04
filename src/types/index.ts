@@ -5,3 +5,7 @@ export interface IProduct {
   category: string
   quantity: number
 }
+export interface APIError {
+  error?: { message?: string }
+  message?: string
+}

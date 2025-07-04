@@ -1,19 +1,17 @@
-export interface User {
-  id: string
-  name: string
-  employeeId: string
-  email: string
-  team: string
-  role: string
-}
-
+import { useFetch } from '@vueuse/core'
+import type { User, OptionItem } from '@/types/user'
 export const createUser = async (
   payload: Omit<User, 'id'>,
 ): Promise<{ message: string; data: User }> => {
-  const response = await fetch('/test.json')
-  const users: User[] = await response.json()
+  const { data: json } = await useFetch('/test.json').json<{
+    users: User[]
+    roles: OptionItem[]
+    teams: OptionItem[]
+  }>()
 
-  const emailExists = users.some((u: User) => u.email === payload.email)
+  const users = json.value?.users || []
+
+  const emailExists = users.some((u) => u.email === payload.email)
   if (emailExists) {
     throw {
       error: {
@@ -26,14 +24,23 @@ export const createUser = async (
   }
 
   const newUser: User = {
-    id: `user${users.length + 1}`,
+    id: Math.random().toString(36).slice(2),
     ...payload,
   }
-
-  users.push(newUser)
-
   return {
     message: 'User created successfully',
     data: newUser,
   }
+}
+
+export const getRoles = async (): Promise<OptionItem[]> => {
+  const { data, get } = useFetch('/test.json').json<{ roles: OptionItem[] }>()
+  await get() // 👈 triggers fetch
+  return data.value?.roles || []
+}
+
+export const getTeams = async (): Promise<OptionItem[]> => {
+  const { data, get } = useFetch('/test.json').json<{ teams: OptionItem[] }>()
+  await get() // 👈 triggers fetch
+  return data.value?.teams || []
 }

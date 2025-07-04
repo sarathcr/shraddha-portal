@@ -1,0 +1,25 @@
+{
+  "users": [
+    {
+      "id": "user1",
+      "name": "Sajishna",
+      "employeeId": "IN0150",
+      "email": "sajishna@example.com",
+      "team": "FE",
+      "role": "Secretary"
+    }
+  ],
+  "roles": [
+    { "label": "Secretary", "value": "Secretary" },
+    { "label": "Treasurer", "value": "Treasurer" },
+    { "label": "Assistant Treasurer", "value": "Assistant Treasurer" },
+    { "label": "Executive Committee member", "value": "Executive Committee member" },
+    { "label": "User", "value": "User" }
+  ],
+  "teams": [
+    { "label": "BE", "value": "BE" },
+    { "label": "FE", "value": "FE" },
+    { "label": ".NET", "value": ".NET" },
+    { "label": "QA", "value": "QA" }
+  ]
+}
