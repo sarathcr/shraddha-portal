@@ -62,7 +62,10 @@ const menuItems = computed(() => {
     {
       label: 'Committee',
       icon: 'pi pi-users',
-      class: currentPath.startsWith('/admin/committee') ? 'p-menuitem-active' : '',
+      command: async (): Promise<void> => {
+        await router.push('/admin/committe')
+      },
+      class: currentPath.startsWith('/admin/committe') ? 'p-menuitem-active' : '',
     },
     {
       label: 'Aprovals',

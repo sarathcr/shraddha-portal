@@ -1,3 +1,5 @@
+import DashboardLayout from '@/layouts/DashboardLayout.vue'
+import CommitteView from '@/views/admin/committe/CommitteView.vue'
 import DashboardView from '@/views/admin/dashboard/DashboardView.vue'
 import RolesView from '@/views/admin/roles/RolesView.vue'
 
@@ -14,9 +16,21 @@ const router = createRouter({
       component: LoginView,
     },
     {
-      path: '/admin/dashboard',
-      name: 'dashboard',
-      component: DashboardView,
+      path: '/admin',
+      name: 'Dashboard Layout',
+      component: DashboardLayout,
+      children: [
+        {
+          path: '/admin/committe',
+          name: 'committe',
+          component: CommitteView,
+        },
+        {
+          path: '/admin/dashboard',
+          name: 'dashboard',
+          component: DashboardView,
+        },
+      ],
     },
     {
       path: '/admin/roles',
