@@ -26,6 +26,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'save', row: RowData): void
   (e: 'cancel'): void
+  (e: 'update:filters', filters: Record<string, { value: string; matchMode: string }>): void
 }>()
 
 const tempRow = reactive<RowData>({})
@@ -50,8 +51,6 @@ function cancelEdit(): void {
 }
 
 const filters = ref<Record<string, { value: string; matchMode: string }>>({})
-const conditionDropdown = ref<Record<string, string>>({})
-const conditionInput = ref<Record<string, string>>({})
 
 props.columns.forEach((col) => {
   if (col.filterable) {
@@ -59,25 +58,20 @@ props.columns.forEach((col) => {
       value: '',
       matchMode: FilterMatchMode.CONTAINS,
     }
-    conditionDropdown.value[col.key] = FilterMatchMode.CONTAINS
-    conditionInput.value[col.key] = ''
   }
 })
 
-const applyFilter = (key: string): void => {
-  filters.value[key] = {
-    value: conditionInput.value[key],
-    matchMode: conditionDropdown.value[key],
-  }
-}
+watch(filters, (newFilters) => {
+  emit('update:filters', { ...newFilters })
+})
 </script>
 
 <template>
   <div class="space-y-4">
     <DataTable
       :value="rows"
-      :filters="filters"
-      filterDisplay="menu"
+      v-model:filters="filters"
+      filterDisplay="row"
       scrollable
       scrollDirection="horizontal"
       scrollHeight="700px"
@@ -93,6 +87,7 @@ const applyFilter = (key: string): void => {
         :field="col.key"
         :header="col.label"
         :sortable="true"
+        :filter="col.filterable"
         :filterField="col.key"
         style="min-width: 200px"
       >
@@ -105,23 +100,13 @@ const applyFilter = (key: string): void => {
           </div>
         </template>
 
-        <template v-if="col.filterable" #filter="{ filterCallback }">
-          <div class="flex flex-col gap-2">
+        <template v-if="col.filterable" #filter="{ filterModel, filterCallback }">
+          <div class="flex flex-col gap-1">
             <InputText
-              v-model="conditionInput[col.key]"
+              v-model="filterModel.value"
               class="w-full"
-              :placeholder="`Enter ${col.label}`"
-            />
-            <Button
-              label="Apply"
-              size="small"
-              @click="
-                () => {
-                  applyFilter(col.key)
-                  filterCallback()
-                }
-              "
-              class="w-full"
+              :placeholder="`Search ${col.label}`"
+              @input="filterCallback()"
             />
           </div>
         </template>
