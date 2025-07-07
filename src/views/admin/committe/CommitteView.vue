@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import HeaderView from '@/components/HeaderView.vue'
-import BaseTable from '@/shared/components/baseTable.vue'
-import { ref, computed } from 'vue'
+import BaseTable from '@/components/baseTable.vue'
+import { ref } from 'vue'
+
 const columns = [
   { label: 'Committee Year', key: 'year', filterable: true },
   { label: 'Core Members', key: 'coreMembers', filterable: true },
@@ -9,6 +9,9 @@ const columns = [
   { label: 'Status', key: 'status', filterable: true },
   { label: 'Created At', key: 'createdAt', filterable: true },
 ]
+interface RowData {
+  [key: string]: unknown
+}
 const allRows = ref([
   {
     year: '2024-2025',
@@ -31,45 +34,112 @@ const allRows = ref([
     status: 'Inactive',
     createdAt: '2022-07-01',
   },
+  {
+    year: '2023-2024',
+    coreMembers: 'Aarav, Diya',
+    executiveMembers: 'Kabir, Meera',
+    status: 'Active',
+    createdAt: '2023-06-01',
+  },
+  {
+    year: '2022-2023',
+    coreMembers: 'Rohan, Sanya',
+    executiveMembers: 'Nikhil, Priya',
+    status: 'Inactive',
+    createdAt: '2022-05-20',
+  },
+  {
+    year: '2021-2022',
+    coreMembers: 'Ananya, Yash',
+    executiveMembers: 'Tara, Arjun',
+    status: 'Active',
+    createdAt: '2021-07-15',
+  },
+  {
+    year: '2020-2021',
+    coreMembers: 'Ishaan, Kavya',
+    executiveMembers: 'Dev, Rhea',
+    status: 'Inactive',
+    createdAt: '2020-04-10',
+  },
+  {
+    year: '2019-2020',
+    coreMembers: 'Reyansh, Myra',
+    executiveMembers: 'Ayaan, Kiara',
+    status: 'Active',
+    createdAt: '2019-03-25',
+  },
+  {
+    year: '2023-2024',
+    coreMembers: 'Aarav, Diya',
+    executiveMembers: 'Kabir, Meera',
+    status: 'Active',
+    createdAt: '2023-06-01',
+  },
+  {
+    year: '2022-2023',
+    coreMembers: 'Rohan, Sanya',
+    executiveMembers: 'Nikhil, Priya',
+    status: 'Inactive',
+    createdAt: '2022-05-20',
+  },
+  {
+    year: '2021-2022',
+    coreMembers: 'Ananya, Yash',
+    executiveMembers: 'Tara, Arjun',
+    status: 'Active',
+    createdAt: '2021-07-15',
+  },
+  {
+    year: '2020-2021',
+    coreMembers: 'Ishaan, Kavya',
+    executiveMembers: 'Dev, Rhea',
+    status: 'Inactive',
+    createdAt: '2020-04-10',
+  },
+  {
+    year: '2019-2020',
+    coreMembers: 'Reyansh, Myra',
+    executiveMembers: 'Ayaan, Kiara',
+    status: 'Active',
+    createdAt: '2019-03-25',
+  },
 ])
-const filters = ref<Record<string, string>>({})
-const onFilterChange = (updatedFilters: Record<string, string>): void => {
-  filters.value = updatedFilters
+const editableRow = ref<RowData | null>(null)
+
+function onEdit(row: RowData): void {
+  editableRow.value = row
 }
 
-const filteredData = computed(() => {
-  return allRows.value.filter((row) =>
-    Object.entries(filters.value).every(([key, value]) => {
-      if (!value) return true
-      return String((row as Record<string, string>)[key] ?? '')
-        .toLowerCase()
-        .includes(value.toLowerCase())
-    }),
-  )
-})
+function onSave(): void {
+  editableRow.value = null
+}
+
+function onCancel(): void {
+  editableRow.value = null
+}
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col bg-slate-100">
-    <HeaderView />
-    <div class="p-6">
-      <BaseTable
-        :columns="columns"
-        :rows="filteredData"
-        :pageSize="5"
-        @update:filters="onFilterChange"
+  <BaseTable
+    :columns="columns"
+    :rows="allRows"
+    :pageSize="5"
+    :editableRow="editableRow"
+    @save="onSave"
+    @cancel="onCancel"
+  >
+    <template #actions="{ row }">
+      <button
+        @click="onEdit(row)"
+        class="p-2 rounded hover:bg-gray-200 transition"
+        aria-label="Edit"
       >
-        <template #actions>
-          <div class="flex items-center gap-4">
-            <button class="p-2 rounded hover:bg-gray-200 transition" aria-label="Edit">
-              <i class="pi pi-pencil text-slate-700 text-base"></i>
-            </button>
-            <button class="p-2 rounded hover:bg-gray-200 transition" aria-label="Delete">
-              <i class="pi pi-trash text-red-600 text-base"></i>
-            </button>
-          </div>
-        </template>
-      </BaseTable>
-    </div>
-  </div>
+        <i class="pi pi-pencil text-slate-700 text-base"></i>
+      </button>
+      <button class="p-2 rounded hover:bg-gray-200 transition" aria-label="Delete">
+        <i class="pi pi-trash text-red-600 text-base"></i>
+      </button>
+    </template>
+  </BaseTable>
 </template>
