@@ -11,6 +11,9 @@ export const ProductService = {
     quantity: number
     inventoryStatus: string
     rating: number
+    employeeId: string
+    email: string
+    team: string[]
   }> {
     return [
       {
@@ -18,6 +21,8 @@ export const ProductService = {
         code: 'f230fh0g3',
         name: 'James Butt',
         role: 'Secretary',
+        employeeId: '34',
+        email: 'abc@hjh.in',
         description: 'Product Description',
         image: 'bamboo-watch.jpg',
         price: 65,
@@ -25,6 +30,7 @@ export const ProductService = {
         quantity: 24,
         inventoryStatus: 'INSTOCK',
         rating: 5,
+        team: ['BE', 'QA'],
       },
       {
         id: '1001',
@@ -38,6 +44,9 @@ export const ProductService = {
         quantity: 61,
         inventoryStatus: 'INSTOCK',
         rating: 4,
+        employeeId: '35',
+        email: 'abc@jh.in',
+        team: ['BE', 'QA'],
       },
       {
         id: '1002',
@@ -51,6 +60,9 @@ export const ProductService = {
         quantity: 2,
         inventoryStatus: 'LOWSTOCK',
         rating: 3,
+        employeeId: '36',
+        email: 'abc@hh.in',
+        team: ['BE', 'QA'],
       },
 
       {
@@ -65,6 +77,9 @@ export const ProductService = {
         quantity: 25,
         inventoryStatus: 'INSTOCK',
         rating: 5,
+        employeeId: '37',
+        email: 'abc@h.in',
+        team: ['BE', 'QA'],
       },
       // {
       //   id: '1004',

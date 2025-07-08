@@ -5,7 +5,7 @@
       "name": "Sajishna",
       "employeeId": "IN0150",
       "email": "sajishna@example.com",
-      "team": "FE",
+      "team": ["FE"],
       "role": "Secretary"
     }
   ],
