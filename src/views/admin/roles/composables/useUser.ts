@@ -118,7 +118,9 @@ export function useUsers(): {
           if (JSON.stringify(newData[field]) !== JSON.stringify(oldData[field])) {
             payload[field] = newData[field]
           }
-        } else {
+        }
+
+        if (field !== 'team') {
           if (newData[field] !== oldData[field]) {
             payload[field] = newData[field]
           }

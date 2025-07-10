@@ -18,7 +18,7 @@ const emit = defineEmits<{
   (e: 'cancel'): void
 }>()
 
-const { handleSubmit, errors, resetForm, setValues } = useForm<Omit<User, 'id' | 'dob'>>({
+const { handleSubmit, errors, resetForm } = useForm<Omit<User, 'id' | 'dob'>>({
   validationSchema: userSchema,
   initialValues: props.initialData,
 })
@@ -31,7 +31,6 @@ const { value: role } = useField<string>('role')
 
 defineExpose({
   resetForm,
-  setValues,
 })
 
 const onSubmit = handleSubmit((values) => {
