@@ -49,7 +49,10 @@ const menuItems = computed(() => {
     {
       label: 'Roles And Access',
       icon: 'pi pi-shield',
-      class: currentPath.startsWith('/admin/roles') ? 'p-menuitem-active' : '', // Example for sub-routes
+      command: async (): Promise<void> => {
+        await router.push('/admin/roles')
+      },
+      class: currentPath === '/admin/roles' ? 'p-menuitem-active' : '', // Example for sub-routes
     },
     {
       label: 'Events',

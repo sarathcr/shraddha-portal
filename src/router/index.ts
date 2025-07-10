@@ -1,6 +1,8 @@
 import DashboardLayout from '@/layouts/DashboardLayout.vue'
 import CommitteView from '@/views/admin/committe/CommitteView.vue'
 import DashboardView from '@/views/admin/dashboard/DashboardView.vue'
+import RolesView from '@/views/admin/roles/RolesView.vue'
+
 import LoginView from '@/views/auth/login/LoginView.vue'
 import { createRouter, createWebHashHistory } from 'vue-router'
 
@@ -27,6 +29,11 @@ const router = createRouter({
           path: '/admin/dashboard',
           name: 'dashboard',
           component: DashboardView,
+        },
+        {
+          path: '/admin/roles',
+          name: 'roles',
+          component: RolesView,
         },
       ],
     },

@@ -47,7 +47,7 @@ onUnmounted(() => {
     </div>
 
     <div
-      class="dashboardLayout__main p-8 grow-1 flex"
+      class="dashboardLayout__main p-8 grow-1 flex mt-[62px]"
       :class="[sidebarStore.isSidebarVisible && isDesktop ? 'gap-[30px]' : 'gap-0']"
     >
       <div
