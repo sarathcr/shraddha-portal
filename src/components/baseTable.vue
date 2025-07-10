@@ -1,26 +1,15 @@
 <script setup lang="ts">
-import { ref, reactive, watch } from 'vue'
+import type { ColumnDef, RowData } from '@/types/baseTable.model'
+import { formatDate } from '@/utils/dateUtils'
 import { FilterMatchMode } from '@primevue/core/api'
-import DataTable from 'primevue/datatable'
-import Column from 'primevue/column'
-import InputText from 'primevue/inputtext'
 import Button from 'primevue/button'
-import Tag from 'primevue/tag'
-import Dropdown from 'primevue/dropdown'
 import Calendar from 'primevue/calendar'
-
-interface ColumnDef {
-  label: string
-  key: string
-  filterable?: boolean
-  useTag?: boolean
-  filterOption?: boolean
-  useDateFilter?: boolean
-}
-
-interface RowData {
-  [key: string]: unknown
-}
+import Column from 'primevue/column'
+import DataTable from 'primevue/datatable'
+import Dropdown from 'primevue/dropdown'
+import InputText from 'primevue/inputtext'
+import Tag from 'primevue/tag'
+import { reactive, ref, watch } from 'vue'
 
 const props = defineProps<{
   columns: ColumnDef[]
@@ -49,12 +38,11 @@ watch(
   { immediate: true },
 )
 
-function saveEdit(row: RowData): void {
+const saveEdit = (row: RowData): void => {
   Object.assign(row, tempRow)
   emit('save', row)
 }
-
-function cancelEdit(): void {
+const cancelEdit = (): void => {
   emit('cancel')
 }
 
@@ -79,31 +67,22 @@ function getSeverity(value: unknown): string {
   if (value === 'Inactive') return 'danger'
   return 'info'
 }
-
-function formatDate(value: unknown): string {
-  if (!value) return ''
-  const date = new Date(value as string)
-  const day = String(date.getDate()).padStart(2, '0')
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const year = String(date.getFullYear()).slice(-2)
-  return `${day}/${month}/${year}`
-}
 </script>
 
 <template>
-  <div class="space-y-4">
+  <div class="space-y-4 h-full">
     <DataTable
       :value="rows"
       v-model:filters="filters"
       filterDisplay="row"
       scrollable
       scrollDirection="horizontal"
-      scrollHeight="700px"
       :paginator="true"
       :rows="pageSize || 20"
       :rowsPerPageOptions="[5, 10, 20]"
       dataKey="id"
       class="min-w-full"
+      paginatorPosition="bottom"
     >
       <Column
         v-for="col in columns"
@@ -185,3 +164,12 @@ function formatDate(value: unknown): string {
     </DataTable>
   </div>
 </template>
+
+<style>
+.p-datatable {
+  height: 100%;
+  display: flex;
+  justify-content: space-between;
+  flex-direction: column;
+}
+</style>
