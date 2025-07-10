@@ -157,7 +157,9 @@ function formatDate(value: unknown): string {
               class="w-full"
               placeholder="Select Date"
               @date-select="filterCallback()"
+              @change="filterCallback()"
             />
+
             <InputText
               v-else
               v-model="filterModel.value"
