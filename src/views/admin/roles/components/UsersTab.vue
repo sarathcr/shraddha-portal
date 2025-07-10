@@ -1,4 +1,3 @@
-<!-- src/views/admin/roles/components/UsersTab.vue -->
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import Dialog from 'primevue/dialog'
@@ -39,7 +38,9 @@ const openCreateUserDialog = (): void => {
 }
 const handleUserFormSubmit = async (payload: Omit<User, 'id' | 'dob'>): Promise<void> => {
   const success = await createUser(payload)
+
   if (success) {
+    clearFilter()
     userFormDialogVisible.value = false
   }
 }

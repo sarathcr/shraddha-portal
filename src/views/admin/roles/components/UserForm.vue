@@ -1,4 +1,3 @@
-<!-- src/views/admin/roles/components/UserForm.vue -->
 <script setup lang="ts">
 import { useForm, useField } from 'vee-validate'
 import InputText from 'primevue/inputtext'
@@ -7,7 +6,7 @@ import Select from 'primevue/select'
 import Button from 'primevue/button'
 import { userSchema } from '@/views/admin/schemas/userSchema'
 import type { User, OptionItem } from '@/types/user'
-
+import { isLoading } from '@/stores/loader'
 const props = defineProps<{
   roles: OptionItem[]
   teams: OptionItem[]
@@ -91,8 +90,8 @@ const onCancel = (): void => {
       <small class="text-red-500">{{ errors.role }}</small>
     </div>
     <div class="flex justify-end gap-2 mt-2">
-      <Button label="Cancel" severity="secondary" @click="onCancel" />
-      <Button type="submit" label="Save" />
+      <Button label="Cancel" severity="secondary" @click="onCancel" :disabled="isLoading.valueOf" />
+      <Button type="submit" label="Save" :loading="isLoading.valueOf" />
     </div>
   </form>
 </template>

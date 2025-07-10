@@ -10,7 +10,7 @@ import { UserService } from '@/services/UserService'
 import type { User, OptionItem } from '@/types/user'
 import type { ApiResponse, APIError } from '@/types/index'
 import { FilterMatchMode } from '@primevue/core/api'
-
+import { isLoading } from '@/stores/loader'
 export function useUsers(): {
   users: Ref<User[]>
   roles: Ref<OptionItem[]>
@@ -29,7 +29,6 @@ export function useUsers(): {
   const users = ref<User[]>([])
   const roles = ref<OptionItem[]>([])
   const teams = ref<OptionItem[]>([])
-  const isLoading = ref(true)
   const editingRows = ref([])
 
   const filters = ref({
@@ -41,7 +40,6 @@ export function useUsers(): {
   }
 
   const fetchInitialData = async (): Promise<void> => {
-    isLoading.value = true
     try {
       const usersResponse: ApiResponse<User[]> = UserService.getUsersData()
 
@@ -83,8 +81,6 @@ export function useUsers(): {
       const error = err as APIError
       const message = error?.error?.message || error.message || 'Failed to load initial data'
       toast.add({ severity: 'error', summary: 'Error', detail: message, life: 3000 })
-    } finally {
-      isLoading.value = false
     }
   }
 
