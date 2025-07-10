@@ -42,6 +42,48 @@ const allRows = ref<RowData[]>([
     status: 'Inactive',
     createdAt: new Date('2025/07/08'),
   },
+  {
+    year: '2024-2025',
+    coreMembers: 'Sarath, Abhinaya, Chrsito',
+    executiveMembers: 'Ratheesh, Refe',
+    status: 'Inactive',
+    createdAt: new Date('2025/07/08'),
+  },
+  {
+    year: '2023-2024',
+    coreMembers: 'Aarav, Diya',
+    executiveMembers: 'Kabir, Meera',
+    status: 'Active',
+    createdAt: new Date('2025/07/08'),
+  },
+  {
+    year: '2022-2023',
+    coreMembers: 'Rohan, Sanya',
+    executiveMembers: 'Nikhil, Priya',
+    status: 'Inactive',
+    createdAt: new Date('2025/07/08'),
+  },
+  {
+    year: '2024-2025',
+    coreMembers: 'Sarath, Abhinaya, Chrsito',
+    executiveMembers: 'Ratheesh, Refe',
+    status: 'Inactive',
+    createdAt: new Date('2025/07/08'),
+  },
+  {
+    year: '2023-2024',
+    coreMembers: 'Aarav, Diya',
+    executiveMembers: 'Kabir, Meera',
+    status: 'Active',
+    createdAt: new Date('2025/07/08'),
+  },
+  {
+    year: '2022-2023',
+    coreMembers: 'Rohan, Sanya',
+    executiveMembers: 'Nikhil, Priya',
+    status: 'Inactive',
+    createdAt: new Date('2025/07/08'),
+  },
 ])
 
 const statusOptions = [
