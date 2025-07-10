@@ -5,6 +5,7 @@ export interface User {
   email: string
   team: string[]
   role: string
+  dob?: string
 }
 
 export interface OptionItem {
