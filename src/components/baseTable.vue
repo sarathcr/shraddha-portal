@@ -8,6 +8,7 @@ import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 import Dropdown from 'primevue/dropdown'
 import Calendar from 'primevue/calendar'
+
 interface ColumnDef {
   label: string
   key: string
@@ -28,6 +29,7 @@ const props = defineProps<{
   editableRow?: RowData | null
   statusOptions?: { label: string; value: string }[]
 }>()
+
 const emit = defineEmits<{
   (e: 'save', row: RowData): void
   (e: 'cancel'): void
@@ -77,6 +79,7 @@ function getSeverity(value: unknown): string {
   if (value === 'Inactive') return 'danger'
   return 'info'
 }
+
 function formatDate(value: unknown): string {
   if (!value) return ''
   const date = new Date(value as string)
@@ -121,7 +124,6 @@ function formatDate(value: unknown): string {
               showIcon
               class="w-full"
             />
-
             <InputText v-else v-model="tempRow[col.key] as string" class="w-full" />
           </div>
           <div v-else>
@@ -147,7 +149,6 @@ function formatDate(value: unknown): string {
               class="w-full"
               @change="filterCallback()"
             />
-
             <Calendar
               v-else-if="col.useDateFilter"
               v-model="filterModel.value"
@@ -175,7 +176,7 @@ function formatDate(value: unknown): string {
             <Button icon="pi pi-times" severity="danger" size="small" @click="cancelEdit" />
           </div>
           <div v-else>
-            <slot name="actions" v-bind="{ row: data }" />
+            <slot name="actions" v-bind="{ row: data, onDelete: () => emit('delete', data) }" />
           </div>
         </template>
       </Column>
