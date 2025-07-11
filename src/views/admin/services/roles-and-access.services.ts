@@ -62,6 +62,11 @@ export const createUser = async (payload: Omit<User, 'id' | 'dob'>): Promise<Api
       id: Math.random().toString(36).slice(2),
       dob: new Date().toISOString().slice(0, 10),
       ...payload,
+      name: '',
+      employeeId: '',
+      email: '',
+      team: [],
+      role: '',
     }
 
     return createMockApiResponse(newUser, 'User created successfully')

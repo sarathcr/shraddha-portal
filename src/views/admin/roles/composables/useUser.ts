@@ -11,6 +11,7 @@ import type { User, OptionItem } from '@/types/user'
 import type { ApiResponse, APIError } from '@/types/index'
 import { FilterMatchMode } from '@primevue/core/api'
 import { isLoading } from '@/stores/loader'
+import type { RowData } from '@/types/baseTable.model'
 export function useUsers(): {
   users: Ref<User[]>
   roles: Ref<OptionItem[]>
@@ -29,7 +30,7 @@ export function useUsers(): {
   const users = ref<User[]>([])
   const roles = ref<OptionItem[]>([])
   const teams = ref<OptionItem[]>([])
-  const editingRows = ref([])
+  const editingRows = ref<RowData[]>([])
 
   const filters = ref({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },

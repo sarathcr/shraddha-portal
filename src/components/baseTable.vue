@@ -7,9 +7,11 @@ import Calendar from 'primevue/calendar'
 import Column from 'primevue/column'
 import DataTable from 'primevue/datatable'
 import Dropdown from 'primevue/dropdown'
+import MultiSelect from 'primevue/multiselect'
 import InputText from 'primevue/inputtext'
 import Tag from 'primevue/tag'
-import { reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
+import { useSlots } from 'vue'
 
 const props = defineProps<{
   columns: ColumnDef[]
@@ -17,6 +19,7 @@ const props = defineProps<{
   pageSize?: number
   editableRow?: RowData | null
   statusOptions?: { label: string; value: string }[]
+  multiSelectOption?: { label: string; value: string }[]
 }>()
 
 const emit = defineEmits<{
@@ -42,6 +45,7 @@ const saveEdit = (row: RowData): void => {
   Object.assign(row, tempRow)
   emit('save', row)
 }
+
 const cancelEdit = (): void => {
   emit('cancel')
 }
@@ -67,6 +71,8 @@ function getSeverity(value: unknown): string {
   if (value === 'Inactive') return 'danger'
   return 'info'
 }
+const slots = useSlots()
+const hasTableHeader = computed(() => !!slots['table-header'])
 </script>
 
 <template>
@@ -84,6 +90,12 @@ function getSeverity(value: unknown): string {
       class="min-w-full"
       paginatorPosition="bottom"
     >
+      <template #header v-if="hasTableHeader">
+        <div class="flex justify-between items-center w-full">
+          <slot name="table-header" />
+        </div>
+      </template>
+
       <Column
         v-for="col in columns"
         :key="col.key"
@@ -103,13 +115,44 @@ function getSeverity(value: unknown): string {
               showIcon
               class="w-full"
             />
+            <Dropdown
+              v-else-if="col.filterOption"
+              v-model="tempRow[col.key]"
+              :options="props.statusOptions"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Select"
+              class="w-full"
+            />
+            <MultiSelect
+              v-else-if="col.useMultiSelect"
+              v-model="tempRow[col.key]"
+              :options="props.multiSelectOption"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Select Options"
+              display="chip"
+              filter
+              class="w-full"
+            />
             <InputText v-else v-model="tempRow[col.key] as string" class="w-full" />
           </div>
           <div v-else>
             <span v-if="col.useDateFilter">{{ formatDate(data[col.key]) }}</span>
+            <template v-else-if="col.useMultiSelect && Array.isArray(data[col.key])">
+              <Tag
+                v-for="item in data[col.key]"
+                :key="item"
+                :value="props.multiSelectOption?.find((opt) => opt.value === item)?.label || item"
+                class="mr-1"
+              />
+            </template>
             <Tag
               v-else-if="col.useTag"
-              :value="data[col.key]"
+              :value="
+                props.statusOptions?.find((opt) => opt.value === data[col.key])?.label ||
+                data[col.key]
+              "
               :severity="getSeverity(data[col.key])"
             />
             <span v-else>{{ data[col.key] }}</span>
@@ -138,7 +181,19 @@ function getSeverity(value: unknown): string {
               @date-select="filterCallback()"
               @change="filterCallback()"
             />
-
+            <MultiSelect
+              v-else-if="col.useMultiSelect"
+              v-model="filterModel.value"
+              :options="props.multiSelectOption"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Select Options"
+              filter
+              display="chip"
+              :maxSelectedLabels="3"
+              class="w-full"
+              @change="filterCallback()"
+            />
             <InputText
               v-else
               v-model="filterModel.value"
@@ -149,7 +204,6 @@ function getSeverity(value: unknown): string {
           </div>
         </template>
       </Column>
-
       <Column header="Actions" style="min-width: 150px">
         <template #body="{ data }">
           <div v-if="editableRow === data" class="flex gap-2">
@@ -165,7 +219,7 @@ function getSeverity(value: unknown): string {
   </div>
 </template>
 
-<style>
+<style scoped>
 .p-datatable {
   height: 100%;
   display: flex;

@@ -5,8 +5,10 @@ export interface ColumnDef {
   key: string
   filterable?: boolean
   useTag?: boolean
-  filterOption?: boolean
+  useMultiSelect?: boolean
   useDateFilter?: boolean
+  filterOption?: boolean
+  options?: { label: string; value: string }[]
 }
 
 export interface RowData {

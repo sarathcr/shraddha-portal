@@ -1,4 +1,6 @@
-export interface User {
+import type { RowData } from '@/types/baseTable.model'
+
+export interface User extends RowData {
   id: string
   name: string
   employeeId: string
