@@ -89,8 +89,8 @@ const onCancel = (): void => {
       <small class="text-red-500">{{ errors.role }}</small>
     </div>
     <div class="flex justify-end gap-2 mt-2">
-      <Button label="Cancel" severity="secondary" @click="onCancel" :disabled="isLoading.valueOf" />
-      <Button type="submit" label="Save" :loading="isLoading.valueOf" />
+      <Button label="Cancel" severity="secondary" @click="onCancel" :disabled="isLoading" />
+      <Button type="submit" label="Save" :loading="isLoading" />
     </div>
   </form>
 </template>
