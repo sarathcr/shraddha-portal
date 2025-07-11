@@ -141,6 +141,18 @@ const menuItems = computed(() => {
   ]
 })
 </script>
+<template class="sidebar-drawer">
+  <Drawer
+    class="sidebar-drawer"
+    v-model:visible="sidebarStore.isSidebarVisible"
+    :modal="isModal"
+    :dismissable="isDismissable"
+  >
+    <div class="menu-container">
+      <PanelMenu :model="menuItems" />
+    </div>
+  </Drawer>
+</template>
 
 <style lang="scss">
 .sidebar-drawer {
@@ -182,14 +194,3 @@ const menuItems = computed(() => {
   }
 }
 </style>
-
-<template class="sidebar-drawer">
-  <Drawer
-    class="sidebar-drawer"
-    v-model:visible="sidebarStore.isSidebarVisible"
-    :modal="isModal"
-    :dismissable="isDismissable"
-  >
-    <div><PanelMenu :model="menuItems" /></div>
-  </Drawer>
-</template>
