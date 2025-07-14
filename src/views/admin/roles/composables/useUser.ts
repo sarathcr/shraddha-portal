@@ -24,8 +24,7 @@ export const useUsers = (): {
   fetchInitialData: () => Promise<null | void>
   createUser: (payload: User) => Promise<true | false | null>
   editUser: (newData: User, oldData: User) => Promise<{ success: boolean; user: User } | null>
-  deleteUser: (row: User) => void
-  confirmDeleteUser: (user: User, event?: Event) => void
+  deleteUser: (user: User, event?: Event) => void
 } => {
   const toast = useToast()
   const confirm = useConfirm()
@@ -152,11 +151,9 @@ export const useUsers = (): {
       return { success: false, user: oldData }
     }
   }, 'An unexpected error occurred while updating the user.')
-  const confirmDeleteUser = (user: User, event?: Event): void => {
-    if (!event || !event.currentTarget) {
-      console.error(
-        'Error: Event object or its currentTarget is missing for confirmDeleteUser. ConfirmPopup requires a target element.',
-      )
+  const deleteUser = (user: User, event?: Event): void => {
+    if (!event?.currentTarget) {
+      console.error('ConfirmPopup requires a valid event target (event missing or invalid).')
       return
     }
 
@@ -169,19 +166,18 @@ export const useUsers = (): {
       acceptClass: 'p-button-danger',
       acceptLabel: 'Delete',
       rejectLabel: 'Cancel',
-      accept: () => deleteUser(user),
-      reject: () => {
-        console.warn('Delete action cancelled.')
+      accept: () => {
+        users.value = users.value.filter((u) => u.id !== user.id)
+        toast.add({
+          severity: 'success',
+          summary: 'Deleted',
+          detail: `User ${user.name} deleted successfully.`,
+          life: 3000,
+        })
       },
-    })
-  }
-  const deleteUser = (row: User): void => {
-    users.value = users.value.filter((p) => p.id !== row.id)
-    toast.add({
-      severity: 'success',
-      summary: 'Deleted',
-      detail: `User ${row.name} deleted successfully (simulated).`,
-      life: 3000,
+      reject: () => {
+        console.warn('User deletion cancelled.')
+      },
     })
   }
 
@@ -197,6 +193,5 @@ export const useUsers = (): {
     createUser,
     editUser,
     deleteUser,
-    confirmDeleteUser,
   }
 }

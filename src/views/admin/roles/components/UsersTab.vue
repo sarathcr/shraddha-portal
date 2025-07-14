@@ -19,7 +19,7 @@ const {
   fetchInitialData,
   createUser,
   editUser,
-  confirmDeleteUser,
+  deleteUser,
 } = useUsers()
 
 const userFormDialogVisible = ref(false)
@@ -66,7 +66,7 @@ const onCancel = (): void => {
 }
 
 const handleDeleteConfirmation = (row: RowData, event?: Event): void => {
-  confirmDeleteUser(row as User, event)
+  deleteUser(row as User, event)
 }
 
 const columns = [
