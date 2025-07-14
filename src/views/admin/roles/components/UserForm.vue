@@ -1,12 +1,14 @@
 <script setup lang="ts">
-import { useForm, useField } from 'vee-validate'
+import { isLoading } from '@/stores/loader'
+import type { OptionItem, User } from '@/types/user'
+import { userSchema } from '@/views/admin/schemas/userSchema'
+import { FloatLabel } from 'primevue'
+import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import MultiSelect from 'primevue/multiselect'
 import Select from 'primevue/select'
-import Button from 'primevue/button'
-import { userSchema } from '@/views/admin/schemas/userSchema'
-import type { User, OptionItem } from '@/types/user'
-import { isLoading } from '@/stores/loader'
+import { useField, useForm } from 'vee-validate'
+
 const props = defineProps<{
   roles: OptionItem[]
   teams: OptionItem[]
@@ -14,11 +16,11 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'submit', payload: Omit<User, 'id' | 'dob'>): void
+  (e: 'submit', payload: User): void
   (e: 'cancel'): void
 }>()
 
-const { handleSubmit, errors, resetForm } = useForm<Omit<User, 'id' | 'dob'>>({
+const { handleSubmit, errors, resetForm } = useForm<User>({
   validationSchema: userSchema,
   initialValues: props.initialData,
 })
@@ -44,50 +46,68 @@ const onCancel = (): void => {
 </script>
 
 <template>
-  <form @submit.prevent="onSubmit" class="flex flex-col gap-4">
-    <div>
-      <label for="username" class="font-semibold mb-2">Username</label>
-      <InputText id="username" v-model="name" class="w-full" placeholder="Name" />
-      <small class="text-red-500">{{ errors.name }}</small>
+  <form @submit.prevent="onSubmit" class="flex flex-col gap-4 pt-2">
+    <div class="relative mb-2.5">
+      <FloatLabel variant="on"
+        ><InputText id="username" v-model="name" class="w-full" />
+        <label for="username">User Name</label></FloatLabel
+      >
+
+      <small class="absolute left-3 pt-0.5 text-red-500">{{ errors.name }}</small>
     </div>
-    <div>
-      <label for="employeeId" class="font-semibold mb-2">Employee ID</label>
-      <InputText id="employeeId" v-model="employeeId" class="w-full" placeholder="Employee Id" />
-      <small class="text-red-500">{{ errors.employeeId }}</small>
+
+    <div class="relative mb-2.5">
+      <FloatLabel variant="on"
+        ><InputText id="employeeId" v-model="employeeId" class="w-full" />
+        <label for="employeeId">Employee ID</label></FloatLabel
+      >
+
+      <small class="absolute left-3 pt-0.5 text-red-500">{{ errors.employeeId }}</small>
     </div>
-    <div>
-      <label for="email" class="font-semibold mb-2">Email</label>
-      <InputText id="email" v-model="email" class="w-full" placeholder="Email Id" />
-      <small class="text-red-500">{{ errors.email }}</small>
+
+    <div class="relative mb-2.5">
+      <FloatLabel variant="on"
+        ><InputText id="email" v-model="email" class="w-full" />
+
+        <label for="email">Email</label></FloatLabel
+      >
+
+      <small class="absolute left-3 pt-0.5 text-red-500">{{ errors.email }}</small>
     </div>
-    <div>
-      <label for="team" class="font-semibold mb-2">Team</label>
-      <MultiSelect
-        id="team"
-        filter
-        v-model="team"
-        :options="props.teams"
-        display="chip"
-        optionLabel="label"
-        optionValue="value"
-        placeholder="Select Team(s)"
-        class="w-full"
-      />
-      <small class="text-red-500">{{ errors.team }}</small>
+
+    <div class="relative mb-2.5">
+      <FloatLabel variant="on">
+        <MultiSelect
+          id="team"
+          filter
+          v-model="team"
+          :options="props.teams"
+          display="chip"
+          optionLabel="label"
+          optionValue="value"
+          class="w-full"
+        />
+        <label for="team" class="font-semibold mb-2">Team</label>
+      </FloatLabel>
+
+      <small class="absolute left-3 pt-0.5 text-red-500">{{ errors.team }}</small>
     </div>
-    <div>
-      <label for="role" class="font-semibold mb-2">Role</label>
-      <Select
-        id="role"
-        v-model="role"
-        :options="props.roles"
-        optionLabel="label"
-        optionValue="value"
-        placeholder="Select a Role"
-        class="w-full"
-      />
-      <small class="text-red-500">{{ errors.role }}</small>
+
+    <div class="relative mb-2.5">
+      <FloatLabel variant="on">
+        <Select
+          id="role"
+          v-model="role"
+          :options="props.roles"
+          optionLabel="label"
+          optionValue="value"
+          class="w-full"
+        /><label for="role">Role</label>
+      </FloatLabel>
+
+      <small class="absolute left-3 pt-0.5 text-red-500">{{ errors.role }}</small>
     </div>
+
     <div class="flex justify-end gap-2 mt-2">
       <Button label="Cancel" severity="secondary" @click="onCancel" :disabled="isLoading" />
       <Button type="submit" label="Save" :loading="isLoading" />

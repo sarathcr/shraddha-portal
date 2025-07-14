@@ -1,30 +1,31 @@
-import { ref, type Ref } from 'vue'
-import { useToast } from 'primevue/usetoast'
-import {
-  createUser as apiCreateUser,
-  getRoles as apiGetRoles,
-  getTeams as apiGetTeams,
-  editUser as apiEditUser,
-} from '@/views/admin/services/roles-and-access.services'
 import { UserService } from '@/services/UserService'
-import type { User, OptionItem } from '@/types/user'
-import type { ApiResponse, APIError } from '@/types/index'
-import { FilterMatchMode } from '@primevue/core/api'
 import { isLoading } from '@/stores/loader'
 import type { RowData } from '@/types/baseTable.model'
-export function useUsers(): {
+import type { APIError, ApiResponse } from '@/types/index'
+import type { OptionItem, User } from '@/types/user'
+import {
+  createUser as apiCreateUser,
+  editUser as apiEditUser,
+  getRoles as apiGetRoles,
+  getTeams as apiGetTeams,
+} from '@/views/admin/services/roles-and-access.services'
+import { FilterMatchMode } from '@primevue/core/api'
+import { useToast } from 'primevue/usetoast'
+import { ref, type Ref } from 'vue'
+
+export const useUsers = (): {
   users: Ref<User[]>
   roles: Ref<OptionItem[]>
   teams: Ref<OptionItem[]>
-  isLoading: Ref<boolean>
-  editingRows: Ref<unknown[]>
-  filters: Ref<{ global: { value: string | null; matchMode: string } }>
+  isLoading: typeof isLoading
+  editingRows: Ref<RowData[]>
+  filters: Ref<{ global: { value: null | string; matchMode: string } }>
   clearFilter: () => void
-  fetchInitialData: () => Promise<void>
-  createUser: (payload: Omit<User, 'id' | 'dob'>) => Promise<boolean>
-  editUser: (newData: User, oldData: User) => Promise<{ success: boolean; user: User }>
+  fetchInitialData: () => Promise<null | void>
+  createUser: (payload: User) => Promise<true | false | null>
+  editUser: (newData: User, oldData: User) => Promise<{ success: boolean; user: User } | null>
   deleteUser: (row: User) => void
-} {
+} => {
   const toast = useToast()
 
   const users = ref<User[]>([])
@@ -36,119 +37,120 @@ export function useUsers(): {
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
   })
 
+  // Higher-order function for consistent error handling
+  const withErrorHandling =
+    <T extends unknown[], R>(
+      asyncFn: (...args: T) => Promise<R>,
+      defaultErrorMessage: string,
+    ): ((...args: T) => Promise<R | null>) =>
+    async (...args: T) => {
+      try {
+        return await asyncFn(...args)
+      } catch (err) {
+        const error = err as APIError
+        const message = error?.error?.message || error.message || defaultErrorMessage
+        toast.add({ severity: 'error', summary: 'Error', detail: message, life: 3000 })
+        return null
+      }
+    }
+
+  const handleApiResponse = <T>(
+    response: ApiResponse<T> | null,
+    state: Ref<T>,
+    defaultMessage: string,
+  ): void => {
+    if (response?.succeeded && Array.isArray(response.data)) {
+      state.value = response.data
+    } else {
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: response?.message || defaultMessage,
+        life: 3000,
+      })
+    }
+  }
+
   const clearFilter = (): void => {
     filters.value.global.value = null
   }
 
-  const fetchInitialData = async (): Promise<void> => {
-    try {
-      const usersResponse: ApiResponse<User[]> = UserService.getUsersData()
+  const fetchInitialData = withErrorHandling(async () => {
+    const [usersResponse, rolesResponse, teamsResponse] = await Promise.all([
+      UserService.getUsersData(),
+      apiGetRoles(),
+      apiGetTeams(),
+    ])
 
-      if (usersResponse.succeeded && Array.isArray(usersResponse.data)) {
-        users.value = usersResponse.data
-      } else {
-        toast.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: usersResponse.message || 'Failed to load initial user data.',
-          life: 3000,
-        })
-      }
+    handleApiResponse(usersResponse, users, 'Failed to load user data.')
+    handleApiResponse(rolesResponse, roles, 'Failed to load roles.')
+    handleApiResponse(teamsResponse, teams, 'Failed to load teams.')
+  }, 'Failed to load initial data')
 
-      const [rolesResponse, teamsResponse] = await Promise.all([apiGetRoles(), apiGetTeams()])
-
-      if (rolesResponse.succeeded && Array.isArray(rolesResponse.data)) {
-        roles.value = rolesResponse.data
-      } else {
-        toast.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: rolesResponse.message || 'Failed to load roles.',
-          life: 3000,
-        })
-      }
-
-      if (teamsResponse.succeeded && Array.isArray(teamsResponse.data)) {
-        teams.value = teamsResponse.data
-      } else {
-        toast.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: teamsResponse.message || 'Failed to load teams.',
-          life: 3000,
-        })
-      }
-    } catch (err) {
-      const error = err as APIError
-      const message = error?.error?.message || error.message || 'Failed to load initial data'
-      toast.add({ severity: 'error', summary: 'Error', detail: message, life: 3000 })
-    }
-  }
-
-  const createUser = async (payload: Omit<User, 'id' | 'dob'>): Promise<boolean> => {
-    try {
-      const res: ApiResponse<User> = await apiCreateUser(payload)
+  const createUser = withErrorHandling(async (payload: User) => {
+    const res = await apiCreateUser(payload)
+    if (res.succeeded) {
       users.value.push(res.data)
       toast.add({ severity: 'success', summary: 'Success', detail: res.message, life: 3000 })
       return true
-    } catch (err) {
-      const error = err as APIError
-      const message = error?.error?.message || error.message || 'Failed to create user'
-      toast.add({ severity: 'error', summary: 'Error', detail: message, life: 3000 })
-      return false
     }
-  }
+    return false
+  }, 'Failed to create user')
 
-  const editUser = async (
-    newData: User,
-    oldData: User,
-  ): Promise<{ success: boolean; user: User }> => {
-    try {
-      const payload: Partial<Omit<User, 'id' | 'dob'>> = {}
+  const editUser = withErrorHandling(async (newData: User, oldData: User) => {
+    const payload: Partial<Omit<User, 'id' | 'dob'>> = {}
+    const editableFields: Array<keyof Omit<User, 'id' | 'dob'>> = [
+      'name',
+      'employeeId',
+      'email',
+      'team',
+      'role',
+    ]
 
-      const editableFields: Array<keyof Omit<User, 'id' | 'dob'>> = [
-        'name',
-        'employeeId',
-        'email',
-        'team',
-        'role',
-      ]
+    editableFields.forEach((field) => {
+      const oldValue = JSON.stringify(oldData[field])
+      const newValue = JSON.stringify(newData[field])
+      if (oldValue !== newValue) {
+        payload[field] = newData[field]
+      }
+    })
 
-      editableFields.forEach((field) => {
-        if (field === 'team') {
-          if (JSON.stringify(newData[field]) !== JSON.stringify(oldData[field])) {
-            payload[field] = newData[field]
-          }
-        }
-
-        if (field !== 'team') {
-          if (newData[field] !== oldData[field]) {
-            payload[field] = newData[field]
-          }
-        }
+    if (Object.keys(payload).length === 0) {
+      toast.add({
+        severity: 'info',
+        summary: 'No Changes',
+        detail: 'No modifications detected.',
+        life: 3000,
       })
+      return { success: true, user: oldData }
+    }
 
-      if (Object.keys(payload).length === 0) {
-        toast.add({
-          severity: 'info',
-          summary: 'No Changes',
-          detail: 'No modifications detected for this user.',
-          life: 3000,
-        })
-        return { success: true, user: oldData }
+    const res = await apiEditUser(newData.id, payload)
+    if (res?.succeeded) {
+      toast.add({ severity: 'success', summary: 'Success', detail: res.message, life: 3000 })
+
+      const index = users.value.findIndex((u) => u.id === res.data.id)
+      if (index !== -1) {
+        users.value[index] = res.data
       }
 
-      const res: ApiResponse<User> = await apiEditUser(newData.id, payload)
-
-      toast.add({ severity: 'success', summary: 'Success', detail: res.message, life: 3000 })
       return { success: true, user: res.data }
-    } catch (err) {
-      const error = err as APIError
-      const message = error?.error?.message || error.message || 'Failed to update user'
-      toast.add({ severity: 'error', summary: 'Error', detail: message, life: 3000 })
+    } else {
+      toast.add({
+        severity: 'error',
+        summary: 'Update Failed',
+        detail: res?.message || 'The user could not be updated.',
+        life: 3000,
+      })
+
+      const index = users.value.findIndex((u) => u.id === oldData.id)
+      if (index !== -1) {
+        users.value[index] = oldData
+      }
+
       return { success: false, user: oldData }
     }
-  }
+  }, 'An unexpected error occurred while updating the user.')
 
   const deleteUser = (row: User): void => {
     users.value = users.value.filter((p) => p.id !== row.id)

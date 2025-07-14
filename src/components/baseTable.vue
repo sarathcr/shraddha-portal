@@ -6,12 +6,12 @@ import Button from 'primevue/button'
 import Calendar from 'primevue/calendar'
 import Column from 'primevue/column'
 import DataTable from 'primevue/datatable'
-import Dropdown from 'primevue/dropdown'
 import MultiSelect from 'primevue/multiselect'
 import InputText from 'primevue/inputtext'
 import Tag from 'primevue/tag'
 import { computed, reactive, ref, watch } from 'vue'
 import { useSlots } from 'vue'
+import { Select } from 'primevue'
 
 const props = defineProps<{
   columns: ColumnDef[]
@@ -115,7 +115,7 @@ const hasTableHeader = computed(() => !!slots['table-header'])
               showIcon
               class="w-full"
             />
-            <Dropdown
+            <Select
               v-else-if="col.filterOption"
               v-model="tempRow[col.key]"
               :options="props.statusOptions"
@@ -161,7 +161,7 @@ const hasTableHeader = computed(() => !!slots['table-header'])
 
         <template #filter="{ filterModel, filterCallback }">
           <div class="flex flex-col gap-1">
-            <Dropdown
+            <Select
               v-if="col.filterOption"
               v-model="filterModel.value"
               :options="props.statusOptions"
@@ -211,7 +211,10 @@ const hasTableHeader = computed(() => !!slots['table-header'])
             <Button icon="pi pi-times" severity="danger" size="small" @click="cancelEdit" />
           </div>
           <div v-else>
-            <slot name="actions" v-bind="{ row: data, onDelete: () => emit('delete', data) }" />
+            <slot
+              name="actions"
+              v-bind="{ row: data, onDelete: (row: number) => emit('delete', data) }"
+            />
           </div>
         </template>
       </Column>

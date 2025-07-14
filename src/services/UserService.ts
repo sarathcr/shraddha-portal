@@ -60,3 +60,26 @@ export const UserService = {
     }
   },
 }
+
+export const Teams = (): { teams: { label: string; value: string }[] } => {
+  return {
+    teams: [
+      { label: 'BE', value: 'BE' },
+      { label: 'FE', value: 'FE' },
+      { label: '.NET', value: '.NET' },
+      { label: 'QA', value: 'QA' },
+    ],
+  }
+}
+
+export const Roles = (): { roles: { label: string; value: string }[] } => {
+  return {
+    roles: [
+      { label: 'Secretary', value: 'Secretary' },
+      { label: 'Treasurer', value: 'Treasurer' },
+      { label: 'Assistant Treasurer', value: 'Assistant Treasurer' },
+      { label: 'Executive Committee member', value: 'Executive Committee member' },
+      { label: 'President', value: 'President' },
+    ],
+  }
+}

@@ -21,7 +21,10 @@ const { columns, allRows, editableRow, statusOptions, onEdit, onSave, onCancel, 
       <button @click="onEdit(row)" class="p-2 rounded hover:bg-gray-200 transition cursor-pointer">
         <i class="pi pi-pencil text-slate-700 text-base"></i>
       </button>
-      <button @click="onDelete()" class="p-2 rounded hover:bg-gray-200 transition cursor-pointer">
+      <button
+        @click="onDelete(row)"
+        class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
+      >
         <i class="pi pi-trash text-red-600 text-base"></i>
       </button>
     </template>
