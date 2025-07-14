@@ -12,7 +12,7 @@ import {
 import { FilterMatchMode } from '@primevue/core/api'
 import { useToast } from 'primevue/usetoast'
 import { ref, type Ref } from 'vue'
-
+import { useConfirm } from 'primevue/useconfirm'
 export const useUsers = (): {
   users: Ref<User[]>
   roles: Ref<OptionItem[]>
@@ -24,10 +24,10 @@ export const useUsers = (): {
   fetchInitialData: () => Promise<null | void>
   createUser: (payload: User) => Promise<true | false | null>
   editUser: (newData: User, oldData: User) => Promise<{ success: boolean; user: User } | null>
-  deleteUser: (row: User) => void
+  deleteUser: (user: User, event?: Event) => void
 } => {
   const toast = useToast()
-
+  const confirm = useConfirm()
   const users = ref<User[]>([])
   const roles = ref<OptionItem[]>([])
   const teams = ref<OptionItem[]>([])
@@ -151,14 +151,33 @@ export const useUsers = (): {
       return { success: false, user: oldData }
     }
   }, 'An unexpected error occurred while updating the user.')
+  const deleteUser = (user: User, event?: Event): void => {
+    if (!event?.currentTarget) {
+      console.error('ConfirmPopup requires a valid event target (event missing or invalid).')
+      return
+    }
 
-  const deleteUser = (row: User): void => {
-    users.value = users.value.filter((p) => p.id !== row.id)
-    toast.add({
-      severity: 'success',
-      summary: 'Deleted',
-      detail: `User ${row.name} deleted successfully (simulated).`,
-      life: 3000,
+    confirm.require({
+      target: event.currentTarget as HTMLElement,
+      message: `Are you sure you want to delete user "${user.name}"? This action cannot be undone.`,
+      header: 'Delete Confirmation',
+      icon: 'pi pi-info-circle',
+      rejectClass: 'p-button-secondary p-button-outlined',
+      acceptClass: 'p-button-danger',
+      acceptLabel: 'Delete',
+      rejectLabel: 'Cancel',
+      accept: () => {
+        users.value = users.value.filter((u) => u.id !== user.id)
+        toast.add({
+          severity: 'success',
+          summary: 'Deleted',
+          detail: `User ${user.name} deleted successfully.`,
+          life: 3000,
+        })
+      },
+      reject: () => {
+        console.warn('User deletion cancelled.')
+      },
     })
   }
 

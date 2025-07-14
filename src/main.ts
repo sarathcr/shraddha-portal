@@ -9,7 +9,7 @@ import router from './router'
 import { myPreset } from './theme-preset'
 
 import ToastService from 'primevue/toastservice'
-
+import ConfirmationService from 'primevue/confirmationservice'
 const app = createApp(App)
 app.use(PrimeVue, { theme: { preset: myPreset } })
 
@@ -20,3 +20,4 @@ app.use(router)
 
 app.mount('#app')
 app.use(ToastService)
+app.use(ConfirmationService)
