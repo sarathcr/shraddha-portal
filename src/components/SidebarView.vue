@@ -171,15 +171,21 @@ const menuItems = computed(() => {
     position: absolute;
     right: 10px;
   }
-
+  .p-panelmenu-header-content {
+    &:hover {
+      background-color: var(--p-primary-bg-color) !important;
+    }
+  }
   .p-menuitem-active {
     $root: &;
     .p-panelmenu {
       &-header {
+        background-color: var(--p-primary-bg-color);
+        border-radius: 5px;
         &-link,
         &-icon,
         #{$root}:hover {
-          color: var(--p-secondary-500) !important;
+          color: var(--p-primary-600) !important;
           font-weight: 600;
         }
       }
