@@ -47,7 +47,7 @@ onMounted(() => {
             <i class="pi pi-pencil text-slate-700 text-base"></i>
           </button>
           <button
-            @click="onDelete()"
+            @click="onDelete(row)"
             class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
             title="Delete"
           >
