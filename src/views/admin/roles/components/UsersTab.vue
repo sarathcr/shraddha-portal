@@ -23,13 +23,13 @@ const {
 
 const userFormDialogVisible = ref(false)
 const userFormRef = ref<InstanceType<typeof UserForm> | null>(null)
-
+const originalUser = ref<User | null>(null)
 const openCreateUserDialog = (): void => {
   userFormDialogVisible.value = true
   userFormRef.value?.resetForm()
 }
 
-const handleUserFormSubmit = async (payload: Omit<User, 'id' | 'dob'>): Promise<void> => {
+const handleUserFormSubmit = async (payload: User): Promise<void> => {
   const success = await createUser(payload)
   if (success) {
     userFormDialogVisible.value = false
@@ -41,15 +41,27 @@ const handleUserFormCancel = (): void => {
 }
 
 const onEdit = (row: RowData): void => {
+  originalUser.value = JSON.parse(JSON.stringify(row))
   editingRows.value = [row]
 }
 
-const onSave = async (row: RowData): Promise<void> => {
-  await editUser(row as User, row as User)
+const onSave = async (newData: RowData): Promise<void> => {
+  if (originalUser.value) {
+    await editUser(newData as User, originalUser.value)
+  }
+  editingRows.value = []
+  originalUser.value = null
 }
 
 const onCancel = (): void => {
+  if (originalUser.value) {
+    const index = users.value.findIndex((u) => u.id === originalUser.value!.id)
+    if (index !== -1) {
+      users.value[index] = originalUser.value
+    }
+  }
   editingRows.value = []
+  originalUser.value = null
 }
 
 const onDelete = (row: RowData): void => {
@@ -118,14 +130,18 @@ onMounted(() => {
         <Button label="New User" icon="pi pi-plus" severity="help" @click="openCreateUserDialog" />
       </template>
 
-      <template #actions="{ row, onDelete }">
+      <template #actions="{ row }">
         <button
           @click="onEdit(row)"
           class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
         >
           <i class="pi pi-pencil text-slate-700 text-base"></i>
         </button>
-        <button @click="onDelete()" class="p-2 rounded hover:bg-gray-200 transition cursor-pointer">
+
+        <button
+          @click="onDelete(row)"
+          class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
+        >
           <i class="pi pi-trash text-red-600 text-base"></i>
         </button>
       </template>
