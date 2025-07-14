@@ -12,7 +12,7 @@ import {
 import { FilterMatchMode } from '@primevue/core/api'
 import { useToast } from 'primevue/usetoast'
 import { ref, type Ref } from 'vue'
-
+import { useConfirm } from 'primevue/useconfirm'
 export const useUsers = (): {
   users: Ref<User[]>
   roles: Ref<OptionItem[]>
@@ -25,9 +25,10 @@ export const useUsers = (): {
   createUser: (payload: User) => Promise<true | false | null>
   editUser: (newData: User, oldData: User) => Promise<{ success: boolean; user: User } | null>
   deleteUser: (row: User) => void
+  confirmDeleteUser: (user: User, event?: Event) => void
 } => {
   const toast = useToast()
-
+  const confirm = useConfirm()
   const users = ref<User[]>([])
   const roles = ref<OptionItem[]>([])
   const teams = ref<OptionItem[]>([])
@@ -151,7 +152,29 @@ export const useUsers = (): {
       return { success: false, user: oldData }
     }
   }, 'An unexpected error occurred while updating the user.')
+  const confirmDeleteUser = (user: User, event?: Event): void => {
+    if (!event || !event.currentTarget) {
+      console.error(
+        'Error: Event object or its currentTarget is missing for confirmDeleteUser. ConfirmPopup requires a target element.',
+      )
+      return
+    }
 
+    confirm.require({
+      target: event.currentTarget as HTMLElement,
+      message: `Are you sure you want to delete user "${user.name}"? This action cannot be undone.`,
+      header: 'Delete Confirmation',
+      icon: 'pi pi-info-circle',
+      rejectClass: 'p-button-secondary p-button-outlined',
+      acceptClass: 'p-button-danger',
+      acceptLabel: 'Delete',
+      rejectLabel: 'Cancel',
+      accept: () => deleteUser(user),
+      reject: () => {
+        console.warn('Delete action cancelled.')
+      },
+    })
+  }
   const deleteUser = (row: User): void => {
     users.value = users.value.filter((p) => p.id !== row.id)
     toast.add({
@@ -174,5 +197,6 @@ export const useUsers = (): {
     createUser,
     editUser,
     deleteUser,
+    confirmDeleteUser,
   }
 }

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import BaseTable from '@/components/baseTable.vue'
 import Dialog from 'primevue/dialog'
+import ConfirmPopup from 'primevue/confirmpopup'
 import Button from 'primevue/button'
 import { ref, onMounted } from 'vue'
 import { useUsers } from '@/views/admin/roles/composables/useUser'
@@ -18,7 +19,7 @@ const {
   fetchInitialData,
   createUser,
   editUser,
-  deleteUser,
+  confirmDeleteUser,
 } = useUsers()
 
 const userFormDialogVisible = ref(false)
@@ -64,8 +65,8 @@ const onCancel = (): void => {
   originalUser.value = null
 }
 
-const onDelete = (row: RowData): void => {
-  deleteUser(row as User)
+const handleDeleteConfirmation = (row: RowData, event?: Event): void => {
+  confirmDeleteUser(row as User, event)
 }
 
 const columns = [
@@ -99,6 +100,7 @@ onMounted(() => {
   </div>
 
   <div v-else class="space-y-4 h-full">
+    <ConfirmPopup />
     <Dialog
       v-model:visible="userFormDialogVisible"
       header="Create User"
@@ -124,7 +126,6 @@ onMounted(() => {
       :multiSelectOption="teams"
       @save="onSave"
       @cancel="onCancel"
-      @delete="onDelete"
     >
       <template #table-header>
         <Button label="New User" icon="pi pi-plus" severity="help" @click="openCreateUserDialog" />
@@ -137,9 +138,8 @@ onMounted(() => {
         >
           <i class="pi pi-pencil text-slate-700 text-base"></i>
         </button>
-
         <button
-          @click="onDelete(row)"
+          @click="handleDeleteConfirmation(row, $event)"
           class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
         >
           <i class="pi pi-trash text-red-600 text-base"></i>
