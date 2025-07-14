@@ -40,7 +40,6 @@ const handleUserFormCancel = (): void => {
   userFormDialogVisible.value = false
 }
 
-// Cast `User` as `RowData`
 const onEdit = (row: RowData): void => {
   editingRows.value = [row]
 }
@@ -133,11 +132,3 @@ onMounted(() => {
     </BaseTable>
   </div>
 </template>
-
-<style scoped>
-.p-tabs,
-.p-tabpanels,
-.p-tabpanel {
-  height: 100%;
-}
-</style>

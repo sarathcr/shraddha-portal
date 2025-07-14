@@ -174,7 +174,7 @@ const hasTableHeader = computed(() => !!slots['table-header'])
             <Calendar
               v-else-if="col.useDateFilter"
               v-model="filterModel.value"
-              dateFormat="yy/mm/dd"
+              dateFormat="dd/mm/yy"
               showIcon
               class="w-full"
               placeholder="Select Date"
