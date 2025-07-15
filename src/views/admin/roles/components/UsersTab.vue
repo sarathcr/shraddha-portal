@@ -148,11 +148,3 @@ onMounted(() => {
     </BaseTable>
   </div>
 </template>
-
-<style scoped>
-.p-tabs,
-.p-tabpanels,
-.p-tabpanel {
-  height: 100%;
-}
-</style>

@@ -9,6 +9,7 @@ export interface ColumnDef {
   useDateFilter?: boolean
   filterOption?: boolean
   options?: { label: string; value: string }[]
+  placeholder?: string
 }
 
 export interface RowData {

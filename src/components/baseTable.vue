@@ -3,7 +3,7 @@ import type { ColumnDef, RowData } from '@/types/baseTable.model'
 import { formatDate } from '@/utils/dateUtils'
 import { FilterMatchMode } from '@primevue/core/api'
 import Button from 'primevue/button'
-import Calendar from 'primevue/calendar'
+import DatePicker from 'primevue/datepicker' // ✅ Changed
 import Column from 'primevue/column'
 import DataTable from 'primevue/datatable'
 import MultiSelect from 'primevue/multiselect'
@@ -34,9 +34,7 @@ const tempRow = reactive<RowData>({})
 watch(
   () => props.editableRow,
   (newRow) => {
-    if (newRow) {
-      Object.assign(tempRow, newRow)
-    }
+    if (newRow) Object.assign(tempRow, newRow)
   },
   { immediate: true },
 )
@@ -71,12 +69,13 @@ function getSeverity(value: unknown): string {
   if (value === 'Inactive') return 'danger'
   return 'info'
 }
+
 const slots = useSlots()
 const hasTableHeader = computed(() => !!slots['table-header'])
 </script>
 
 <template>
-  <div class="space-y-4 h-full">
+  <div class="space-y-4 h-full p-4">
     <DataTable
       :value="rows"
       v-model:filters="filters"
@@ -108,7 +107,7 @@ const hasTableHeader = computed(() => !!slots['table-header'])
       >
         <template #body="{ data }">
           <div v-if="editableRow === data">
-            <Calendar
+            <DatePicker
               v-if="col.useDateFilter"
               v-model="tempRow[col.key] as Date | null"
               dateFormat="dd/mm/yy"
@@ -121,7 +120,7 @@ const hasTableHeader = computed(() => !!slots['table-header'])
               :options="props.statusOptions"
               optionLabel="label"
               optionValue="value"
-              placeholder="Select"
+              :placeholder="col.placeholder || `Select ${col.label}`"
               class="w-full"
             />
             <MultiSelect
@@ -130,7 +129,7 @@ const hasTableHeader = computed(() => !!slots['table-header'])
               :options="props.multiSelectOption"
               optionLabel="label"
               optionValue="value"
-              placeholder="Select Options"
+              :placeholder="col.placeholder || `Select ${col.label}`"
               display="chip"
               filter
               class="w-full"
@@ -167,17 +166,17 @@ const hasTableHeader = computed(() => !!slots['table-header'])
               :options="props.statusOptions"
               optionLabel="label"
               optionValue="value"
-              placeholder="Select Status"
+              :placeholder="col.placeholder || `Select ${col.label}`"
               class="w-full"
               @change="filterCallback()"
             />
-            <Calendar
+            <DatePicker
               v-else-if="col.useDateFilter"
               v-model="filterModel.value"
-              dateFormat="yy/mm/dd"
+              dateFormat="dd/mm/yy"
               showIcon
-              class="w-full"
               placeholder="Select Date"
+              class="w-full"
               @date-select="filterCallback()"
               @change="filterCallback()"
             />
@@ -187,7 +186,7 @@ const hasTableHeader = computed(() => !!slots['table-header'])
               :options="props.multiSelectOption"
               optionLabel="label"
               optionValue="value"
-              placeholder="Select Options"
+              :placeholder="col.placeholder || `Select ${col.label}`"
               filter
               display="chip"
               :maxSelectedLabels="3"
@@ -204,6 +203,7 @@ const hasTableHeader = computed(() => !!slots['table-header'])
           </div>
         </template>
       </Column>
+
       <Column header="Actions" style="min-width: 150px">
         <template #body="{ data }">
           <div v-if="editableRow === data" class="flex gap-2">
@@ -221,12 +221,3 @@ const hasTableHeader = computed(() => !!slots['table-header'])
     </DataTable>
   </div>
 </template>
-
-<style scoped>
-.p-datatable {
-  height: 100%;
-  display: flex;
-  justify-content: space-between;
-  flex-direction: column;
-}
-</style>
