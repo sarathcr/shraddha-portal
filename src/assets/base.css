@@ -22,6 +22,7 @@
   --vt-c-text-dark-2: rgba(235, 235, 235, 0.64);
 
   --p-primary-500: #a855f7;
+  --p-primary-bg-color: #ede9fe;
   --p-primary-500-rgb: 99, 102, 241; /* Manually converted from #6366F1 */
 
   --p-primary-600: #9333ea; /* optional: a darker variant for hover/focus */

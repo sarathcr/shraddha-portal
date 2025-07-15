@@ -49,7 +49,10 @@ const menuItems = computed(() => {
     {
       label: 'Roles And Access',
       icon: 'pi pi-shield',
-      class: currentPath.startsWith('/admin/roles') ? 'p-menuitem-active' : '', // Example for sub-routes
+      command: async (): Promise<void> => {
+        await router.push('/admin/roles')
+      },
+      class: currentPath === '/admin/roles' ? 'p-menuitem-active' : '', // Example for sub-routes
     },
     {
       label: 'Events',
@@ -59,7 +62,10 @@ const menuItems = computed(() => {
     {
       label: 'Committee',
       icon: 'pi pi-users',
-      class: currentPath.startsWith('/admin/committee') ? 'p-menuitem-active' : '',
+      command: async (): Promise<void> => {
+        await router.push('/admin/committe')
+      },
+      class: currentPath.startsWith('/admin/committe') ? 'p-menuitem-active' : '',
     },
     {
       label: 'Aprovals',
@@ -135,6 +141,18 @@ const menuItems = computed(() => {
   ]
 })
 </script>
+<template class="sidebar-drawer">
+  <Drawer
+    class="sidebar-drawer"
+    v-model:visible="sidebarStore.isSidebarVisible"
+    :modal="isModal"
+    :dismissable="isDismissable"
+  >
+    <div class="menu-container">
+      <PanelMenu :model="menuItems" />
+    </div>
+  </Drawer>
+</template>
 
 <style lang="scss">
 .sidebar-drawer {
@@ -153,15 +171,21 @@ const menuItems = computed(() => {
     position: absolute;
     right: 10px;
   }
-
+  .p-panelmenu-header-content {
+    &:hover {
+      background-color: var(--p-primary-bg-color) !important;
+    }
+  }
   .p-menuitem-active {
     $root: &;
     .p-panelmenu {
       &-header {
+        background-color: var(--p-primary-bg-color);
+        border-radius: 5px;
         &-link,
         &-icon,
         #{$root}:hover {
-          color: var(--p-secondary-500) !important;
+          color: var(--p-primary-600) !important;
           font-weight: 600;
         }
       }
@@ -176,14 +200,3 @@ const menuItems = computed(() => {
   }
 }
 </style>
-
-<template class="sidebar-drawer">
-  <Drawer
-    class="sidebar-drawer"
-    v-model:visible="sidebarStore.isSidebarVisible"
-    :modal="isModal"
-    :dismissable="isDismissable"
-  >
-    <div><PanelMenu :model="menuItems" /></div>
-  </Drawer>
-</template>

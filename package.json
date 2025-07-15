@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --open",
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
     "test:unit": "vitest",
@@ -16,7 +16,10 @@
     "format": "prettier --write src/",
     "prepare": "husky install",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
-    "lint-staged": "lint-staged"
+    "lint-staged": "lint-staged",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage"
   },
   "lint-staged": {
     "*.{ts,js,vue}": [
@@ -29,22 +32,28 @@
   },
   "dependencies": {
     "@primeuix/themes": "^1.1.1",
+    "@vueuse/core": "^13.5.0",
     "chart.js": "^4.5.0",
     "pinia": "^3.0.1",
     "primeicons": "^7.0.0",
     "primevue": "^4.3.4",
+    "vee-validate": "^4.15.1",
     "vue": "^3.5.13",
-    "vue-router": "^4.5.0"
+    "vue-router": "^4.5.0",
+    "yup": "^1.6.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.51.1",
     "@tailwindcss/vite": "^4.1.8",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/vue": "^8.1.0",
     "@tsconfig/node22": "^22.0.1",
     "@types/jsdom": "^21.1.7",
     "@types/node": "^22.14.0",
     "@vitejs/plugin-vue": "^5.2.3",
     "@vitejs/plugin-vue-jsx": "^4.1.2",
     "@vitest/eslint-plugin": "^1.1.39",
+    "@vitest/ui": "^3.2.4",
     "@vue/eslint-config-prettier": "^10.2.0",
     "@vue/eslint-config-typescript": "^14.5.0",
     "@vue/test-utils": "^2.4.6",
@@ -55,9 +64,10 @@
     "eslint-plugin-playwright": "^2.2.0",
     "eslint-plugin-unused-imports": "^4.1.4",
     "eslint-plugin-vue": "~10.0.0",
+    "happy-dom": "^18.0.1",
     "husky": "^9.1.7",
     "jiti": "^2.4.2",
-    "jsdom": "^26.0.0",
+    "jsdom": "^26.1.0",
     "lint-staged": "^16.1.0",
     "npm-run-all2": "^7.0.2",
     "oxlint": "^0.16.0",
