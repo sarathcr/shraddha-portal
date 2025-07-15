@@ -64,30 +64,28 @@ export function useCommittee(): {
     filters.value.global.value = null
   }
   const fetchInitialData = async (): Promise<void> => {
-    try {
-      await simulateApiCall(async () => {
-        const committeeResponse: ApiResponse<Committee[]> = await CommiteeService.getCommitteeData()
+    await simulateApiCall(async () => {
+      const committeeResponse: ApiResponse<Committee[]> = await CommiteeService.getCommitteeData()
 
-        if (committeeResponse.succeeded && Array.isArray(committeeResponse.data)) {
-          committee.value = committeeResponse.data
-          allRows.value = committeeResponse.data.map((item) => ({
-            ...item,
-            createdAt: new Date(item.createdAt),
-          }))
-        } else {
-          toast.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: committeeResponse.message || 'Failed to load committee data.',
-            life: 3000,
-          })
-        }
-      })
-    } catch (err) {
+      if (committeeResponse.succeeded && Array.isArray(committeeResponse.data)) {
+        committee.value = committeeResponse.data
+        allRows.value = committeeResponse.data.map((item) => ({
+          ...item,
+          createdAt: new Date(item.createdAt),
+        }))
+      } else {
+        toast.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: committeeResponse.message || 'Failed to load committee data.',
+          life: 3000,
+        })
+      }
+    }).catch((err) => {
       const error = err as APIError
       const message = error?.error?.message || error.message || 'Failed to load data'
       toast.add({ severity: 'error', summary: 'Error', detail: message, life: 3000 })
-    }
+    })
   }
 
   const onEdit = (row: RowData): void => {
