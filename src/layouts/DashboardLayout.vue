@@ -4,7 +4,6 @@ import SidebarView from '@/components/SidebarView.vue'
 import { useSidebarStore } from '@/stores/sidebar'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 
-// ---  STATE & STORE ---
 const sidebarStore = useSidebarStore()
 
 const screenWidth = ref(window.innerWidth)
@@ -15,23 +14,17 @@ const updateScreenWidth = (): void => {
 }
 
 watch(isDesktop, (isNowDesktop, wasPreviouslyDesktop) => {
-  // This check prevents the watch from running on initial component load
-  if (wasPreviouslyDesktop === undefined) {
-    return
-  }
+  if (wasPreviouslyDesktop === undefined) return
 
-  // If we just resized from mobile to desktop, show the sidebar.
   if (isNowDesktop && !wasPreviouslyDesktop) {
     sidebarStore.showSidebar()
   }
 
-  // If we just resized from desktop to mobile, hide the sidebar.
   if (!isNowDesktop && wasPreviouslyDesktop) {
     sidebarStore.hideSidebar()
   }
 })
 
-// --- LIFECYCLE HOOKS ---
 onMounted(() => {
   window.addEventListener('resize', updateScreenWidth)
 })
@@ -40,37 +33,31 @@ onUnmounted(() => {
   window.removeEventListener('resize', updateScreenWidth)
 })
 </script>
+
 <template>
-  <div class="dashboardLayout min-h-screen flex flex-col bg-[#f1f5f9] z-0">
+  <div class="dashboardLayout min-h-screen flex flex-col bg-[#f1f5f9]">
     <div class="dashboardLayout__header">
       <HeaderView />
     </div>
 
     <div
-      class="dashboardLayout__main p-4 lg:p-8 grow-1 flex mt-[62px]"
+      class="dashboardLayout__main py-2 px-4 lg:p-8 grow flex mt-[62px]"
       :class="[sidebarStore.isSidebarVisible && isDesktop ? 'gap-[30px]' : 'gap-0']"
     >
       <div
         class="dashboardLayout__sidebar transition-all duration-400 ease-in-out"
         :class="[sidebarStore.isSidebarVisible && isDesktop ? 'w-[240px]' : 'w-0']"
       >
-        <div class="w-[240px] bg-white">
+        <div class="w-[240px] bg-white h-full">
           <SidebarView />
         </div>
       </div>
 
-      <div
-        class="dashboardLayout__content w-full flex flex-col gap-7 lg:h-[calc(100vh-126px)] overflow-hidden"
-      >
-        <RouterView />
+      <div class="dashboardLayout__content w-full flex flex-col gap-7 flex-grow overflow-hidden">
+        <div class="h-full overflow-y-auto">
+          <RouterView />
+        </div>
       </div>
     </div>
   </div>
 </template>
-<style scoped>
-@media (max-width: 768px) {
-  .dashboardLayout__main {
-    padding: 8px 16px;
-  }
-}
-</style>
