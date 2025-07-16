@@ -217,7 +217,7 @@ const menuItems = computed(() => {
     top: 30px;
     left: 30px;
     border-radius: 6px;
-    width: 240px !important;
+    width: 243px !important;
   }
 }
 </style>
