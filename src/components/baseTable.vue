@@ -78,9 +78,7 @@ const hasTableHeader = computed(() => !!slots['table-header'])
 
 <template>
   <div class="space-y-4 h-full p-4 flex flex-col justify-between">
-    <div
-      class="bg-white rounded-md shadow-sm max-h-[calc(100vh-200px)] overflow-hidden flex flex-col"
-    >
+    <div class="bg-white rounded-md max-h-[calc(100vh-200px)] overflow-hidden flex flex-col">
       <DataTable
         :value="rows.slice(first, first + (pageSize || 20))"
         v-model:filters="filters"
@@ -224,7 +222,7 @@ const hasTableHeader = computed(() => !!slots['table-header'])
       </DataTable>
     </div>
 
-    <div class="flex justify-center w-full bg-white sticky bottom-0 z-10 shadow">
+    <div class="flex justify-center w-full bg-white sticky bottom-0 z-10">
       <Paginator
         :rows="pageSize || 20"
         :totalRecords="rows.length"
