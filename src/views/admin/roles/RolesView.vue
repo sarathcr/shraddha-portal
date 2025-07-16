@@ -20,13 +20,13 @@ const tabs = ref([
 </script>
 
 <template>
-  <Toast />
-  <div class="roles__content bg-white w-full overflow-auto rounded-md shadow">
+  <Toast position="top-left" />
+  <div class="roles__content bg-white w-full overflow-auto rounded-md shadow z-0">
     <Tabs :value="selectedTab" @update:value="selectedTab = String($event)">
-      <TabList class="sticky top-0 z-50 bg-white">
+      <TabList class="sticky top-0 bg-white">
         <Tab v-for="tab in tabs" :key="tab.value" :value="tab.value">{{ tab.title }}</Tab>
       </TabList>
-      <TabPanels class="p-0">
+      <TabPanels class="p-0!">
         <TabPanel value="0">
           <UsersTab />
         </TabPanel>

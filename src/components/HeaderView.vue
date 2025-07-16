@@ -6,7 +6,7 @@ const sidebarStore = useSidebarStore()
 </script>
 
 <template>
-  <header class="header flex items-center justify-between py-3 px-8 bg-white w-full fixed">
+  <header class="header flex items-center justify-between py-3 px-8 bg-white w-full fixed z-1">
     <div class="flex items-center gap-4">
       <i class="pi pi-bars cursor-pointer !text-[20px]" @click="sidebarStore.toggleSidebar()"></i>
       <AppLogo />
