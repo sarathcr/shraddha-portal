@@ -246,4 +246,8 @@ const hasTableHeader = computed(() => !!slots['table-header'])
 .p-paginator {
   width: 100%;
 }
+
+.p-datatable-header {
+  padding: 0 0 1rem 0 !important;
+}
 </style>

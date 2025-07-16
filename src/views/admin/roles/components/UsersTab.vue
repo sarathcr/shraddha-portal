@@ -100,13 +100,14 @@ onMounted(() => {
   </div>
 
   <div v-else class="space-y-4 h-full">
-    <ConfirmPopup />
+    <ConfirmPopup class="mx-4" />
     <Dialog
       v-model:visible="userFormDialogVisible"
       header="Create User"
       :style="{ width: '50rem' }"
       modal
       @hide="handleUserFormCancel"
+      class="mx-4"
     >
       <UserForm
         ref="userFormRef"
