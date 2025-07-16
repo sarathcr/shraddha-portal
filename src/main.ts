@@ -11,13 +11,19 @@ import { myPreset } from './theme-preset'
 import ToastService from 'primevue/toastservice'
 import ConfirmationService from 'primevue/confirmationservice'
 const app = createApp(App)
-app.use(PrimeVue, { theme: { preset: myPreset } })
+app.use(PrimeVue, {
+  theme: {
+    preset: myPreset,
+    options: {
+      darkModeSelector: 'app-dark',
+    },
+  },
+})
 
 const pinia = createPinia()
 app.use(pinia)
 
 app.use(router)
-
-app.mount('#app')
 app.use(ToastService)
 app.use(ConfirmationService)
+app.mount('#app')
