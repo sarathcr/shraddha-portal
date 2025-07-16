@@ -42,6 +42,9 @@ const menuItems = computed(() => {
       icon: 'pi pi-home',
       command: async (): Promise<void> => {
         await router.push('/admin/dashboard')
+        if (isModal.value) {
+          sidebarStore.isSidebarVisible = false
+        }
       },
       // Add a class or a style based on the current route
       class: currentPath === '/admin/dashboard' ? 'p-menuitem-active' : '',
@@ -51,6 +54,9 @@ const menuItems = computed(() => {
       icon: 'pi pi-shield',
       command: async (): Promise<void> => {
         await router.push('/admin/roles')
+        if (isModal.value) {
+          sidebarStore.isSidebarVisible = false
+        }
       },
       class: currentPath === '/admin/roles' ? 'p-menuitem-active' : '', // Example for sub-routes
     },
@@ -64,6 +70,9 @@ const menuItems = computed(() => {
       icon: 'pi pi-users',
       command: async (): Promise<void> => {
         await router.push('/admin/committe')
+        if (isModal.value) {
+          sidebarStore.isSidebarVisible = false
+        }
       },
       class: currentPath.startsWith('/admin/committe') ? 'p-menuitem-active' : '',
     },
@@ -82,6 +91,9 @@ const menuItems = computed(() => {
           icon: 'pi pi-wallet',
           command: async (): Promise<void> => {
             await router.push('/admin/finance/fund-collection')
+            if (isModal.value) {
+              sidebarStore.isSidebarVisible = false
+            }
           },
           class: currentPath === '/admin/finance/fund-collection' ? 'p-menuitem-active' : '',
         },
@@ -90,6 +102,9 @@ const menuItems = computed(() => {
           icon: 'pi pi-money-bill',
           command: async (): Promise<void> => {
             await router.push('/admin/finance/expenses')
+            if (isModal.value) {
+              sidebarStore.isSidebarVisible = false
+            }
           },
           class: currentPath === '/admin/finance/expenses' ? 'p-menuitem-active' : '',
         },
@@ -98,6 +113,9 @@ const menuItems = computed(() => {
           icon: 'pi pi-chart-bar',
           command: async (): Promise<void> => {
             await router.push('/admin/finance/balance-sheet')
+            if (isModal.value) {
+              sidebarStore.isSidebarVisible = false
+            }
           },
           class: currentPath === '/admin/finance/balance-sheet' ? 'p-menuitem-active' : '',
         },
@@ -106,6 +124,9 @@ const menuItems = computed(() => {
           icon: 'pi pi-file-o',
           command: async (): Promise<void> => {
             await router.push('/admin/finance/bills-uploads')
+            if (isModal.value) {
+              sidebarStore.isSidebarVisible = false
+            }
           },
           class: currentPath === '/admin/finance/bills-uploads' ? 'p-menuitem-active' : '',
         },
@@ -192,7 +213,7 @@ const menuItems = computed(() => {
     }
   }
   @media screen and (min-width: 1024px) {
-    height: calc(100vh - 123px) !important;
+    height: calc(100dvh - 123px) !important;
     top: 30px;
     left: 30px;
     border-radius: 6px;
