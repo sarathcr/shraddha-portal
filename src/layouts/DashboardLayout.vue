@@ -41,13 +41,13 @@ onUnmounted(() => {
 })
 </script>
 <template>
-  <div class="dashboardLayout min-h-screen flex flex-col bg-[#f1f5f9]">
+  <div class="dashboardLayout h-screen flex flex-col bg-[#f1f5f9] z-0">
     <div class="dashboardLayout__header">
       <HeaderView />
     </div>
 
     <div
-      class="dashboardLayout__main py-2 px-4 lg:p-8 grow flex mt-[62px]"
+      class="dashboardLayout__main p-4 lg:p-8 flex grow mt-[62px] overflow-hidden"
       :class="[sidebarStore.isSidebarVisible && isDesktop ? 'gap-[30px]' : 'gap-0']"
     >
       <div
@@ -59,11 +59,22 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <div class="dashboardLayout__content w-full flex flex-col gap-7 flex-grow overflow-hidden">
-        <div class="h-full overflow-y-auto">
-          <RouterView />
-        </div>
+      <div class="dashboardLayout__content w-full flex flex-col gap-7 lg:h-[calc(100vh-126px)]">
+        <RouterView />
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+@media (max-width: 768px) {
+  .dashboardLayout__main {
+    padding: 8px 16px;
+  }
+}
+@media (max-height: 700px) {
+  .dashboardLayout {
+    overflow: hidden;
+  }
+}
+</style>
