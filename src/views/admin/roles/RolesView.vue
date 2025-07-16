@@ -21,7 +21,7 @@ const tabs = ref([
 
 <template>
   <Toast />
-  <div class="roles__content bg-white w-full overflow-auto rounded-md shadow">
+  <div class="roles__content bg-white w-full rounded-md shadow">
     <Tabs :value="selectedTab" @update:value="selectedTab = String($event)">
       <TabList class="sticky top-0 z-50 bg-white">
         <Tab v-for="tab in tabs" :key="tab.value" :value="tab.value">{{ tab.title }}</Tab>
@@ -47,5 +47,14 @@ const tabs = ref([
   @media screen and (min-width: 1024px) {
     height: calc(100vh - 123px) !important;
   }
+}
+.p-tabs {
+  height: 100%;
+}
+.p-tabpanels {
+  height: 100%;
+}
+.p-tabpanel {
+  height: 100%;
 }
 </style>
