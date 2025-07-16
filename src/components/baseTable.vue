@@ -221,3 +221,8 @@ const hasTableHeader = computed(() => !!slots['table-header'])
     </DataTable>
   </div>
 </template>
+<style lang="scss">
+.p-datatable-header {
+  padding: 0 0 1rem 0 !important;
+}
+</style>
