@@ -48,9 +48,17 @@ const tabs = ref([
     height: calc(100vh - 123px) !important;
   }
 }
+
 .p-tabs,
 .p-tabpanels,
 .p-tabpanel {
   height: 100%;
+  min-height: 100%;
+}
+
+@media screen and (max-height: 700px) {
+  .p-tabpanel {
+    min-height: calc(100vh - 160px);
+  }
 }
 </style>
