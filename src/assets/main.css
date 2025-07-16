@@ -6,5 +6,5 @@
 @import './base.css';
 
 #app {
-  min-height: 100dvh;
+  min-height: 100svh;
 }

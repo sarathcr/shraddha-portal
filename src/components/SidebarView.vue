@@ -213,7 +213,7 @@ const menuItems = computed(() => {
     }
   }
   @media screen and (min-width: 1024px) {
-    height: calc(100dvh - 123px) !important;
+    height: calc(100svh - 123px) !important;
     top: 30px;
     left: 30px;
     border-radius: 6px;

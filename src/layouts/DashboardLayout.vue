@@ -60,7 +60,7 @@ onUnmounted(() => {
       </div>
 
       <div
-        class="dashboardLayout__content w-full flex flex-col gap-7 lg:h-[calc(100dvh-126px)] overflow-auto"
+        class="dashboardLayout__content w-full flex flex-col gap-7 lg:h-[calc(100svh-126px)] overflow-auto"
       >
         <RouterView />
       </div>
