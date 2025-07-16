@@ -4,6 +4,7 @@ import SidebarView from '@/components/SidebarView.vue'
 import { useSidebarStore } from '@/stores/sidebar'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 
+// ---  STATE & STORE ---
 const sidebarStore = useSidebarStore()
 
 const screenWidth = ref(window.innerWidth)
@@ -14,17 +15,23 @@ const updateScreenWidth = (): void => {
 }
 
 watch(isDesktop, (isNowDesktop, wasPreviouslyDesktop) => {
-  if (wasPreviouslyDesktop === undefined) return
+  // This check prevents the watch from running on initial component load
+  if (wasPreviouslyDesktop === undefined) {
+    return
+  }
 
+  // If we just resized from mobile to desktop, show the sidebar.
   if (isNowDesktop && !wasPreviouslyDesktop) {
     sidebarStore.showSidebar()
   }
 
+  // If we just resized from desktop to mobile, hide the sidebar.
   if (!isNowDesktop && wasPreviouslyDesktop) {
     sidebarStore.hideSidebar()
   }
 })
 
+// --- LIFECYCLE HOOKS ---
 onMounted(() => {
   window.addEventListener('resize', updateScreenWidth)
 })
@@ -33,7 +40,6 @@ onUnmounted(() => {
   window.removeEventListener('resize', updateScreenWidth)
 })
 </script>
-
 <template>
   <div class="dashboardLayout min-h-screen flex flex-col bg-[#f1f5f9]">
     <div class="dashboardLayout__header">
