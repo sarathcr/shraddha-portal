@@ -45,7 +45,7 @@ const tabs = ref([
 <style>
 .roles__content {
   @media screen and (min-width: 1024px) {
-    height: calc(100dvh - 123px) !important;
+    height: calc(100svh - 123px) !important;
   }
 }
 </style>
