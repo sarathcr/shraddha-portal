@@ -3,7 +3,7 @@ import type { ColumnDef, RowData } from '@/types/baseTable.model'
 import { formatDate } from '@/utils/dateUtils'
 import { FilterMatchMode } from '@primevue/core/api'
 import Button from 'primevue/button'
-import DatePicker from 'primevue/datepicker' // ✅ Changed
+import DatePicker from 'primevue/datepicker'
 import Column from 'primevue/column'
 import DataTable from 'primevue/datatable'
 import MultiSelect from 'primevue/multiselect'
@@ -12,6 +12,7 @@ import Tag from 'primevue/tag'
 import { computed, reactive, ref, watch } from 'vue'
 import { useSlots } from 'vue'
 import { Select } from 'primevue'
+import BaseTableSkeleton from './Skelton/BaseTableSkeleton.vue'
 
 const props = defineProps<{
   columns: ColumnDef[]
@@ -20,6 +21,7 @@ const props = defineProps<{
   editableRow?: RowData | null
   statusOptions?: { label: string; value: string }[]
   multiSelectOption?: { label: string; value: string }[]
+  loading?: boolean // Add loading prop here
 }>()
 
 const emit = defineEmits<{
@@ -76,7 +78,14 @@ const hasTableHeader = computed(() => !!slots['table-header'])
 
 <template>
   <div class="space-y-4 h-full p-4">
+    <BaseTableSkeleton
+      v-if="loading"
+      :columnsCount="columns.length + 1"
+      :rowsCount="pageSize || 10"
+    />
+
     <DataTable
+      v-else
       :value="rows"
       v-model:filters="filters"
       filterDisplay="row"
@@ -221,6 +230,7 @@ const hasTableHeader = computed(() => !!slots['table-header'])
     </DataTable>
   </div>
 </template>
+
 <style lang="scss">
 .p-datatable-header {
   padding: 0 0 1rem 0 !important;
