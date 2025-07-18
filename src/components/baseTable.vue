@@ -235,16 +235,6 @@ const hasTableHeader = computed(() => !!slots['table-header'])
 </template>
 
 <style>
-.p-datatable-thead > tr {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background: white;
-}
-.p-paginator {
-  width: 100%;
-}
-
 .p-datatable-header {
   padding: 0 0 1rem 0 !important;
 }

@@ -41,13 +41,13 @@ onUnmounted(() => {
 })
 </script>
 <template>
-  <div class="dashboardLayout h-screen flex flex-col bg-[#f1f5f9] z-0">
+  <div class="dashboardLayout h-screen flex flex-col bg-[#f1f5f9]">
     <div class="dashboardLayout__header">
       <HeaderView />
     </div>
 
     <div
-      class="dashboardLayout__main p-4 lg:p-8 flex grow mt-[62px] overflow-hidden"
+      class="dashboardLayout__main p-4 lg:p-8 flex grow mt-[62px] overflow-auto"
       :class="[sidebarStore.isSidebarVisible && isDesktop ? 'gap-[30px]' : 'gap-0']"
     >
       <div
@@ -59,7 +59,7 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <div class="dashboardLayout__content w-full flex flex-col gap-7 lg:h-[calc(100vh-126px)]">
+      <div class="dashboardLayout__content w-full flex flex-col gap-7 grow overflow-auto">
         <RouterView />
       </div>
     </div>
