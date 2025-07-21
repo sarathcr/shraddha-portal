@@ -7,6 +7,16 @@ import type { ColumnDef, RowData } from '@/types/baseTable.model'
 import type { OptionItem } from '@/types/user'
 import type { APIError, ApiResponse } from '@/types'
 import { CommitteeService } from '../../services/committee.service'
+import { getAllUsers } from '../../services/roles-and-access.services'
+
+export const committeeUsers = ref<OptionItem[]>([])
+export const getUsersData = async (): Promise<void> => {
+  const users = await getAllUsers()
+  committeeUsers.value = users.map((user) => ({
+    label: user.name,
+    value: user.id,
+  }))
+}
 
 export function useCommittee(): {
   committee: Ref<Committee[]>
@@ -26,11 +36,11 @@ export function useCommittee(): {
   fetchInitialData: () => Promise<void>
 } {
   const toast = useToast()
-  const committeeUsers = ref<OptionItem[]>([])
   const committee = ref<Committee[]>([])
   const allRows = ref<RowData[]>([])
   const editableRow = ref<RowData | null>(null)
   const editingRows = ref<RowData[]>([])
+  const committeeUsers = ref<OptionItem[]>([])
   const filters = ref({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
   })
@@ -63,7 +73,7 @@ export function useCommittee(): {
   const clearFilter = (): void => {
     filters.value.global.value = null
   }
-  // Higher-order function for consistent error handling
+
   const withErrorHandling =
     <T extends unknown[]>(
       asyncFn: (...args: T) => Promise<void>,
@@ -99,6 +109,7 @@ export function useCommittee(): {
   const fetchInitialData = withErrorHandling(async () => {
     const response = await CommitteeService.getCommitee()
     handleApiResponse(response, committee, 'Failed to load committee data.')
+
     allRows.value = (response?.data || []).map((item) => ({
       id: item.id,
       name: item.name,
@@ -109,7 +120,6 @@ export function useCommittee(): {
       createdAt: new Date(item.createdAt),
     }))
   }, 'Failed to fetch data.')
-
   const onEdit = (row: RowData): void => {
     editableRow.value = row
   }

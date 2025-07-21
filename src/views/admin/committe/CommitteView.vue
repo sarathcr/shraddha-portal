@@ -4,6 +4,7 @@ import BaseTable from '@/components/baseTable.vue'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
 import { useCommittee } from './composable/useCommitte'
+import CommitteeForm from './components/CommitteeForm.vue'
 
 const {
   columns,
@@ -19,6 +20,8 @@ const {
 } = useCommittee()
 
 const userFormDialogVisible = ref(false)
+const coreMemberOptions = ref<{ label: string; value: string }[]>([])
+const executiveMemberOptions = ref<{ label: string; value: string }[]>([])
 
 const openCreateUserDialog = (): void => {
   userFormDialogVisible.value = true
@@ -27,7 +30,11 @@ const openCreateUserDialog = (): void => {
 const handleCommitteeFormCancel = (): void => {
   userFormDialogVisible.value = false
 }
+const handleUserFormSubmit = async (): Promise<void> => {}
 
+const handleUserFormCancel = (): void => {
+  userFormDialogVisible.value = false
+}
 onMounted(() => {
   void fetchInitialData()
 })
@@ -47,6 +54,13 @@ onMounted(() => {
         modal
         @hide="handleCommitteeFormCancel"
       >
+        <CommitteeForm
+          ref="userFormRef"
+          :coremembers="coreMemberOptions"
+          :executivemembers="executiveMemberOptions"
+          @submit="handleUserFormSubmit"
+          @cancel="handleUserFormCancel"
+        />
       </Dialog>
 
       <BaseTable
@@ -79,7 +93,6 @@ onMounted(() => {
             @click="onDelete(row)"
             class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
           >
-            >
             <i class="pi pi-trash text-red-600 text-base"></i>
           </button>
         </template>

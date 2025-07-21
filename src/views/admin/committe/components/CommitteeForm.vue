@@ -1,13 +1,17 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
+import { committeeUsers, getUsersData } from '../composable/useCommitte'
+
 import { isLoading } from '@/stores/loader'
 import type { Committee } from '@/types/commitee'
 import type { OptionItem, User } from '@/types/user'
 import { userSchema } from '@/views/admin/schemas/userSchema'
-import { FloatLabel } from 'primevue'
+import { useField, useForm } from 'vee-validate'
+import MultiSelect from 'primevue/multiselect'
+import InputSwitch from 'primevue/inputswitch'
+import FloatLabel from 'primevue/floatlabel'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
-import MultiSelect from 'primevue/multiselect'
-import { useField, useForm } from 'vee-validate'
 
 const props = defineProps<{
   coremembers: OptionItem[]
@@ -20,22 +24,23 @@ const emit = defineEmits<{
   (e: 'cancel'): void
 }>()
 
+onMounted(() => {
+  void getUsersData()
+})
+
 const { handleSubmit, errors, resetForm } = useForm<Committee>({
   validationSchema: userSchema,
   initialValues: props.initialData,
 })
 
 const { value: year } = useField<string>('committeeYear')
-const { value: coreMembers } = useField<string>('coreMembers')
-const { value: executiveMembers } = useField<string>('executiveMembers')
+const { value: coreMembers } = useField<string[]>('coreMembers')
+const { value: executiveMembers } = useField<string[]>('executiveMembers')
 const { value: status } = useField<boolean>('status')
-defineExpose({
-  resetForm,
-})
 
-const onSubmit = handleSubmit(() => {
-  //   emit('submit', values)
-})
+defineExpose({ resetForm })
+
+const onSubmit = handleSubmit(() => {})
 
 const onCancel = (): void => {
   emit('cancel')
@@ -59,6 +64,7 @@ const onCancel = (): void => {
         <MultiSelect
           id="coreMembers"
           v-model="coreMembers"
+          :options="committeeUsers"
           optionLabel="label"
           optionValue="value"
           display="chip"
@@ -75,6 +81,7 @@ const onCancel = (): void => {
         <MultiSelect
           id="executiveMembers"
           v-model="executiveMembers"
+          :options="committeeUsers"
           optionLabel="label"
           optionValue="value"
           display="chip"

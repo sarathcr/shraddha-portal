@@ -2,6 +2,7 @@ import { useFetch } from '@vueuse/core'
 import type { User, OptionItem } from '@/types/user'
 import type { ApiResponse, APIError } from '@/types/index'
 import { setLoading } from '@/stores/loader'
+import { UserService } from '@/services/UserService'
 
 interface TestJsonData {
   users: User[]
@@ -105,6 +106,16 @@ export const editUser = async (
 
     return createMockApiResponse(updatedUser, 'User updated successfully')
   })
+}
+
+export const getAllUsers = async (): Promise<User[]> => {
+  try {
+    const response = await UserService.getUsersData()
+    return response.data as User[]
+  } catch (e) {
+    console.error('Failed to fetch users', e)
+    return []
+  }
 }
 
 const getOptionData = async (key: 'roles' | 'teams'): Promise<ApiResponse<OptionItem[]>> => {
