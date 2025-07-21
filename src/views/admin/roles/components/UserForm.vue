@@ -24,7 +24,6 @@ const { handleSubmit, errors, resetForm } = useForm<User>({
   validationSchema: userSchema,
   initialValues: props.initialData,
 })
-
 const { value: name } = useField<string>('name')
 const { value: employeeId } = useField<string>('employeeId')
 const { value: email } = useField<string>('email')

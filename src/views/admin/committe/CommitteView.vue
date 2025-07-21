@@ -5,6 +5,8 @@ import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
 import { useCommittee } from './composable/useCommitte'
 import CommitteeForm from './components/CommitteeForm.vue'
+import { createCommittee } from '../services/committee.service'
+import type { Committee } from '@/types/commitee'
 
 const {
   columns,
@@ -12,7 +14,6 @@ const {
   editableRow,
   statusOptions,
   onEdit,
-  isLoading,
   onSave,
   onCancel,
   onDelete,
@@ -30,8 +31,12 @@ const openCreateUserDialog = (): void => {
 const handleCommitteeFormCancel = (): void => {
   userFormDialogVisible.value = false
 }
-const handleUserFormSubmit = async (): Promise<void> => {}
-
+const handleUserFormSubmit = async (payload: Committee): Promise<void> => {
+  const success = await createCommittee(payload)
+  if (success) {
+    userFormDialogVisible.value = false
+  }
+}
 const handleUserFormCancel = (): void => {
   userFormDialogVisible.value = false
 }
@@ -42,11 +47,7 @@ onMounted(() => {
 
 <template>
   <div class="space-y-4 h-full">
-    <div v-if="isLoading" class="flex justify-center items-center h-full">
-      <p>Loading committee data...</p>
-    </div>
-
-    <div class="h-full bg-white" v-else>
+    <div class="h-full bg-white">
       <Dialog
         v-model:visible="userFormDialogVisible"
         header="Create Committee"

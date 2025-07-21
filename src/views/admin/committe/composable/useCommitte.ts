@@ -6,8 +6,9 @@ import type { Committee } from '@/types/commitee'
 import type { ColumnDef, RowData } from '@/types/baseTable.model'
 import type { OptionItem } from '@/types/user'
 import type { APIError, ApiResponse } from '@/types'
-import { CommitteeService } from '../../services/committee.service'
+import { getCommittee } from '../../services/committee.service'
 import { getAllUsers } from '../../services/roles-and-access.services'
+import { createCommittee as apiCreateCommittee } from '../../services/committee.service'
 
 export const committeeUsers = ref<OptionItem[]>([])
 export const getUsersData = async (): Promise<void> => {
@@ -25,6 +26,7 @@ export function useCommittee(): {
   editableRow: Ref<RowData | null>
   committeeUsers: Ref<OptionItem[]>
   statusOptions: { label: string; value: string }[]
+  createCommittee: (payload: Committee) => Promise<void>
   onEdit: (row: RowData) => void
   onSave: () => void
   onCancel: () => void
@@ -107,9 +109,9 @@ export function useCommittee(): {
   }
 
   const fetchInitialData = withErrorHandling(async () => {
-    const response = await CommitteeService.getCommitee()
+    await getUsersData()
+    const response = await getCommittee()
     handleApiResponse(response, committee, 'Failed to load committee data.')
-
     allRows.value = (response?.data || []).map((item) => ({
       id: item.id,
       name: item.name,
@@ -120,6 +122,15 @@ export function useCommittee(): {
       createdAt: new Date(item.createdAt),
     }))
   }, 'Failed to fetch data.')
+
+  const createCommittee = withErrorHandling(async (payload: Committee) => {
+    const res = await apiCreateCommittee(payload)
+    if (res.succeeded) {
+      committee.value.push(res.data)
+      toast.add({ severity: 'success', summary: 'Success', detail: res.message, life: 3000 })
+    }
+  }, 'Failed to create committee')
+
   const onEdit = (row: RowData): void => {
     editableRow.value = row
   }
@@ -152,6 +163,7 @@ export function useCommittee(): {
     allRows,
     editableRow,
     statusOptions,
+    createCommittee,
     onEdit,
     onSave,
     onCancel,

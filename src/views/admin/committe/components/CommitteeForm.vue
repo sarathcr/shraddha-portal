@@ -1,48 +1,37 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
-import { committeeUsers, getUsersData } from '../composable/useCommitte'
-
-import { isLoading } from '@/stores/loader'
+import { committeeUsers } from '../composable/useCommitte'
+import { getCommittee } from '../../services/committee.service'
 import type { Committee } from '@/types/commitee'
-import type { OptionItem, User } from '@/types/user'
-import { userSchema } from '@/views/admin/schemas/userSchema'
 import { useField, useForm } from 'vee-validate'
 import MultiSelect from 'primevue/multiselect'
-import InputSwitch from 'primevue/inputswitch'
 import FloatLabel from 'primevue/floatlabel'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
-
-const props = defineProps<{
-  coremembers: OptionItem[]
-  executivemembers: OptionItem[]
-  initialData?: Omit<User, 'id' | 'dob'>
-}>()
+import ToggleSwitch from 'primevue/toggleswitch'
 
 const emit = defineEmits<{
-  (e: 'submit', payload: User): void
+  (e: 'submit', payload: Committee): void
   (e: 'cancel'): void
 }>()
 
-onMounted(() => {
-  void getUsersData()
-})
+onMounted(() => void getCommittee())
 
-const { handleSubmit, errors, resetForm } = useForm<Committee>({
-  validationSchema: userSchema,
-  initialValues: props.initialData,
-})
+const { handleSubmit, errors, resetForm } = useForm<Committee>({})
 
-const { value: year } = useField<string>('committeeYear')
+const { value: year } = useField<string>('year')
 const { value: coreMembers } = useField<string[]>('coreMembers')
 const { value: executiveMembers } = useField<string[]>('executiveMembers')
 const { value: status } = useField<boolean>('status')
 
 defineExpose({ resetForm })
 
-const onSubmit = handleSubmit(() => {})
+const onSubmit = handleSubmit((values) => {
+  emit('submit', values)
+})
 
 const onCancel = (): void => {
+  alert()
   emit('cancel')
   resetForm()
 }
@@ -51,11 +40,10 @@ const onCancel = (): void => {
 <template>
   <form @submit.prevent="onSubmit" class="flex flex-col gap-4 pt-2">
     <div class="relative mb-2.5">
-      <FloatLabel variant="on"
-        ><InputText id="committeeYear" v-model="year" class="w-full" />
-        <label for="committeeYear">Committee Year</label></FloatLabel
-      >
-
+      <FloatLabel variant="on">
+        <InputText id="year" v-model="year" class="w-full" />
+        <label for="year">Committee Year</label>
+      </FloatLabel>
       <small class="absolute left-3 pt-0.5 text-red-500">{{ errors.year }}</small>
     </div>
 
@@ -72,7 +60,6 @@ const onCancel = (): void => {
         />
         <label for="coreMembers">CoreMembers</label>
       </FloatLabel>
-
       <small class="absolute left-3 pt-0.5 text-red-500">{{ errors.coreMembers }}</small>
     </div>
 
@@ -89,28 +76,20 @@ const onCancel = (): void => {
         />
         <label for="coreMembers">ExecutiveMembers</label>
       </FloatLabel>
-
       <small class="absolute left-3 pt-0.5 text-red-500">{{ errors.executiveMembers }}</small>
     </div>
 
     <div class="relative mb-2.5">
       <FloatLabel variant="on">
-        <InputSwitch
-          id="status"
-          v-model="status"
-          true-value="1"
-          false-value="0"
-          class="align-middle"
-        />
+        <ToggleSwitch v-model="status" />
         <label for="status" class="ml-2 font-semibold">Status</label>
       </FloatLabel>
-
       <small class="absolute left-3 pt-0.5 text-red-500">{{ errors.status }}</small>
     </div>
 
     <div class="flex justify-end gap-2 mt-2">
-      <Button label="Cancel" severity="secondary" @click="onCancel" :disabled="isLoading" />
-      <Button type="submit" label="Save" :loading="isLoading" />
+      <Button label="Cancel" severity="secondary" @click="onCancel" />
+      <Button type="submit" label="Save" />
     </div>
   </form>
 </template>
