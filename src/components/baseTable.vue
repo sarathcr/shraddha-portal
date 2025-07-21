@@ -98,7 +98,7 @@ const hasTableHeader = computed(() => !!slots['table-header'])
         class="min-w-full grow"
       >
         <template #header v-if="hasTableHeader">
-          <div class="flex justify-between items-center px-4 pt-4 pb-2 bg-white sticky top-0 z-20">
+          <div class="flex justify-between items-center bg-white sticky top-0 z-20">
             <slot name="table-header" />
           </div>
         </template>
