@@ -31,7 +31,7 @@ onMounted(() => {
       <BaseTable
         :columns="columns"
         :rows="allRows"
-        :pageSize="5"
+        :pageSize="20"
         :editableRow="editableRow"
         :statusOptions="statusOptions"
         @save="onSave"

@@ -45,7 +45,13 @@ const tabs = ref([
 <style>
 .roles__content {
   @media screen and (min-width: 1024px) {
-    height: calc(100dvh - 123px) !important;
+    height: calc(100vh - 184px) !important;
   }
+}
+.p-tabs,
+.p-tabpanels,
+.p-tabpanel {
+  height: 100%;
+  min-height: 100%;
 }
 </style>
