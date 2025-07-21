@@ -7,6 +7,7 @@ interface TestJsonData {
   users: User[]
   roles: OptionItem[]
   teams: OptionItem[]
+  committeeUsers: OptionItem[]
 }
 
 let cachedData: TestJsonData | null = null
