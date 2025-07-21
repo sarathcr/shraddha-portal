@@ -11,6 +11,7 @@ const {
   editableRow,
   statusOptions,
   onEdit,
+  isLoading,
   onSave,
   onCancel,
   onDelete,
@@ -33,45 +34,56 @@ onMounted(() => {
 </script>
 
 <template>
-  <Dialog
-    v-model:visible="userFormDialogVisible"
-    header="Create Committee"
-    :style="{ width: '50rem' }"
-    modal
-    @hide="handleCommitteeFormCancel"
-  >
-  </Dialog>
+  <div class="space-y-4 h-full">
+    <div v-if="isLoading" class="flex justify-center items-center h-full">
+      <p>Loading committee data...</p>
+    </div>
 
-  <BaseTable
-    :columns="columns"
-    :rows="allRows"
-    :pageSize="5"
-    :editableRow="editableRow"
-    :statusOptions="statusOptions"
-    @save="onSave"
-    @cancel="onCancel"
-    @delete="onDelete"
-  >
-    <template #table-header>
-      <Button
-        label="New Committee"
-        icon="pi pi-plus"
-        severity="help"
-        @click="openCreateUserDialog"
-      />
-    </template>
-
-    <template #actions="{ row, onDelete }">
-      <button @click="onEdit(row)" class="p-2 rounded hover:bg-gray-200 transition cursor-pointer">
-        <i class="pi pi-pencil text-slate-700 text-base"></i>
-      </button>
-      <button
-        @click="onDelete(row)"
-        class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
+    <div class="h-full bg-white" v-else>
+      <Dialog
+        v-model:visible="userFormDialogVisible"
+        header="Create Committee"
+        :style="{ width: '50rem' }"
+        modal
+        @hide="handleCommitteeFormCancel"
       >
-        >
-        <i class="pi pi-trash text-red-600 text-base"></i>
-      </button>
-    </template>
-  </BaseTable>
+      </Dialog>
+
+      <BaseTable
+        :columns="columns"
+        :rows="allRows"
+        :pageSize="5"
+        :editableRow="editableRow"
+        :statusOptions="statusOptions"
+        @save="onSave"
+        @cancel="onCancel"
+        @delete="onDelete"
+      >
+        <template #table-header>
+          <Button
+            label="New Committee"
+            icon="pi pi-plus"
+            severity="help"
+            @click="openCreateUserDialog"
+          />
+        </template>
+
+        <template #actions="{ row, onDelete }">
+          <button
+            @click="onEdit(row)"
+            class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
+          >
+            <i class="pi pi-pencil text-slate-700 text-base"></i>
+          </button>
+          <button
+            @click="onDelete(row)"
+            class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
+          >
+            >
+            <i class="pi pi-trash text-red-600 text-base"></i>
+          </button>
+        </template>
+      </BaseTable>
+    </div>
+  </div>
 </template>

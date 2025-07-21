@@ -6,7 +6,7 @@ export const committeeData: ApiResponse<Committee[]> = {
     {
       id: '1',
       name: 'Tech Committee',
-      year: '2024',
+      year: '2024-2025',
       coreMembers: ['Alice Johnson', 'Bob Smith'],
       executiveMembers: ['Karen Lee', 'John Doe'],
       status: true,
@@ -15,7 +15,7 @@ export const committeeData: ApiResponse<Committee[]> = {
     {
       id: '2',
       name: 'Culture Committee',
-      year: '2025',
+      year: '2023-2024',
       coreMembers: ['Emily Davis'],
       executiveMembers: ['Thomas Clark', 'Nancy King'],
       status: false,
@@ -24,7 +24,7 @@ export const committeeData: ApiResponse<Committee[]> = {
     {
       id: '3',
       name: 'Finance Committee',
-      year: '2023',
+      year: '2023-2022',
       coreMembers: ['Michael Brown', 'Sara White'],
       executiveMembers: ['James Green', 'Linda Hall'],
       status: true,
@@ -33,7 +33,7 @@ export const committeeData: ApiResponse<Committee[]> = {
     {
       id: '4',
       name: 'HR Committee',
-      year: '2024',
+      year: '2022-2021',
       coreMembers: ['Rachel Adams'],
       executiveMembers: ['Samuel Wilson'],
       status: false,
@@ -42,7 +42,7 @@ export const committeeData: ApiResponse<Committee[]> = {
     {
       id: '5',
       name: 'Operations Committee',
-      year: '2025',
+      year: '2021-2020',
       coreMembers: ['Kevin Martinez', 'Laura Scott'],
       executiveMembers: ['George Anderson', 'Helen Young'],
       status: true,
@@ -51,7 +51,7 @@ export const committeeData: ApiResponse<Committee[]> = {
     {
       id: '6',
       name: 'Innovation Committee',
-      year: '2024',
+      year: '2020-2019',
       coreMembers: ['Olivia Moore', 'Ethan Thomas'],
       executiveMembers: ['Chloe Walker', 'Benjamin Harris'],
       status: true,
@@ -60,7 +60,7 @@ export const committeeData: ApiResponse<Committee[]> = {
     {
       id: '7',
       name: 'Environment Committee',
-      year: '2023',
+      year: '2019-2018',
       coreMembers: ['Mia Rodriguez'],
       executiveMembers: ['Liam Lewis', 'Ava Lee'],
       status: false,
@@ -69,7 +69,7 @@ export const committeeData: ApiResponse<Committee[]> = {
     {
       id: '8',
       name: 'Health & Safety Committee',
-      year: '2025',
+      year: '2018-2017',
       coreMembers: ['Noah White', 'Isabella Allen'],
       executiveMembers: ['William Young', 'Sophia Hernandez'],
       status: true,
@@ -78,7 +78,7 @@ export const committeeData: ApiResponse<Committee[]> = {
     {
       id: '9',
       name: 'Events Committee',
-      year: '2024',
+      year: '2017-2016',
       coreMembers: ['Elijah Wright'],
       executiveMembers: ['Amelia Lopez'],
       status: false,
@@ -87,7 +87,7 @@ export const committeeData: ApiResponse<Committee[]> = {
     {
       id: '10',
       name: 'Training Committee',
-      year: '2023',
+      year: '2016-2015',
       coreMembers: ['Jacob Hill', 'Grace Nelson'],
       executiveMembers: ['David Carter', 'Sofia Mitchell'],
       status: true,
