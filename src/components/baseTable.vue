@@ -12,6 +12,7 @@ import Tag from 'primevue/tag'
 import { computed, reactive, ref, watch } from 'vue'
 import { useSlots } from 'vue'
 import { Select } from 'primevue'
+import BaseTableSkeleton from './Skelton/BaseTableSkeleton.vue'
 import Paginator from 'primevue/paginator'
 
 const props = defineProps<{
@@ -21,6 +22,7 @@ const props = defineProps<{
   editableRow?: RowData | null
   statusOptions?: { label: string; value: string }[]
   multiSelectOption?: { label: string; value: string }[]
+  loading?: boolean // Add loading prop here
 }>()
 
 const emit = defineEmits<{
@@ -75,11 +77,16 @@ function getSeverity(value: unknown): string {
 const slots = useSlots()
 const hasTableHeader = computed(() => !!slots['table-header'])
 </script>
-
 <template>
   <div class="space-y-4 h-full p-4 flex flex-col justify-between">
     <div class="bg-white rounded-md max-h-[calc(100vh-200px)] overflow-hidden flex flex-col">
+      <BaseTableSkeleton
+        v-if="loading"
+        :columnsCount="columns.length + 1"
+        :rowsCount="pageSize || 10"
+      />
       <DataTable
+        v-else
         :value="rows.slice(first, first + (pageSize || 20))"
         v-model:filters="filters"
         filterDisplay="row"
@@ -234,7 +241,7 @@ const hasTableHeader = computed(() => !!slots['table-header'])
   </div>
 </template>
 
-<style>
+<style lang="scss">
 .p-datatable-header {
   padding: 0 0 1rem 0 !important;
 }
