@@ -1,6 +1,5 @@
 export interface Committee {
   id: string
-  name: string
   year: string
   coreMembers: string[]
   executiveMembers: string[]

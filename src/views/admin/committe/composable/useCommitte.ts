@@ -1,14 +1,14 @@
 import { ref, type Ref } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { FilterMatchMode } from '@primevue/core/api'
-import { isLoading } from '@/stores/loader'
+import { isLoading, simulateApiCall } from '@/stores/loader'
 import type { Committee } from '@/types/commitee'
 import type { ColumnDef, RowData } from '@/types/baseTable.model'
 import type { OptionItem } from '@/types/user'
 import type { APIError, ApiResponse } from '@/types'
 import { getCommittee } from '../../services/committee.service'
 import { getAllUsers } from '../../services/roles-and-access.services'
-import { createCommittee as apiCreateCommittee } from '../../services/committee.service'
+import { committeeData } from '@/services/CommiteeService'
 
 export const committeeUsers = ref<OptionItem[]>([])
 export const getUsersData = async (): Promise<void> => {
@@ -26,7 +26,7 @@ export function useCommittee(): {
   editableRow: Ref<RowData | null>
   committeeUsers: Ref<OptionItem[]>
   statusOptions: { label: string; value: string }[]
-  createCommittee: (payload: Committee) => Promise<void>
+  createCommittee: (payload: Committee) => Promise<ApiResponse<Committee>>
   onEdit: (row: RowData) => void
   onSave: () => void
   onCancel: () => void
@@ -114,7 +114,6 @@ export function useCommittee(): {
     handleApiResponse(response, committee, 'Failed to load committee data.')
     allRows.value = (response?.data || []).map((item) => ({
       id: item.id,
-      name: item.name,
       year: item.year,
       coreMembers: item.coreMembers.join(', '),
       executiveMembers: item.executiveMembers.join(', '),
@@ -123,13 +122,20 @@ export function useCommittee(): {
     }))
   }, 'Failed to fetch data.')
 
-  const createCommittee = withErrorHandling(async (payload: Committee) => {
-    const res = await apiCreateCommittee(payload)
-    if (res.succeeded) {
-      committee.value.push(res.data)
-      toast.add({ severity: 'success', summary: 'Success', detail: res.message, life: 3000 })
-    }
-  }, 'Failed to create committee')
+  const createCommittee = (newCommittee: Committee): Promise<ApiResponse<Committee>> => {
+    return simulateApiCall(async () => {
+      newCommittee.id = (committeeData.data.length + 1).toString()
+      newCommittee.createdAt = new Date().toISOString()
+      committeeData.data.push(newCommittee)
+
+      return {
+        data: newCommittee,
+        message: 'Committee created successfully',
+        errors: null,
+        succeeded: true,
+      }
+    })
+  }
 
   const onEdit = (row: RowData): void => {
     editableRow.value = row

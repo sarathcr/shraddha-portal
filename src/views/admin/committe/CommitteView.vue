@@ -7,6 +7,8 @@ import { useCommittee } from './composable/useCommitte'
 import CommitteeForm from './components/CommitteeForm.vue'
 import { createCommittee } from '../services/committee.service'
 import type { Committee } from '@/types/commitee'
+import { useToast } from 'primevue/usetoast'
+import Toast from 'primevue/toast'
 
 const {
   columns,
@@ -20,6 +22,7 @@ const {
   fetchInitialData,
 } = useCommittee()
 
+const toast = useToast()
 const userFormDialogVisible = ref(false)
 const coreMemberOptions = ref<{ label: string; value: string }[]>([])
 const executiveMemberOptions = ref<{ label: string; value: string }[]>([])
@@ -31,15 +34,37 @@ const openCreateUserDialog = (): void => {
 const handleCommitteeFormCancel = (): void => {
   userFormDialogVisible.value = false
 }
+
 const handleUserFormSubmit = async (payload: Committee): Promise<void> => {
-  const success = await createCommittee(payload)
-  if (success) {
+  try {
+    const result = await createCommittee(payload)
     userFormDialogVisible.value = false
+    toast.add({
+      severity: 'success',
+      summary: 'Success',
+      detail: `Committee for year ${result.year} created successfully`,
+      life: 3000,
+    })
+  } catch (error: unknown) {
+    let errorMessage = 'An error occurred while creating the committee.'
+
+    if (error instanceof Error) {
+      errorMessage = error.message
+    }
+
+    toast.add({
+      severity: 'error',
+      summary: 'Creation Failed',
+      detail: errorMessage,
+      life: 4000,
+    })
+
+    console.error('Committee creation error:', errorMessage)
+  } finally {
+    await fetchInitialData()
   }
 }
-const handleUserFormCancel = (): void => {
-  userFormDialogVisible.value = false
-}
+
 onMounted(() => {
   void fetchInitialData()
 })
@@ -48,6 +73,8 @@ onMounted(() => {
 <template>
   <div class="space-y-4 h-full">
     <div class="h-full bg-white">
+      <Toast />
+
       <Dialog
         v-model:visible="userFormDialogVisible"
         header="Create Committee"
@@ -56,11 +83,10 @@ onMounted(() => {
         @hide="handleCommitteeFormCancel"
       >
         <CommitteeForm
-          ref="userFormRef"
           :coremembers="coreMemberOptions"
           :executivemembers="executiveMemberOptions"
           @submit="handleUserFormSubmit"
-          @cancel="handleUserFormCancel"
+          @cancel="handleCommitteeFormCancel"
         />
       </Dialog>
 

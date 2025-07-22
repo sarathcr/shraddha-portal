@@ -31,7 +31,6 @@ const onSubmit = handleSubmit((values) => {
 })
 
 const onCancel = (): void => {
-  alert()
   emit('cancel')
   resetForm()
 }
@@ -54,7 +53,7 @@ const onCancel = (): void => {
           v-model="coreMembers"
           :options="committeeUsers"
           optionLabel="label"
-          optionValue="value"
+          optionValue="label"
           display="chip"
           class="w-full"
         />
@@ -70,7 +69,7 @@ const onCancel = (): void => {
           v-model="executiveMembers"
           :options="committeeUsers"
           optionLabel="label"
-          optionValue="value"
+          optionValue="label"
           display="chip"
           class="w-full"
         />
@@ -80,10 +79,8 @@ const onCancel = (): void => {
     </div>
 
     <div class="relative mb-2.5">
-      <FloatLabel variant="on">
-        <ToggleSwitch v-model="status" />
-        <label for="status" class="ml-2 font-semibold">Status</label>
-      </FloatLabel>
+      <ToggleSwitch v-model="status" />
+
       <small class="absolute left-3 pt-0.5 text-red-500">{{ errors.status }}</small>
     </div>
 

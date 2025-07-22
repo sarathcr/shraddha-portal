@@ -1,38 +1,8 @@
 import { simulateApiCall } from '@/stores/loader'
-import type { APIError, ApiResponse } from '@/types'
+import type { ApiResponse } from '@/types'
 import type { Committee } from '@/types/commitee'
 import { committeeData } from '@/services/CommiteeService'
 
-/**
- * In-memory mock committee list.
- * This simulates your backend DB for testing purposes.
- */
-const committeeList: Committee[] = []
-
-/**
- * Utility to create an APIError matching internal structure
- */
-const createApiError = (
-  businessError: number,
-  errorValue: string,
-  type: 'ConflictError' | 'NotFoundError',
-  failedAction: string,
-): APIError => {
-  const message = `Committee ${failedAction} failed`
-  return {
-    error: {
-      businessError,
-      message,
-      errorValue,
-      type,
-    },
-    message: `${message}: ${errorValue}`,
-  }
-}
-
-/**
- * Utility to create a standard API response shape
- */
 const createMockApiResponse = <T>(data: T, message: string): ApiResponse<T> => ({
   data,
   message,
@@ -44,28 +14,21 @@ const createMockApiResponse = <T>(data: T, message: string): ApiResponse<T> => (
   totalRecords: Array.isArray(data) ? data.length : 1,
 })
 
-/**
- * Create a new committee (simulated)
- */
-export const createCommittee = (payload: Committee): Promise<ApiResponse<Committee>> =>
-  simulateApiCall(async () => {
-    if (committeeList.some((c) => c.year === payload.year)) {
-      throw createApiError(1003, 'Committee Year already exists', 'ConflictError', 'creation')
+export const createCommittee = (newCommittee: Committee): Promise<Committee> => {
+  return simulateApiCall(async () => {
+    const yearExists = committeeData.data.some((committee) => committee.year === newCommittee.year)
+
+    if (yearExists) {
+      throw new Error(`Committee for year ${newCommittee.year} already exists`)
     }
+    newCommittee.id = (committeeData.data.length + 1).toString()
+    newCommittee.createdAt = new Date().toISOString()
+    committeeData.data.push(newCommittee)
 
-    const newCommittee: Committee = {
-      ...payload,
-      id: Math.random().toString(36).substring(2),
-    }
-
-    committeeList.push(newCommittee)
-
-    return createMockApiResponse(newCommittee, 'Committee created successfully')
+    return newCommittee
   })
+}
 
-/**
- * Get list of committees (simulated)
- */
 export const getCommittee = (): Promise<ApiResponse<Committee[]>> =>
   simulateApiCall(async () => {
     return createMockApiResponse(committeeData.data, 'Committee list fetched')
