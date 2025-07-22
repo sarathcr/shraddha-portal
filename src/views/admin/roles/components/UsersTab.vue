@@ -94,11 +94,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div v-if="isLoading" class="flex justify-center items-center h-full">
-    <p>Loading user data...</p>
-  </div>
-
-  <div v-else class="space-y-4 h-full">
+  <div class="space-y-4 h-full">
     <ConfirmPopup class="mx-4" />
     <Dialog
       v-model:visible="userFormDialogVisible"
@@ -124,6 +120,7 @@ onMounted(() => {
       :editableRow="editingRows[0] as RowData"
       :statusOptions="roles"
       :multiSelectOption="teams"
+      :loading="isLoading"
       @save="onSave"
       @cancel="onCancel"
     >
