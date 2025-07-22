@@ -6,7 +6,7 @@ import type { Committee } from '@/types/commitee'
 import type { ColumnDef, RowData } from '@/types/baseTable.model'
 import type { OptionItem } from '@/types/user'
 import type { APIError, ApiResponse } from '@/types'
-import { getCommittee } from '../../services/committee.service'
+import { editCommittee, getCommittee } from '../../services/committee.service'
 import { getAllUsers } from '../../services/roles-and-access.services'
 import { committeeData } from '@/services/CommiteeService'
 
@@ -23,16 +23,16 @@ export function useCommittee(): {
   committee: Ref<Committee[]>
   columns: ColumnDef[]
   allRows: Ref<RowData[]>
-  editableRow: Ref<RowData | null>
+  editingRows: Ref<RowData[]>
   committeeUsers: Ref<OptionItem[]>
   statusOptions: { label: string; value: string }[]
   createCommittee: (payload: Committee) => Promise<ApiResponse<Committee>>
-  onEdit: (row: RowData) => void
-  onSave: () => void
-  onCancel: () => void
+  handleEdit: (
+    newData: Committee,
+    oldData: Committee,
+  ) => Promise<{ success: boolean; committee: Committee } | null>
   onDelete: (row: RowData) => void
   isLoading: Ref<boolean>
-  editingRows: Ref<unknown[]>
   filters: Ref<{ global: { value: string | null; matchMode: string } }>
   clearFilter: () => void
   fetchInitialData: () => Promise<void>
@@ -40,7 +40,6 @@ export function useCommittee(): {
   const toast = useToast()
   const committee = ref<Committee[]>([])
   const allRows = ref<RowData[]>([])
-  const editableRow = ref<RowData | null>(null)
   const editingRows = ref<RowData[]>([])
   const committeeUsers = ref<OptionItem[]>([])
   const filters = ref({
@@ -136,17 +135,58 @@ export function useCommittee(): {
       }
     })
   }
+  const handleEdit = async (
+    newData: Committee,
+    oldData: Committee,
+  ): Promise<{ success: boolean; committee: Committee } | null> => {
+    try {
+      if (JSON.stringify(newData) === JSON.stringify(oldData)) {
+        toast.add({
+          severity: 'info',
+          summary: 'No Changes',
+          detail: 'No modifications detected.',
+          life: 3000,
+        })
+        return { success: true, committee: oldData }
+      }
 
-  const onEdit = (row: RowData): void => {
-    editableRow.value = row
-  }
+      const response = await editCommittee(newData)
 
-  const onSave = (): void => {
-    editableRow.value = null
-  }
+      if (response && response.succeeded && response.data) {
+        const updatedCommittee = response.data
+        const committeeIndex = committee.value.findIndex((c) => c.id === oldData.id)
 
-  const onCancel = (): void => {
-    editableRow.value = null
+        if (committeeIndex !== -1) {
+          committee.value[committeeIndex] = updatedCommittee
+        }
+
+        toast.add({
+          severity: 'success',
+          summary: 'Success',
+          detail: `Committee for year ${updatedCommittee.year} updated successfully.`,
+          life: 3000,
+        })
+
+        return { success: true, committee: updatedCommittee }
+      } else {
+        toast.add({
+          severity: 'error',
+          summary: 'Update Failed',
+          life: 3000,
+        })
+      }
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error occurred while updating.'
+      toast.add({
+        severity: 'error',
+        summary: 'Update Failed',
+        detail: errorMessage,
+        life: 3000,
+      })
+    }
+
+    return null
   }
 
   const onDelete = (row: RowData): void => {
@@ -167,15 +207,12 @@ export function useCommittee(): {
     columns,
     committeeUsers,
     allRows,
-    editableRow,
+    editingRows,
     statusOptions,
     createCommittee,
-    onEdit,
-    onSave,
-    onCancel,
+    handleEdit,
     onDelete,
     isLoading,
-    editingRows,
     filters,
     clearFilter,
     fetchInitialData,

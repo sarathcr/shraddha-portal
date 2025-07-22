@@ -13,7 +13,12 @@ const createMockApiResponse = <T>(data: T, message: string): ApiResponse<T> => (
   totalPages: 1,
   totalRecords: Array.isArray(data) ? data.length : 1,
 })
-
+//get committe data
+export const getCommittee = (): Promise<ApiResponse<Committee[]>> =>
+  simulateApiCall(async () => {
+    return createMockApiResponse(committeeData.data, 'Committee list fetched')
+  })
+//create new committee
 export const createCommittee = (newCommittee: Committee): Promise<Committee> => {
   return simulateApiCall(async () => {
     const yearExists = committeeData.data.some((committee) => committee.year === newCommittee.year)
@@ -29,7 +34,28 @@ export const createCommittee = (newCommittee: Committee): Promise<Committee> => 
   })
 }
 
-export const getCommittee = (): Promise<ApiResponse<Committee[]>> =>
-  simulateApiCall(async () => {
-    return createMockApiResponse(committeeData.data, 'Committee list fetched')
+//edit committee table
+export const editCommittee = (
+  updatedCommittee: Committee,
+): Promise<{ succeeded: boolean; data: Committee }> => {
+  return simulateApiCall(async () => {
+    const index = committeeData.data.findIndex((committee) => committee.id === updatedCommittee.id)
+    if (index === -1) {
+      throw new Error(`Committee with ID ${updatedCommittee.id} not found`)
+    }
+
+    const yearExists = committeeData.data.some(
+      (committee, i) => committee.year === updatedCommittee.year && i !== index,
+    )
+    if (yearExists) {
+      throw new Error(`Another committee for year ${updatedCommittee.year} already exists`)
+    }
+
+    committeeData.data[index] = { ...committeeData.data[index], ...updatedCommittee }
+
+    return {
+      succeeded: true,
+      data: committeeData.data[index],
+    }
   })
+}

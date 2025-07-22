@@ -9,15 +9,16 @@ import FloatLabel from 'primevue/floatlabel'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import ToggleSwitch from 'primevue/toggleswitch'
+import { committeeSchema } from '@/views/admin/schemas/committeeSchema'
 
 const emit = defineEmits<{
   (e: 'submit', payload: Committee): void
   (e: 'cancel'): void
 }>()
-
 onMounted(() => void getCommittee())
-
-const { handleSubmit, errors, resetForm } = useForm<Committee>({})
+const { handleSubmit, errors, resetForm } = useForm<Committee>({
+  validationSchema: committeeSchema,
+})
 
 const { value: year } = useField<string>('year')
 const { value: coreMembers } = useField<string[]>('coreMembers')

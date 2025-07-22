@@ -9,23 +9,16 @@ import { createCommittee } from '../services/committee.service'
 import type { Committee } from '@/types/commitee'
 import { useToast } from 'primevue/usetoast'
 import Toast from 'primevue/toast'
+import type { RowData } from '@/types/baseTable.model'
 
-const {
-  columns,
-  allRows,
-  editableRow,
-  statusOptions,
-  onEdit,
-  onSave,
-  onCancel,
-  onDelete,
-  fetchInitialData,
-} = useCommittee()
+const { committee, columns, allRows, editingRows, statusOptions, fetchInitialData, handleEdit } =
+  useCommittee()
 
 const toast = useToast()
 const userFormDialogVisible = ref(false)
 const coreMemberOptions = ref<{ label: string; value: string }[]>([])
 const executiveMemberOptions = ref<{ label: string; value: string }[]>([])
+const selectedCommittee = ref<Committee | null>(null)
 
 const openCreateUserDialog = (): void => {
   userFormDialogVisible.value = true
@@ -35,6 +28,29 @@ const handleCommitteeFormCancel = (): void => {
   userFormDialogVisible.value = false
 }
 
+const handleEditCommittee = (row: Committee): void => {
+  selectedCommittee.value = JSON.parse(JSON.stringify(row))
+  editingRows.value = [row]
+}
+const onSave = async (newData: RowData): Promise<void> => {
+  if (selectedCommittee.value) {
+    const result = await handleEdit(newData as Committee, selectedCommittee.value)
+    if (result && result.success) {
+      editingRows.value = []
+      selectedCommittee.value = null
+    }
+  }
+}
+const onCancel = (): void => {
+  if (selectedCommittee.value) {
+    const index = committee.value.findIndex((u) => u.id === selectedCommittee.value!.id)
+    if (index !== -1) {
+      committee.value[index] = selectedCommittee.value
+    }
+  }
+  editingRows.value = []
+  selectedCommittee.value = null
+}
 const handleUserFormSubmit = async (payload: Committee): Promise<void> => {
   try {
     const result = await createCommittee(payload)
@@ -47,19 +63,15 @@ const handleUserFormSubmit = async (payload: Committee): Promise<void> => {
     })
   } catch (error: unknown) {
     let errorMessage = 'An error occurred while creating the committee.'
-
     if (error instanceof Error) {
       errorMessage = error.message
     }
-
     toast.add({
       severity: 'error',
       summary: 'Creation Failed',
       detail: errorMessage,
       life: 4000,
     })
-
-    console.error('Committee creation error:', errorMessage)
   } finally {
     await fetchInitialData()
   }
@@ -89,16 +101,14 @@ onMounted(() => {
           @cancel="handleCommitteeFormCancel"
         />
       </Dialog>
-
       <BaseTable
         :columns="columns"
         :rows="allRows"
         :pageSize="5"
-        :editableRow="editableRow"
+        :editableRow="editingRows[0] as RowData"
         :statusOptions="statusOptions"
         @save="onSave"
         @cancel="onCancel"
-        @delete="onDelete"
       >
         <template #table-header>
           <Button
@@ -111,7 +121,7 @@ onMounted(() => {
 
         <template #actions="{ row, onDelete }">
           <button
-            @click="onEdit(row)"
+            @click="handleEditCommittee(row)"
             class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
           >
             <i class="pi pi-pencil text-slate-700 text-base"></i>
