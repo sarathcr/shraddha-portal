@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import BaseTable from '@/components/baseTable.vue'
 import Dialog from 'primevue/dialog'
+import ConfirmPopup from 'primevue/confirmpopup'
 import Button from 'primevue/button'
 import { ref, onMounted } from 'vue'
 import { useUsers } from '@/views/admin/roles/composables/useUser'
