@@ -6,9 +6,10 @@ import type { Committee } from '@/types/commitee'
 import type { ColumnDef, RowData } from '@/types/baseTable.model'
 import type { OptionItem } from '@/types/user'
 import type { APIError, ApiResponse } from '@/types'
-import { editCommittee, getCommittee } from '../../services/committee.service'
+import { editCommittee, getCommittee, deleteCommittee } from '../../services/committee.service'
 import { getAllUsers } from '../../services/roles-and-access.services'
 import { committeeData } from '@/services/CommiteeService'
+import { useConfirm } from 'primevue/useconfirm'
 
 export const committeeUsers = ref<OptionItem[]>([])
 export const getUsersData = async (): Promise<void> => {
@@ -31,7 +32,7 @@ export function useCommittee(): {
     newData: Committee,
     oldData: Committee,
   ) => Promise<{ success: boolean; committee: Committee } | null>
-  onDelete: (row: RowData) => void
+  deleteUser: (commitee: Committee, event?: Event) => void
   isLoading: Ref<boolean>
   filters: Ref<{ global: { value: string | null; matchMode: string } }>
   clearFilter: () => void
@@ -42,6 +43,7 @@ export function useCommittee(): {
   const allRows = ref<RowData[]>([])
   const editingRows = ref<RowData[]>([])
   const committeeUsers = ref<OptionItem[]>([])
+  const confirm = useConfirm()
   const filters = ref({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
   })
@@ -189,19 +191,47 @@ export function useCommittee(): {
     return null
   }
 
-  const onDelete = (row: RowData): void => {
-    const index = allRows.value.findIndex((r) => r === row)
-    if (index !== -1) {
-      allRows.value.splice(index, 1)
-      toast.add({
-        severity: 'success',
-        summary: 'Deleted',
-        detail: `Committee ${row.year} deleted.`,
-        life: 3000,
-      })
+  const deleteUser = (committeeToDelete: Committee, event?: Event): void => {
+    if (!event?.currentTarget) {
+      console.error('ConfirmPopup requires a valid event target (event missing or invalid).')
+      return
     }
-  }
+    confirm.require({
+      target: event.currentTarget as HTMLElement,
+      message: `Are you sure you want to delete the committee for year "${committeeToDelete.year}"?`,
+      header: 'Delete Confirmation',
+      icon: 'pi pi-info-circle',
+      rejectClass: 'p-button-secondary p-button-outlined',
+      acceptClass: 'p-button-danger',
+      acceptLabel: 'Delete',
+      rejectLabel: 'Cancel',
+      accept: async () => {
+        try {
+          const response = await deleteCommittee(committeeToDelete.id)
+          if (response.succeeded) {
+            committee.value = committee.value.filter((c) => c.id !== committeeToDelete.id)
+            allRows.value = allRows.value.filter((r) => r.id !== committeeToDelete.id)
 
+            toast.add({
+              severity: 'success',
+              summary: 'Deleted',
+              detail: `Committee for year ${committeeToDelete.year} deleted successfully.`,
+              life: 3000,
+            })
+          }
+        } catch (err) {
+          const error = err as Error
+          toast.add({
+            severity: 'error',
+            summary: 'Delete Failed',
+            detail: error.message,
+            life: 3000,
+          })
+        }
+      },
+      reject: () => {},
+    })
+  }
   return {
     committee,
     columns,
@@ -211,7 +241,7 @@ export function useCommittee(): {
     statusOptions,
     createCommittee,
     handleEdit,
-    onDelete,
+    deleteUser,
     isLoading,
     filters,
     clearFilter,
