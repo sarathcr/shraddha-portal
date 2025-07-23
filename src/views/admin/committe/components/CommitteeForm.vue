@@ -58,9 +58,11 @@ const onCancel = (): void => {
           optionLabel="label"
           optionValue="label"
           display="chip"
+          filter
           :class="{ 'p-invalid': errors.coreMembers }"
           class="w-full"
         />
+
         <label for="coreMembers">Core Members</label>
       </FloatLabel>
       <small v-if="errors.coreMembers" class="absolute left-3 pt-0.5 text-red-500">
@@ -75,6 +77,7 @@ const onCancel = (): void => {
           v-model="executiveMembers"
           :options="committeeUsers"
           optionLabel="label"
+          filter
           optionValue="label"
           display="chip"
           :class="{ 'p-invalid': errors.executiveMembers }"
@@ -103,5 +106,8 @@ const onCancel = (): void => {
 <style>
 .p-multiselect-label {
   flex-wrap: wrap;
+}
+.p-dialog {
+  margin: 16px !important;
 }
 </style>
