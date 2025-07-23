@@ -107,4 +107,7 @@ const onCancel = (): void => {
 .p-multiselect-label {
   flex-wrap: wrap;
 }
+.p-dialog {
+  margin: 16px !important;
+}
 </style>
