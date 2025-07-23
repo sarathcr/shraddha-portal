@@ -41,10 +41,12 @@ const onCancel = (): void => {
   <form @submit.prevent="onSubmit" class="flex flex-col gap-4 pt-2">
     <div class="relative mb-2.5">
       <FloatLabel variant="on">
-        <InputText id="year" v-model="year" class="w-full" />
+        <InputText id="year" v-model="year" :class="{ 'p-invalid': errors.year }" class="w-full" />
         <label for="year">Committee Year</label>
       </FloatLabel>
-      <small class="absolute left-3 pt-0.5 text-red-500">{{ errors.year }}</small>
+      <small v-if="errors.year" class="absolute left-3 pt-0.5 text-red-500">
+        {{ errors.year }}
+      </small>
     </div>
 
     <div class="relative mb-2.5">
@@ -56,11 +58,14 @@ const onCancel = (): void => {
           optionLabel="label"
           optionValue="label"
           display="chip"
+          :class="{ 'p-invalid': errors.coreMembers }"
           class="w-full"
         />
-        <label for="coreMembers">CoreMembers</label>
+        <label for="coreMembers">Core Members</label>
       </FloatLabel>
-      <small class="absolute left-3 pt-0.5 text-red-500">{{ errors.coreMembers }}</small>
+      <small v-if="errors.coreMembers" class="absolute left-3 pt-0.5 text-red-500">
+        {{ errors.coreMembers }}
+      </small>
     </div>
 
     <div class="relative mb-2.5">
@@ -72,17 +77,21 @@ const onCancel = (): void => {
           optionLabel="label"
           optionValue="label"
           display="chip"
+          :class="{ 'p-invalid': errors.executiveMembers }"
           class="w-full"
         />
-        <label for="coreMembers">ExecutiveMembers</label>
+        <label for="executiveMembers">Executive Members</label>
       </FloatLabel>
-      <small class="absolute left-3 pt-0.5 text-red-500">{{ errors.executiveMembers }}</small>
+      <small v-if="errors.executiveMembers" class="absolute left-3 pt-0.5 text-red-500">
+        {{ errors.executiveMembers }}
+      </small>
     </div>
 
     <div class="relative mb-2.5">
-      <ToggleSwitch v-model="status" />
-
-      <small class="absolute left-3 pt-0.5 text-red-500">{{ errors.status }}</small>
+      <ToggleSwitch v-model="status" :class="{ 'p-invalid': errors.status }" />
+      <small v-if="errors.status" class="absolute left-3 pt-0.5 text-red-500">
+        {{ errors.status }}
+      </small>
     </div>
 
     <div class="flex justify-end gap-2 mt-2">
@@ -91,3 +100,8 @@ const onCancel = (): void => {
     </div>
   </form>
 </template>
+<style>
+.p-multiselect-label {
+  flex-wrap: wrap;
+}
+</style>

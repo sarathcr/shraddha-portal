@@ -11,8 +11,16 @@ import { useToast } from 'primevue/usetoast'
 import Toast from 'primevue/toast'
 import type { RowData } from '@/types/baseTable.model'
 
-const { committee, columns, allRows, editingRows, statusOptions, fetchInitialData, handleEdit } =
-  useCommittee()
+const {
+  committee,
+  isLoading,
+  columns,
+  allRows,
+  editingRows,
+  statusOptions,
+  fetchInitialData,
+  handleEdit,
+} = useCommittee()
 
 const toast = useToast()
 const userFormDialogVisible = ref(false)
@@ -88,6 +96,7 @@ onMounted(() => {
       <Toast />
 
       <Dialog
+        class="m-4"
         v-model:visible="userFormDialogVisible"
         header="Create Committee"
         :style="{ width: '50rem' }"
@@ -104,9 +113,10 @@ onMounted(() => {
       <BaseTable
         :columns="columns"
         :rows="allRows"
-        :pageSize="5"
+        :pageSize="20"
         :editableRow="editingRows[0] as RowData"
         :statusOptions="statusOptions"
+        :loading="isLoading"
         @save="onSave"
         @cancel="onCancel"
       >
