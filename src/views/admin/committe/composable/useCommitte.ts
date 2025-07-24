@@ -142,6 +142,27 @@ export function useCommittee(): {
     oldData: Committee,
   ): Promise<{ success: boolean; committee: Committee } | null> => {
     try {
+      const yearPattern = /^\d{4}-\d{4}$/
+      if (!yearPattern.test(newData.year)) {
+        toast.add({
+          severity: 'error',
+          summary: 'Validation Error',
+          detail: 'Year must be in the format YYYY-YYYY',
+          life: 3000,
+        })
+        return null
+      }
+      const [startYear, endYear] = newData.year.split('-').map(Number)
+      if (endYear !== startYear + 1) {
+        toast.add({
+          severity: 'error',
+          summary: 'Validation Error',
+          detail: 'Years must be consecutive',
+          life: 3000,
+        })
+        return null
+      }
+
       if (JSON.stringify(newData) === JSON.stringify(oldData)) {
         toast.add({
           severity: 'info',
