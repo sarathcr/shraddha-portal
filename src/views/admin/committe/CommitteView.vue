@@ -5,9 +5,10 @@ import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
 import { useCommittee } from './composable/useCommitte'
 import CommitteeForm from './components/CommitteeForm.vue'
-import { createCommittee } from '../services/committee.service'
+import { createCommittee } from '../services/committee.services'
 import type { Committee } from '@/types/commitee'
 import { useToast } from 'primevue/usetoast'
+import ConfirmPopup from 'primevue/confirmpopup'
 import Toast from 'primevue/toast'
 import type { RowData } from '@/types/baseTable.model'
 
@@ -20,6 +21,7 @@ const {
   statusOptions,
   fetchInitialData,
   handleEdit,
+  deleteUser,
 } = useCommittee()
 
 const toast = useToast()
@@ -59,6 +61,9 @@ const onCancel = (): void => {
   editingRows.value = []
   selectedCommittee.value = null
 }
+const handleDeleteConfirmation = (row: RowData, event?: Event): void => {
+  deleteUser(row as Committee, event)
+}
 const handleUserFormSubmit = async (payload: Committee): Promise<void> => {
   try {
     const result = await createCommittee(payload)
@@ -93,6 +98,7 @@ onMounted(() => {
 <template>
   <div class="space-y-4 h-full">
     <div class="h-full bg-white">
+      <ConfirmPopup class="mx-4" />
       <Toast />
 
       <Dialog
@@ -129,7 +135,7 @@ onMounted(() => {
           />
         </template>
 
-        <template #actions="{ row, onDelete }">
+        <template #actions="{ row }">
           <button
             @click="handleEditCommittee(row)"
             class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
@@ -137,7 +143,7 @@ onMounted(() => {
             <i class="pi pi-pencil text-slate-700 text-base"></i>
           </button>
           <button
-            @click="onDelete(row)"
+            @click="handleDeleteConfirmation(row, $event)"
             class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
           >
             <i class="pi pi-trash text-red-600 text-base"></i>
