@@ -63,7 +63,6 @@ export const useRoles = (): {
     try {
       const response = await roleService.createRole(payload)
       if (response.succeeded) {
-        // roles.value.push(response.data)
         await fetchInitialData()
 
         toast.add({

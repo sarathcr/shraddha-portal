@@ -8,6 +8,7 @@ import { useRoles } from '@/views/admin/roles/composables/useRole'
 import RoleForm from './RoleForm.vue'
 import type { Role } from '@/types/role'
 import type { RowData } from '@/types/baseTable.model'
+import { useValidation } from '@/views/admin/roles/composables/useValidation'
 
 const {
   roles,
@@ -19,6 +20,8 @@ const {
   editRole,
   deleteRole,
 } = useRoles()
+
+const { validationErrors, validateField, resetValidation, isSaveDisabled } = useValidation()
 
 const roleFormDialogVisible = ref(false)
 const roleFormRef = ref<InstanceType<typeof RoleForm> | null>(null)
@@ -46,8 +49,17 @@ const onEditRole = (row: RowData): void => {
 }
 
 const onSaveRole = async (newData: RowData): Promise<void> => {
+  columns.forEach((col) => {
+    if (col.required) {
+      validateField(col.key, newData[col.key], col.label)
+    }
+  })
+
+  if (Object.keys(validationErrors.value).length > 0) return
+
   await editRole(newData as Role)
   editingRows.value = []
+  resetValidation()
 }
 
 const onCancelEdit = (): void => {
@@ -59,6 +71,7 @@ const onCancelEdit = (): void => {
   }
   editingRows.value = []
   originalRole.value = null
+  resetValidation()
 }
 
 const handleDeleteConfirmation = (row: RowData, event?: Event): void => {
@@ -70,11 +83,13 @@ const columns = [
     label: 'Role Name',
     key: 'roleName',
     filterable: true,
+    required: true,
   },
   {
     label: 'Description',
     key: 'description',
     filterable: true,
+    required: true,
   },
   {
     label: 'Permissions',
@@ -82,6 +97,7 @@ const columns = [
     filterable: true,
     useTag: true,
     useMultiSelect: true,
+    required: true,
   },
 ]
 
@@ -119,6 +135,7 @@ onMounted(() => {
       :loading="isLoading"
       @save="onSaveRole"
       @cancel="onCancelEdit"
+      :saveDisabled="isSaveDisabled"
     >
       <template #table-header>
         <Button label="Add New Role" icon="pi pi-plus" severity="help" @click="onAddNewRole" />
