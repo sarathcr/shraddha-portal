@@ -226,6 +226,9 @@ const hasTableHeader = computed(() => !!slots['table-header'])
             </div>
           </template>
         </Column>
+        <template #empty>
+          <div class="text-center text-gray-500 p-4">No data found.</div>
+        </template>
       </DataTable>
     </div>
 
