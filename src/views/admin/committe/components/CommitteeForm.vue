@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { committeeUsers } from '../composable/useCommitte'
-import { getCommittee } from '../../services/committee.service'
+import { getCommittee } from '../../services/committee.services'
 import type { Committee } from '@/types/commitee'
 import { useField, useForm } from 'vee-validate'
 import MultiSelect from 'primevue/multiselect'
