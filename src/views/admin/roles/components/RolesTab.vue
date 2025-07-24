@@ -141,3 +141,8 @@ onMounted(() => {
     </BaseTable>
   </div>
 </template>
+<style>
+.p-tag {
+  margin-bottom: 5px;
+}
+</style>

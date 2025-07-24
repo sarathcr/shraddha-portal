@@ -1,7 +1,7 @@
 import { setLoading } from '@/stores/loader'
 import { roles as staticRoles, permissions as staticPermissions } from '@/services/RoleService'
 import type { User, OptionItem } from '@/types/user'
-import type { Role, permissionOptions } from '@/types/role'
+import type { Role, PermissionOptions } from '@/types/role'
 import type { ApiResponse, APIError } from '@/types/index'
 import { useFetch } from '@vueuse/core'
 import { UserService } from '@/services/UserService'
@@ -107,8 +107,8 @@ export const editUser = async (
 
 export const getAllUsers = async (): Promise<User[]> => {
   try {
-    const response = await UserService.getUsersData()
-    return response.data as User[]
+    const response = UserService.getUsersData()
+    return response.data
   } catch (e) {
     console.error('Failed to fetch users', e)
     return []
@@ -148,7 +148,7 @@ export const roleService = {
   getRolesData: async (): Promise<ApiResponse<Role[]>> =>
     simulateApiCall(async () => createMockApiResponse(roles, 'Roles fetched successfully')),
 
-  getPermissions: async (): Promise<ApiResponse<permissionOptions[]>> =>
+  getPermissions: async (): Promise<ApiResponse<PermissionOptions[]>> =>
     simulateApiCall(async () =>
       createMockApiResponse(staticPermissions, 'Permissions fetched successfully'),
     ),
@@ -194,6 +194,6 @@ export const roleService = {
       }
 
       const [deleted] = roles.splice(index, 1)
-      return createMockApiResponse({ id: deleted.id! }, 'Role deleted successfully')
+      return createMockApiResponse({ id: deleted.id }, 'Role deleted successfully')
     }),
 }

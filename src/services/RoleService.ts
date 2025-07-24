@@ -1,4 +1,4 @@
-import type { Role, permissionOptions } from '@/types/role'
+import type { Role, PermissionOptions } from '@/types/role'
 
 export const roles: Role[] = [
   {
@@ -33,7 +33,7 @@ export const roles: Role[] = [
   },
 ]
 
-export const permissions: permissionOptions[] = [
+export const permissions: PermissionOptions[] = [
   { label: 'Read', value: 'read' },
   { label: 'Write', value: 'write' },
   { label: 'Update', value: 'update' },

@@ -5,13 +5,13 @@ import { useConfirm } from 'primevue/useconfirm'
 
 import { isLoading } from '@/stores/loader'
 import type { APIError } from '@/types'
-import type { permissionOptions, Role } from '@/types/role'
+import type { PermissionOptions, Role } from '@/types/role'
 import type { RowData } from '@/types/baseTable.model'
 import { roleService } from '@/views/admin/services/roles-and-access.services'
 
 export const useRoles = (): {
   roles: Ref<Role[]>
-  permissions: Ref<permissionOptions[]>
+  permissions: Ref<PermissionOptions[]>
   isLoading: typeof isLoading
   editingRows: Ref<RowData[]>
   filters: Ref<{ global: { value: null | string; matchMode: string } }>
@@ -25,7 +25,7 @@ export const useRoles = (): {
   const confirm = useConfirm()
 
   const roles = ref<Role[]>([])
-  const permissions = ref<permissionOptions[]>([])
+  const permissions = ref<PermissionOptions[]>([])
   const editingRows = ref<Role[]>([])
 
   const filters = ref({
@@ -61,9 +61,11 @@ export const useRoles = (): {
 
   const createRole = async (payload: Role): Promise<boolean | null> => {
     try {
-      const response = await roleService.createRole(payload as Role)
+      const response = await roleService.createRole(payload)
       if (response.succeeded) {
-        roles.value.push(response.data)
+        // roles.value.push(response.data)
+        await fetchInitialData()
+
         toast.add({
           severity: 'success',
           summary: 'Role Created',
@@ -88,7 +90,7 @@ export const useRoles = (): {
 
   const editRole = async (updated: Role): Promise<boolean | null> => {
     try {
-      const response = await roleService.editRole(updated.id!, updated)
+      const response = await roleService.editRole(updated.id, updated)
       if (response.succeeded) {
         const index = roles.value.findIndex((r) => r.id === updated.id)
         if (index !== -1) roles.value[index] = response.data

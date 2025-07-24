@@ -54,12 +54,16 @@ watch(
   { deep: true },
 )
 </script>
-
 <template>
   <form @submit.prevent="onSubmit" class="flex flex-col gap-4 pt-2">
     <div class="relative mb-2.5">
       <FloatLabel variant="on">
-        <InputText id="roleName" v-model="roleName" class="w-full" />
+        <InputText
+          id="roleName"
+          v-model="roleName"
+          class="w-full"
+          :class="{ '!border-red-500': errors.roleName }"
+        />
         <label for="roleName">Role Name</label>
       </FloatLabel>
       <small class="absolute left-3 pt-0.5 text-red-500">{{ errors.roleName }}</small>
@@ -67,13 +71,21 @@ watch(
 
     <div class="relative mb-2.5">
       <FloatLabel variant="on">
-        <Textarea id="description" v-model="description" rows="4" class="w-full" />
+        <Textarea
+          id="description"
+          v-model="description"
+          rows="4"
+          class="w-full"
+          :class="{ '!border-red-500': errors.description }"
+        />
         <label for="description">Role Description</label>
       </FloatLabel>
-      <small class="absolute left-3 pt-0.5 text-red-500">{{ errors.description }}</small>
+      <small class="absolute left-3 pt-0.5 text-red-500 leading-none">{{
+        errors.description
+      }}</small>
     </div>
 
-    <div>
+    <div class="relative mb-2.5">
       <p class="font-medium mb-2">Permissions</p>
       <div class="flex flex-wrap gap-4">
         <div
@@ -85,7 +97,7 @@ watch(
           <label :for="perm" class="cursor-pointer capitalize">{{ perm }}</label>
         </div>
       </div>
-      <small class="block pt-0.5 text-red-500 mt-2">{{ errors.permissions }}</small>
+      <small class="absolute left-3 pt-0.5 text-red-500">{{ errors.permissions }}</small>
     </div>
 
     <div class="flex justify-end gap-2 mt-2">

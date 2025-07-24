@@ -6,7 +6,7 @@ export interface Role extends RowData {
   description: string
   permissions: string[]
 }
-export interface permissionOptions {
+export interface PermissionOptions {
   label: string
   value: string
 }

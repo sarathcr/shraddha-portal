@@ -48,7 +48,12 @@ const onCancel = (): void => {
   <form @submit.prevent="onSubmit" class="flex flex-col gap-4 pt-2">
     <div class="relative mb-2.5">
       <FloatLabel variant="on"
-        ><InputText id="username" v-model="name" class="w-full" />
+        ><InputText
+          id="username"
+          v-model="name"
+          class="w-full"
+          :class="{ '!border-red-500': errors.name }"
+        />
         <label for="username">User Name</label></FloatLabel
       >
 
@@ -57,7 +62,12 @@ const onCancel = (): void => {
 
     <div class="relative mb-2.5">
       <FloatLabel variant="on"
-        ><InputText id="employeeId" v-model="employeeId" class="w-full" />
+        ><InputText
+          id="employeeId"
+          v-model="employeeId"
+          class="w-full"
+          :class="{ '!border-red-500': errors.employeeId }"
+        />
         <label for="employeeId">Employee ID</label></FloatLabel
       >
 
@@ -66,7 +76,12 @@ const onCancel = (): void => {
 
     <div class="relative mb-2.5">
       <FloatLabel variant="on"
-        ><InputText id="email" v-model="email" class="w-full" />
+        ><InputText
+          id="email"
+          v-model="email"
+          class="w-full"
+          :class="{ '!border-red-500': errors.email }"
+        />
 
         <label for="email">Email</label></FloatLabel
       >
@@ -85,6 +100,7 @@ const onCancel = (): void => {
           optionLabel="label"
           optionValue="value"
           class="w-full"
+          :class="{ '!border-red-500': errors.team }"
         />
         <label for="team" class="font-semibold mb-2">Team</label>
       </FloatLabel>
@@ -101,6 +117,7 @@ const onCancel = (): void => {
           optionLabel="label"
           optionValue="value"
           class="w-full"
+          :class="{ '!border-red-500': errors.role }"
         /><label for="role">Role</label>
       </FloatLabel>
 
