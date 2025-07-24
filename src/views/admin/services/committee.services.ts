@@ -59,3 +59,19 @@ export const editCommittee = (
     }
   })
 }
+// delete committee
+export const deleteCommittee = (id: string): Promise<{ succeeded: boolean; message: string }> => {
+  return simulateApiCall(async () => {
+    const index = committeeData.data.findIndex((committee) => committee.id === id)
+    if (index === -1) {
+      throw new Error(`Committee with ID ${id} not found`)
+    }
+
+    committeeData.data.splice(index, 1)
+
+    return {
+      succeeded: true,
+      message: `Committee with ID ${id} deleted successfully`,
+    }
+  })
+}
