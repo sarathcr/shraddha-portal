@@ -11,6 +11,7 @@ import { useToast } from 'primevue/usetoast'
 import ConfirmPopup from 'primevue/confirmpopup'
 import Toast from 'primevue/toast'
 import type { RowData } from '@/types/baseTable.model'
+import router from '@/router'
 
 const {
   committee,
@@ -89,6 +90,9 @@ const handleUserFormSubmit = async (payload: Committee): Promise<void> => {
     await fetchInitialData()
   }
 }
+const handleViewCommittee = (): void => {
+  void router.push('/admin/committe/dashboard')
+}
 
 onMounted(() => {
   void fetchInitialData()
@@ -142,11 +146,18 @@ onMounted(() => {
           >
             <i class="pi pi-pencil text-slate-700 text-base"></i>
           </button>
+
           <button
             @click="handleDeleteConfirmation(row, $event)"
             class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
           >
             <i class="pi pi-trash text-red-600 text-base"></i>
+          </button>
+          <button
+            @click="handleViewCommittee()"
+            class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
+          >
+            <i class="pi pi-eye text-blue-600 text-base"></i>
           </button>
         </template>
       </BaseTable>
