@@ -6,6 +6,7 @@ import CommitteeDashboarView from '@/views/admin/committe/dashboard/committeeDas
 import DashboardView from '@/views/admin/dashboard/DashboardView.vue'
 import RolesView from '@/views/admin/roles/RolesView.vue'
 import LoginView from '@/views/auth/login/LoginView.vue'
+import CommitteeListView from '@/views/admin/committe/CommitteeListView.vue'
 
 const router = createRouter({
   history: createWebHashHistory(import.meta.env.BASE_URL),
@@ -24,6 +25,7 @@ const router = createRouter({
           path: 'committe',
           component: CommitteView,
           children: [
+            { path: '', component: CommitteeListView },
             {
               path: 'dashboard',
               component: CommitteeDashboarView,
