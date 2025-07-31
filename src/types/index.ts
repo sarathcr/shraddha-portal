@@ -18,11 +18,11 @@ export interface APIError {
 
 export interface ApiResponse<T> {
   data: T
-  errors: string | null
   message: string
-  pageNumber?: number
-  pageSize?: number
   succeeded: boolean
-  totalPages?: number
-  totalRecords?: number
+  errors: string[] | null
+  pageNumber: number
+  pageSize: number
+  totalPages: number
+  totalRecords: number
 }

@@ -91,8 +91,8 @@ const handleUserFormSubmit = async (payload: Committee): Promise<void> => {
     await fetchInitialData()
   }
 }
-const handleViewCommittee = async (): Promise<void> => {
-  await router.push('/admin/committe/dashboard')
+const handleViewCommittee = async (row: { id: string }): Promise<void> => {
+  await router.push(`/admin/committe/${row.id}/dashboard`)
 }
 
 onMounted(() => {
@@ -155,7 +155,7 @@ onMounted(() => {
             <i class="pi pi-trash text-red-600 text-base"></i>
           </button>
           <button
-            @click="handleViewCommittee()"
+            @click="handleViewCommittee(row)"
             class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
           >
             <i class="pi pi-eye text-blue-600 text-base"></i>

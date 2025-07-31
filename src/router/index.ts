@@ -27,7 +27,7 @@ const router = createRouter({
           children: [
             { path: '', component: CommitteeListView },
             {
-              path: 'dashboard',
+              path: ':id/dashboard',
               component: CommitteeDashboarView,
             },
           ],
