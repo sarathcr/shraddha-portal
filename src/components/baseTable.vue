@@ -14,6 +14,7 @@ import { useSlots } from 'vue'
 import { Select } from 'primevue'
 import BaseTableSkeleton from './Skelton/BaseTableSkeleton.vue'
 import Paginator from 'primevue/paginator'
+import { useValidation } from '@/views/admin/roles/composables/useValidation'
 
 const props = defineProps<{
   columns: ColumnDef[]
@@ -22,7 +23,8 @@ const props = defineProps<{
   editableRow?: RowData | null
   statusOptions?: { label: string; value: string }[]
   multiSelectOption?: { label: string; value: string }[]
-  loading?: boolean // Add loading prop here
+  loading?: boolean
+  saveDisabled?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -35,12 +37,24 @@ const emit = defineEmits<{
 const tempRow = reactive<RowData>({})
 const first = ref(0)
 
+const { validationErrors, validateField, isSaveDisabled } = useValidation()
+
 watch(
   () => props.editableRow,
   (newRow) => {
     if (newRow) Object.assign(tempRow, newRow)
   },
   { immediate: true },
+)
+
+watch(
+  tempRow,
+  (newRow) => {
+    props.columns.forEach((col) => {
+      if (col.required) validateField(col.key, newRow[col.key], col.label)
+    })
+  },
+  { deep: true },
 )
 
 const saveEdit = (row: RowData): void => {
@@ -121,28 +135,55 @@ const hasTableHeader = computed(() => !!slots['table-header'])
                 dateFormat="dd/mm/yy"
                 showIcon
                 class="w-full"
+                @blur="col.required ? validateField(col.key, tempRow[col.key], col.label) : null"
               />
-              <Select
-                v-else-if="col.filterOption"
-                v-model="tempRow[col.key]"
-                :options="props.statusOptions"
-                optionLabel="label"
-                optionValue="value"
-                :placeholder="col.placeholder || `Select ${col.label}`"
-                class="w-full"
-              />
-              <MultiSelect
-                v-else-if="col.useMultiSelect"
-                v-model="tempRow[col.key]"
-                :options="props.multiSelectOption"
-                optionLabel="label"
-                optionValue="value"
-                :placeholder="col.placeholder || `Select ${col.label}`"
-                display="chip"
-                filter
-                class="w-full"
-              />
-              <InputText v-else v-model="tempRow[col.key] as string" class="w-full" />
+              <div v-else-if="col.filterOption">
+                <Select
+                  v-model="tempRow[col.key]"
+                  :options="props.statusOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  :placeholder="col.placeholder || `Select ${col.label}`"
+                  class="w-full"
+                  @change="
+                    col.required ? validateField(col.key, tempRow[col.key], col.label) : null
+                  "
+                  @blur="col.required ? validateField(col.key, tempRow[col.key], col.label) : null"
+                />
+                <p v-if="validationErrors[col.key]" class="text-red-500 text-xs mt-1">
+                  {{ validationErrors[col.key] }}
+                </p>
+              </div>
+              <div v-else-if="col.useMultiSelect">
+                <MultiSelect
+                  v-model="tempRow[col.key]"
+                  :options="props.multiSelectOption"
+                  optionLabel="label"
+                  optionValue="value"
+                  :placeholder="col.placeholder || `Select ${col.label}`"
+                  display="chip"
+                  filter
+                  class="w-full"
+                  @change="
+                    col.required ? validateField(col.key, tempRow[col.key], col.label) : null
+                  "
+                  @blur="col.required ? validateField(col.key, tempRow[col.key], col.label) : null"
+                />
+                <p v-if="validationErrors[col.key]" class="text-red-500 text-xs mt-1">
+                  {{ validationErrors[col.key] }}
+                </p>
+              </div>
+              <div v-else>
+                <InputText
+                  v-model="tempRow[col.key] as string"
+                  :type="col.key === 'email' ? 'email' : 'text'"
+                  class="w-full"
+                  @blur="validateField(col.key, tempRow[col.key], col.label)"
+                />
+                <p v-if="validationErrors[col.key]" class="text-red-500 text-xs mt-1">
+                  {{ validationErrors[col.key] }}
+                </p>
+              </div>
             </div>
             <div v-else>
               <span v-if="col.useDateFilter">{{ formatDate(data[col.key]) }}</span>
@@ -215,7 +256,13 @@ const hasTableHeader = computed(() => !!slots['table-header'])
         <Column header="Actions" style="min-width: 150px">
           <template #body="{ data }">
             <div v-if="editableRow === data" class="flex gap-2">
-              <Button icon="pi pi-check" severity="success" size="small" @click="saveEdit(data)" />
+              <Button
+                icon="pi pi-check"
+                severity="success"
+                size="small"
+                :disabled="isSaveDisabled"
+                @click="saveEdit(data)"
+              />
               <Button icon="pi pi-times" severity="danger" size="small" @click="cancelEdit" />
             </div>
             <div v-else>
