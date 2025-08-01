@@ -12,7 +12,10 @@ export function useDashboard(): {
   moms: Ref<{ date: string; pdfUrl: string }[]>
   tournaments: Ref<{ name: string; startDate: string; endDate: string }[]>
   birthdayGift: Ref<{ month: string; totalCelebrated: number }[]>
-
+  isLoadingCards: Ref<boolean>
+  isLoadingTable: Ref<boolean>
+  isLoadingTournaments: Ref<boolean>
+  isLoadingGraph: Ref<boolean>
   fetchDashboard: () => Promise<void>
 } {
   const chartData = ref<ChartData<'bar'>>()
@@ -21,6 +24,10 @@ export function useDashboard(): {
   const moms = ref<{ date: string; pdfUrl: string }[]>([])
   const tournaments = ref<{ name: string; startDate: string; endDate: string }[]>([])
   const birthdayGift = ref<{ month: string; totalCelebrated: number }[]>([])
+  const isLoadingCards = ref(true)
+  const isLoadingTable = ref(true)
+  const isLoadingTournaments = ref(true)
+  const isLoadingGraph = ref(true)
 
   const toast = useToast()
 
@@ -41,6 +48,11 @@ export function useDashboard(): {
     }
 
   const fetchDashboard = withErrorHandling(async () => {
+    isLoadingCards.value = true
+    isLoadingTable.value = true
+    isLoadingTournaments.value = true
+    isLoadingGraph.value = true
+
     const response: ApiResponse<CommitteeDashboard[]> = await getCommitteeDashboard()
     if (response?.succeeded && Array.isArray(response.data) && response.data.length > 0) {
       const dashboard = response.data[0]
@@ -136,6 +148,10 @@ export function useDashboard(): {
         life: 3000,
       })
     }
+    isLoadingCards.value = false
+    isLoadingTable.value = false
+    isLoadingTournaments.value = false
+    isLoadingGraph.value = false
   }, 'Failed to fetch committee dashboard data.')
 
   onMounted(fetchDashboard)
@@ -147,6 +163,10 @@ export function useDashboard(): {
     moms,
     tournaments,
     birthdayGift,
+    isLoadingCards,
+    isLoadingTable,
+    isLoadingTournaments,
+    isLoadingGraph,
     fetchDashboard,
   }
 }
