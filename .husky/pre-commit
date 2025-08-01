@@ -17,7 +17,7 @@ npx eslint --ext .ts,.tsx,.vue src || exit 1
 npx prettier --check . || exit 1
 
 # Run unit tests
-npx vitest run --passWithNoTests || exit 1
+npx vitest run --coverage || exit 1
 
 # Ensure app builds before commit
 npx vite build || exit 1
