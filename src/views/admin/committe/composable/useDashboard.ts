@@ -94,27 +94,6 @@ export function useDashboard(): {
 
       cards.value = [
         {
-          title: 'Finance',
-          icon: 'pi pi-wallet',
-          colorClasses: { bg: 'bg-green-100', text: 'text-green-600' },
-          countValue: dashboard.finance.balance,
-          countLabel: '₹ balance this month',
-        },
-        {
-          title: 'MOM',
-          icon: 'pi pi-file',
-          colorClasses: { bg: 'bg-blue-100', text: 'text-blue-600' },
-          countValue: dashboard.moms.length,
-          countLabel: 'minutes recorded this month',
-        },
-        {
-          title: 'Birthday Gift',
-          icon: 'pi pi-gift',
-          colorClasses: { bg: 'bg-yellow-100', text: 'text-yellow-600' },
-          countValue: dashboard.birthdayGift.list,
-          countLabel: 'birthdays celebrated',
-        },
-        {
           title: 'Tournaments',
           icon: 'pi pi-trophy',
           colorClasses: { bg: 'bg-pink-100', text: 'text-pink-600' },
