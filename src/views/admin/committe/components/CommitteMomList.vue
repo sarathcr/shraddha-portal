@@ -1,15 +1,9 @@
 <script setup lang="ts">
-import type { IProduct } from '@/types'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
-
-import { useDashboard } from '../composable/useDashboard'
-
-// eslint-disable-next-line vue/no-dupe-keys
-const { moms } = useDashboard()
-
+import type { Mom } from '@/types/commitee'
 defineProps<{
-  moms: IProduct[]
+  moms: Mom[]
 }>()
 </script>
 

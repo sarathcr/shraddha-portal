@@ -1,150 +1,152 @@
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, type Ref } from 'vue'
 import type { ChartData, ChartOptions } from 'chart.js'
+import type { CommitteeDashboard } from '@/types/commitee'
+import { getCommitteeDashboard } from '@/views/admin/services/committeeDashboard.services'
+import type { APIError, ApiResponse } from '@/types/index'
+import { useToast } from 'primevue/usetoast'
 
 export function useDashboard(): {
-  chartData: typeof chartData
-  chartOptions: typeof chartOptions
-  cards: typeof cards
-  moms: typeof moms
+  chartData: Ref<ChartData<'bar'> | undefined>
+  chartOptions: Ref<ChartOptions<'bar'> | undefined>
+  cards: Ref<unknown[]>
+  moms: Ref<{ date: string; pdfUrl: string }[]>
+  tournaments: Ref<{ name: string; startDate: string; endDate: string }[]>
+  birthdayGift: Ref<{ month: string; totalCelebrated: number }[]>
+
+  fetchDashboard: () => Promise<void>
 } {
   const chartData = ref<ChartData<'bar'>>()
   const chartOptions = ref<ChartOptions<'bar'>>()
+  const cards = ref<unknown[]>([])
+  const moms = ref<{ date: string; pdfUrl: string }[]>([])
+  const tournaments = ref<{ name: string; startDate: string; endDate: string }[]>([])
+  const birthdayGift = ref<{ month: string; totalCelebrated: number }[]>([])
 
-  const cards = ref([
-    {
-      title: 'Finance',
-      icon: 'pi pi-wallet',
-      colorClasses: { bg: 'bg-green-100', text: 'text-green-600' },
-      countValue: 32_500,
-      countLabel: '₹ balance this month',
-    },
-    {
-      title: 'MOM',
-      icon: 'pi pi-file',
-      colorClasses: { bg: 'bg-blue-100', text: 'text-blue-600' },
-      countValue: 5,
-      countLabel: 'minutes recorded this month',
-    },
-    {
-      title: 'Birthday Gift',
-      icon: 'pi pi-gift',
-      colorClasses: { bg: 'bg-yellow-100', text: 'text-yellow-600' },
-      countValue: 3,
-      countLabel: 'birthdays celebrated',
-    },
-    {
-      title: 'Tournaments',
-      icon: 'pi pi-trophy',
-      colorClasses: { bg: 'bg-pink-100', text: 'text-pink-600' },
-      countValue: 6,
-      countLabel: 'tournaments completed this year',
-    },
-    {
-      title: 'Events',
-      icon: 'pi pi-calendar',
-      colorClasses: { bg: 'bg-purple-100', text: 'text-purple-600' },
-      countValue: 12,
-      countLabel: 'done this month',
-    },
-    {
-      title: 'Charity',
-      icon: 'pi pi-heart',
-      colorClasses: { bg: 'bg-red-100', text: 'text-red-600' },
-      countValue: 5,
-      countLabel: 'completed this year',
-    },
-  ])
+  const toast = useToast()
 
-  const moms = ref([
-    {
-      date: '2025-07-02',
-      pdfUrl: '#',
-    },
-    {
-      date: '2025-07-08',
-      pdfUrl: '#',
-    },
-    {
-      date: '2025-07-12',
-      pdfUrl: '#',
-    },
-    {
-      date: '2025-07-19',
-      pdfUrl: '#',
-    },
-    {
-      date: '2025-07-26',
-      pdfUrl: '#',
-    },
-  ])
-
-  const setChartData = (): ChartData<'bar'> => {
-    const documentStyle = getComputedStyle(document.documentElement)
-
-    return {
-      labels: [
-        'Jan',
-        'Feb',
-        'Mar',
-        'Apr',
-        'May',
-        'June',
-        'July',
-        'Aug',
-        'Sep',
-        'Oct',
-        'Nov',
-        'Dec',
-      ],
-      datasets: [
-        {
-          type: 'bar' as const,
-          label: 'Monthly Income',
-          backgroundColor: documentStyle.getPropertyValue('--p-cyan-500'),
-          data: [5000, 8000, 7000, 12500, 8000, 2000, 15000, 12000],
-        },
-      ],
+  const withErrorHandling =
+    <T extends unknown[]>(
+      asyncFn: (...args: T) => Promise<void>,
+      defaultErrorMessage: string,
+    ): ((...args: T) => Promise<void>) =>
+    async (...args: T): Promise<void> => {
+      try {
+        await asyncFn(...args)
+      } catch (err) {
+        const error = err as APIError
+        const message =
+          error?.error?.message || error.message || defaultErrorMessage || 'Unexpected error'
+        toast.add({ severity: 'error', summary: 'Error', detail: message, life: 3000 })
+      }
     }
-  }
 
-  const setChartOptions = (): ChartOptions<'bar'> => {
-    const documentStyle = getComputedStyle(document.documentElement)
-    const textColor = documentStyle.getPropertyValue('--p-text-color')
-    const textColorSecondary = documentStyle.getPropertyValue('--p-text-muted-color')
-    const surfaceBorder = documentStyle.getPropertyValue('--p-content-border-color')
+  const fetchDashboard = withErrorHandling(async () => {
+    const response: ApiResponse<CommitteeDashboard[]> = await getCommitteeDashboard()
+    if (response?.succeeded && Array.isArray(response.data) && response.data.length > 0) {
+      const dashboard = response.data[0]
+      const documentStyle = getComputedStyle(document.documentElement)
 
-    return {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          labels: {
-            color: textColor,
+      chartData.value = {
+        labels: dashboard.finance.graph.labels,
+        datasets: [
+          {
+            type: 'bar',
+            label: 'Monthly Income',
+            backgroundColor: documentStyle.getPropertyValue('--p-cyan-500'),
+            data: dashboard.finance.graph.values,
+          },
+        ],
+      }
+
+      chartOptions.value = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            labels: {
+              color: documentStyle.getPropertyValue('--p-text-color'),
+            },
           },
         },
-      },
-      scales: {
-        x: {
-          ticks: { color: textColorSecondary },
-          grid: { color: surfaceBorder },
+        scales: {
+          x: {
+            ticks: { color: documentStyle.getPropertyValue('--p-text-muted-color') },
+            grid: { color: documentStyle.getPropertyValue('--p-content-border-color') },
+          },
+          y: {
+            ticks: { color: documentStyle.getPropertyValue('--p-text-muted-color') },
+            grid: { color: documentStyle.getPropertyValue('--p-content-border-color') },
+          },
         },
-        y: {
-          ticks: { color: textColorSecondary },
-          grid: { color: surfaceBorder },
-        },
-      },
-    }
-  }
+      }
 
-  onMounted(() => {
-    chartData.value = setChartData()
-    chartOptions.value = setChartOptions()
-  })
+      cards.value = [
+        {
+          title: 'Finance',
+          icon: 'pi pi-wallet',
+          colorClasses: { bg: 'bg-green-100', text: 'text-green-600' },
+          countValue: dashboard.finance.balance,
+          countLabel: '₹ balance this month',
+        },
+        {
+          title: 'MOM',
+          icon: 'pi pi-file',
+          colorClasses: { bg: 'bg-blue-100', text: 'text-blue-600' },
+          countValue: dashboard.moms.length,
+          countLabel: 'minutes recorded this month',
+        },
+        {
+          title: 'Birthday Gift',
+          icon: 'pi pi-gift',
+          colorClasses: { bg: 'bg-yellow-100', text: 'text-yellow-600' },
+          countValue: dashboard.birthdayGift.list,
+          countLabel: 'birthdays celebrated',
+        },
+        {
+          title: 'Tournaments',
+          icon: 'pi pi-trophy',
+          colorClasses: { bg: 'bg-pink-100', text: 'text-pink-600' },
+          countValue: dashboard.tournaments.completed,
+          countLabel: 'tournaments completed this year',
+        },
+        {
+          title: 'Events',
+          icon: 'pi pi-calendar',
+          colorClasses: { bg: 'bg-purple-100', text: 'text-purple-600' },
+          countValue: dashboard.events.totalEvents,
+          countLabel: 'done this year',
+        },
+        {
+          title: 'Charity',
+          icon: 'pi pi-heart',
+          colorClasses: { bg: 'bg-red-100', text: 'text-red-600' },
+          countValue: dashboard.charity.count,
+          countLabel: 'completed this year',
+        },
+      ]
+
+      moms.value = dashboard.moms
+      tournaments.value = dashboard.tournaments.list
+      birthdayGift.value = dashboard.birthdayGift.list
+    } else {
+      toast.add({
+        severity: 'warn',
+        summary: 'No Data',
+        detail: response?.message || 'No dashboard data found.',
+        life: 3000,
+      })
+    }
+  }, 'Failed to fetch committee dashboard data.')
+
+  onMounted(fetchDashboard)
 
   return {
     chartData,
     chartOptions,
     cards,
     moms,
+    tournaments,
+    birthdayGift,
+    fetchDashboard,
   }
 }

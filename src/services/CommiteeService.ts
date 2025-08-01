@@ -37,8 +37,21 @@ export const committeeDashboards: ApiResponse<CommitteeDashboard[]> = {
       finance: {
         balance: 32500,
         graph: {
-          labels: ['Jan', 'Feb', 'Mar', 'Apr'],
-          values: [5000, 8000, 7000, 12500],
+          labels: [
+            'Jan',
+            'Feb',
+            'Mar',
+            'Apr',
+            'May',
+            'june',
+            'July',
+            'Aug',
+            'Sep',
+            'Oct',
+            'Nov',
+            'Dec',
+          ],
+          values: [5000, 8000, 7000, 12500, 8000, 11000, 15000, 2300, 8900, 20000, 11000, 20000],
         },
       },
       moms: [
@@ -49,14 +62,22 @@ export const committeeDashboards: ApiResponse<CommitteeDashboard[]> = {
         { date: '2025-07-26', pdfUrl: 'https://example.com/files/mom-2025-07-26.pdf' },
       ],
       birthdayGift: {
-        totalCelebrated: 14,
         year: 2025,
+        list: [
+          { month: 'January', totalCelebrated: 2 },
+          { month: 'February', totalCelebrated: 1 },
+          { month: 'March', totalCelebrated: 3 },
+          { month: 'April', totalCelebrated: 0 },
+          { month: 'May', totalCelebrated: 2 },
+          { month: 'June', totalCelebrated: 1 },
+          { month: 'July', totalCelebrated: 2 },
+        ],
       },
       tournaments: {
-        completed: 6,
+        completed: 2,
         list: [
-          { name: 'BoardGames', date: '2025-03-01' },
-          { name: 'Badminton', date: '2025-04-15' },
+          { name: 'Badminton - 2025', startDate: '2025-03-01', endDate: '2025-04-03' },
+          { name: 'BoardGames - 2025', startDate: '2025-03-01', endDate: '2025-04-03' },
         ],
       },
       events: {
@@ -79,56 +100,6 @@ export const committeeDashboards: ApiResponse<CommitteeDashboard[]> = {
           { date: '2025-05-12', title: 'School Kit Distribution' },
           { date: '2025-06-30', title: 'Tree Plantation Drive' },
           { date: '2025-07-18', title: 'Support for Flood Relief' },
-        ],
-      },
-    },
-    {
-      id: '2',
-      year: '2023-2024',
-      finance: {
-        balance: 28100,
-        graph: {
-          labels: ['Jan', 'Feb', 'Mar', 'Apr'],
-          values: [6000, 7000, 5000, 10100],
-        },
-      },
-      moms: [
-        { date: '2024-07-01', pdfUrl: 'https://example.com/files/mom-2024-07-01.pdf' },
-        { date: '2024-07-07', pdfUrl: 'https://example.com/files/mom-2024-07-07.pdf' },
-        { date: '2024-07-13', pdfUrl: 'https://example.com/files/mom-2024-07-13.pdf' },
-        { date: '2024-07-20', pdfUrl: 'https://example.com/files/mom-2024-07-20.pdf' },
-        { date: '2024-07-27', pdfUrl: 'https://example.com/files/mom-2024-07-27.pdf' },
-      ],
-      birthdayGift: {
-        totalCelebrated: 10,
-        year: 2024,
-      },
-      tournaments: {
-        completed: 4,
-        list: [
-          { name: 'Chess Tournament', date: '2024-02-10' },
-          { name: 'Table Tennis', date: '2024-04-20' },
-        ],
-      },
-      events: {
-        year: 2024,
-        totalEvents: 10,
-        eventsList: [
-          { name: 'New Year Celebration', date: '2024-01-01' },
-          { name: 'Woman’s Day', date: '2024-03-08' },
-          { name: 'Annual Day', date: '2024-07-21' },
-          { name: 'Independence Day', date: '2024-08-15' },
-          { name: 'Christmas Celebration', date: '2024-12-25' },
-        ],
-      },
-      charity: {
-        count: 4,
-        latest: '2024-06-30',
-        activities: [
-          { date: '2024-01-18', title: 'Orphanage Visit' },
-          { date: '2024-03-09', title: 'Blood Donation Drive' },
-          { date: '2024-05-22', title: 'Stationery Kit Distribution' },
-          { date: '2024-06-30', title: 'Beach Cleanup Campaign' },
         ],
       },
     },

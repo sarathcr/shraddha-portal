@@ -92,7 +92,7 @@ const handleUserFormSubmit = async (payload: Committee): Promise<void> => {
   }
 }
 const handleViewCommittee = async (row: { id: string }): Promise<void> => {
-  await router.push(`/admin/committe/${row.id}/dashboard`)
+  await router.push(`/admin/committe/${row.id}`)
 }
 
 onMounted(() => {

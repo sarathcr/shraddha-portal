@@ -9,6 +9,16 @@ export interface Committee extends RowData {
   createdAt: string
 }
 
+export interface CommitteeCard {
+  title: string
+  icon: string
+  colorClasses: {
+    bg: string
+    text: string
+  }
+  countValue: number
+  countLabel: string
+}
 export interface CommitteeDashboard {
   id: string
   year: string
@@ -19,20 +29,17 @@ export interface CommitteeDashboard {
       values: number[]
     }
   }
-  moms: {
-    date: string
-    pdfUrl: string
-  }[]
+  moms: Mom[]
   birthdayGift: {
-    totalCelebrated: number
     year: number
+    list: {
+      month: string
+      totalCelebrated: number
+    }[]
   }
   tournaments: {
     completed: number
-    list: {
-      name: string
-      date: string
-    }[]
+    list: Tournament[]
   }
   events: {
     year: number
@@ -50,4 +57,14 @@ export interface CommitteeDashboard {
       title: string
     }[]
   }
+}
+export interface Tournament {
+  name: string
+  startDate: string
+  endDate: string
+}
+
+export interface Mom {
+  date: string
+  pdfUrl: string
 }
