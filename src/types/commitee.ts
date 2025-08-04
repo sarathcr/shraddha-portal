@@ -57,6 +57,11 @@ export interface CommitteeDashboard {
       title: string
     }[]
   }
+  members: {
+    total: number
+    newThisYear: number
+    active: number
+  }
 }
 export interface Tournament {
   name: string

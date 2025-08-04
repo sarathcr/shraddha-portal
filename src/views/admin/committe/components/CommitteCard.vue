@@ -24,6 +24,7 @@ defineProps<{
 
     <div class="flex flex-col justify-between h-full pr-16">
       <h2 class="text-base font-semibold text-gray-800">{{ title }}</h2>
+      <p class="text-black text-2xl">{{ countValue }}</p>
       <p v-if="countValue !== undefined && countLabel" class="text-sm text-gray-500 mt-2">
         {{ countValue }} <span class="lowercase">{{ countLabel }}</span>
       </p>

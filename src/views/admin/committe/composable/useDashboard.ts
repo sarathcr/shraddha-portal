@@ -94,13 +94,6 @@ export function useDashboard(): {
 
       cards.value = [
         {
-          title: 'Tournaments',
-          icon: 'pi pi-trophy',
-          colorClasses: { bg: 'bg-pink-100', text: 'text-pink-600' },
-          countValue: dashboard.tournaments.completed,
-          countLabel: 'tournaments completed this year',
-        },
-        {
           title: 'Events',
           icon: 'pi pi-calendar',
           colorClasses: { bg: 'bg-purple-100', text: 'text-purple-600' },
@@ -113,6 +106,23 @@ export function useDashboard(): {
           colorClasses: { bg: 'bg-red-100', text: 'text-red-600' },
           countValue: dashboard.charity.count,
           countLabel: 'completed this year',
+        },
+        {
+          title: 'Members',
+          icon: 'pi pi-users',
+          colorClasses: { bg: 'bg-pink-100', text: 'text-pink-600' },
+          countValue: dashboard.members.total,
+          countLabel: 'total members this committee',
+        },
+        {
+          title: 'Birthday-Gifts',
+          icon: 'pi pi-gift',
+          colorClasses: { bg: 'bg-yellow-100', text: 'text-yellow-600' },
+          countValue: dashboard.birthdayGift.list.reduce(
+            (sum, gift) => sum + gift.totalCelebrated,
+            0,
+          ),
+          countLabel: 'birthdays celebrated this year',
         },
       ]
 

@@ -33,7 +33,9 @@ const committeeCards = computed(() => cards.value as CommitteeCard[])
 const lastFiveMonthsData = computed(() => birthdayGift.value.slice(-3))
 
 const filteredCards = computed(() =>
-  committeeCards.value.filter((card) => ['Events', 'Charity', 'Tournaments'].includes(card.title)),
+  committeeCards.value.filter((card) =>
+    ['Events', 'Charity', 'Members', 'Birthday-Gifts'].includes(card.title),
+  ),
 )
 
 const tournamentCount = computed(
@@ -43,9 +45,9 @@ const tournamentCount = computed(
 
 <template>
   <div class="flex flex-col gap-6 h-full">
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 flex-grow">
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 flex-grow">
       <template v-if="isLoadingCards">
-        <CommitteeCardSkelton v-for="n in 3" :key="n" />
+        <CommitteeCardSkelton v-for="n in 4" :key="n" />
       </template>
       <template v-else>
         <FolderCard

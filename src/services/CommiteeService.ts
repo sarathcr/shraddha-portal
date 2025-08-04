@@ -102,6 +102,11 @@ export const committeeDashboards: ApiResponse<CommitteeDashboard[]> = {
           { date: '2025-07-18', title: 'Support for Flood Relief' },
         ],
       },
+      members: {
+        total: 150,
+        newThisYear: 12,
+        active: 140,
+      },
     },
   ],
   errors: null,
