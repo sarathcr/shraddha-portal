@@ -5,7 +5,7 @@ import { isLoading, simulateApiCall } from '@/stores/loader'
 import type { Committee } from '@/types/commitee'
 import type { ColumnDef, RowData } from '@/types/baseTable.model'
 import type { OptionItem } from '@/types/user'
-import type { APIError, ApiResponse } from '@/types'
+import type { APIError, ApiResponse } from '@/types/index'
 import { editCommittee, getCommittee, deleteCommittee } from '../../services/committee.services'
 import { getAllUsers } from '../../services/roles-and-access.services'
 import { committeeData } from '@/services/CommiteeService'
@@ -134,9 +134,14 @@ export function useCommittee(): {
         message: 'Committee created successfully',
         errors: null,
         succeeded: true,
+        pageNumber: 1,
+        pageSize: 1,
+        totalPages: 1,
+        totalRecords: 1,
       }
     })
   }
+
   const handleEdit = async (
     newData: Committee,
     oldData: Committee,
