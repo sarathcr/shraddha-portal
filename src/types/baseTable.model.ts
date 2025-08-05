@@ -10,6 +10,7 @@ export interface ColumnDef {
   filterOption?: boolean
   options?: { label: string; value: string }[]
   placeholder?: string
+  required?: boolean
 }
 
 export interface RowData {

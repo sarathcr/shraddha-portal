@@ -1,10 +1,12 @@
+import { createRouter, createWebHashHistory } from 'vue-router'
+
 import DashboardLayout from '@/layouts/DashboardLayout.vue'
 import CommitteView from '@/views/admin/committe/CommitteView.vue'
+import CommitteeDashboarView from '@/views/admin/committe/dashboard/committeeDashboarView.vue'
 import DashboardView from '@/views/admin/dashboard/DashboardView.vue'
 import RolesView from '@/views/admin/roles/RolesView.vue'
-
 import LoginView from '@/views/auth/login/LoginView.vue'
-import { createRouter, createWebHashHistory } from 'vue-router'
+import CommitteeListView from '@/views/admin/committe/CommitteeListView.vue'
 
 const router = createRouter({
   history: createWebHashHistory(import.meta.env.BASE_URL),
@@ -17,22 +19,25 @@ const router = createRouter({
     },
     {
       path: '/admin',
-      name: 'Dashboard Layout',
       component: DashboardLayout,
       children: [
         {
-          path: '/admin/committe',
-          name: 'committe',
+          path: 'committe',
           component: CommitteView,
+          children: [
+            { path: '', component: CommitteeListView },
+            {
+              path: ':id',
+              component: CommitteeDashboarView,
+            },
+          ],
         },
         {
-          path: '/admin/dashboard',
-          name: 'dashboard',
+          path: 'dashboard',
           component: DashboardView,
         },
         {
-          path: '/admin/roles',
-          name: 'roles',
+          path: 'roles',
           component: RolesView,
         },
       ],

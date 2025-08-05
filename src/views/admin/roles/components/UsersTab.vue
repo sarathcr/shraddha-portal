@@ -6,10 +6,10 @@ import Button from 'primevue/button'
 import { ref, onMounted } from 'vue'
 import { useUsers } from '@/views/admin/roles/composables/useUser'
 import UserForm from './UserForm.vue'
+import { useValidation } from '@/views/admin/roles/composables/useValidation'
 import type { User } from '@/types/user'
 import type { RowData } from '@/types/baseTable.model'
 
-// Composable usage
 const {
   users,
   roles,
@@ -21,6 +21,8 @@ const {
   editUser,
   deleteUser,
 } = useUsers()
+
+const { validationErrors, validateField, resetValidation, isSaveDisabled } = useValidation()
 
 const userFormDialogVisible = ref(false)
 const userFormRef = ref<InstanceType<typeof UserForm> | null>(null)
@@ -47,11 +49,20 @@ const onEdit = (row: RowData): void => {
 }
 
 const onSave = async (newData: RowData): Promise<void> => {
+  columns.forEach((col) => {
+    if (col.required) {
+      validateField(col.key, newData[col.key], col.label)
+    }
+  })
+
+  if (Object.keys(validationErrors.value).length > 0) return
+
   if (originalUser.value) {
     await editUser(newData as User, originalUser.value)
   }
   editingRows.value = []
   originalUser.value = null
+  resetValidation()
 }
 
 const onCancel = (): void => {
@@ -63,6 +74,7 @@ const onCancel = (): void => {
   }
   editingRows.value = []
   originalUser.value = null
+  resetValidation()
 }
 
 const handleDeleteConfirmation = (row: RowData, event?: Event): void => {
@@ -70,15 +82,16 @@ const handleDeleteConfirmation = (row: RowData, event?: Event): void => {
 }
 
 const columns = [
-  { label: 'Name', key: 'name', filterable: true },
-  { label: 'Employee ID', key: 'employeeId', filterable: true },
-  { label: 'Email', key: 'email', filterable: true },
+  { label: 'Name', key: 'name', filterable: true, required: true },
+  { label: 'Employee ID', key: 'employeeId', filterable: true, required: true },
+  { label: 'Email', key: 'email', filterable: true, required: true }, // Email now validated
   {
     label: 'Team',
     key: 'team',
     filterable: true,
     useTag: true,
     useMultiSelect: true,
+    required: true,
   },
   {
     label: 'Role',
@@ -86,6 +99,7 @@ const columns = [
     filterable: true,
     useTag: true,
     filterOption: true,
+    required: true,
   },
 ]
 
@@ -95,11 +109,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div v-if="isLoading" class="flex justify-center items-center h-full">
-    <p>Loading user data...</p>
-  </div>
-
-  <div v-else class="space-y-4 h-full">
+  <div class="space-y-4 h-full">
     <ConfirmPopup class="mx-4" />
     <Dialog
       v-model:visible="userFormDialogVisible"
@@ -125,8 +135,10 @@ onMounted(() => {
       :editableRow="editingRows[0] as RowData"
       :statusOptions="roles"
       :multiSelectOption="teams"
+      :loading="isLoading"
       @save="onSave"
       @cancel="onCancel"
+      :saveDisabled="isSaveDisabled"
     >
       <template #table-header>
         <Button label="New User" icon="pi pi-plus" severity="help" @click="openCreateUserDialog" />
