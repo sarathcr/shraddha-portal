@@ -178,6 +178,7 @@ const hasTableHeader = computed(() => !!slots['table-header'])
                   v-model="tempRow[col.key] as string"
                   :type="col.key === 'email' ? 'email' : 'text'"
                   class="w-full"
+                  filter
                   @blur="validateField(col.key, tempRow[col.key], col.label)"
                 />
                 <p v-if="validationErrors[col.key]" class="text-red-500 text-xs mt-1">
@@ -217,6 +218,8 @@ const hasTableHeader = computed(() => !!slots['table-header'])
                 optionValue="value"
                 :placeholder="col.placeholder || `Select ${col.label}`"
                 class="w-full"
+                :readonly="true"
+                @focus="$event.target && ($event.target as HTMLElement).removeAttribute('readonly')"
                 @change="filterCallback()"
               />
               <DatePicker
@@ -226,6 +229,8 @@ const hasTableHeader = computed(() => !!slots['table-header'])
                 showIcon
                 placeholder="Select Date"
                 class="w-full"
+                :readonly="true"
+                @focus="$event.target && ($event.target as HTMLElement).removeAttribute('readonly')"
                 @date-select="filterCallback()"
                 @change="filterCallback()"
               />
@@ -238,8 +243,9 @@ const hasTableHeader = computed(() => !!slots['table-header'])
                 :placeholder="col.placeholder || `Select ${col.label}`"
                 filter
                 display="chip"
-                :maxSelectedLabels="3"
                 class="w-full"
+                :readonly="true"
+                @focus="$event.target && ($event.target as HTMLElement).removeAttribute('readonly')"
                 @change="filterCallback()"
               />
               <InputText
@@ -247,6 +253,8 @@ const hasTableHeader = computed(() => !!slots['table-header'])
                 v-model="filterModel.value"
                 class="w-full"
                 :placeholder="`Search ${col.label}`"
+                :readonly="true"
+                @focus="$event.target && ($event.target as HTMLElement).removeAttribute('readonly')"
                 @input="filterCallback()"
               />
             </div>
