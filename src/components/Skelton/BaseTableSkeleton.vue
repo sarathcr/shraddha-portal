@@ -26,7 +26,7 @@ defineProps<{
       </div>
     </template>
 
-    <Column v-for="i in columnsCount" :key="i" style="min-width: 200px">
+    <Column v-for="i in columnsCount - 1" :key="i" style="min-width: 200px">
       <template #header>
         <Skeleton width="7rem" height="1.5rem"></Skeleton>
       </template>
@@ -38,7 +38,7 @@ defineProps<{
       </template>
     </Column>
 
-    <Column header="Actions" style="min-width: 150px">
+    <Column style="min-width: 150px">
       <template #header>
         <Skeleton width="5rem" height="1.5rem"></Skeleton>
       </template>
