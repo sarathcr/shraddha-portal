@@ -39,8 +39,6 @@ export function useLogin(): UseLoginReturn {
           const message = error.response?.data?.errorValue || 'An error occurred.'
           toast.add({ severity: 'error', summary: 'Error', detail: message, life: 3000 })
         }
-      } else {
-        console.error('Unexpected error during login:', error)
       }
     }
   }
