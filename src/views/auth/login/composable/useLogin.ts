@@ -3,6 +3,7 @@ import type { LoginCredentials } from '@/types/login.models'
 import { UserLogin } from '../../services/login.service'
 import { useToast } from 'primevue/usetoast'
 import axios from 'axios'
+import { useAuthStore } from '@/stores/auth' // adjust path to your pinia auth store
 
 interface UseLoginReturn {
   handleLogin: (credentials: LoginCredentials) => Promise<void>
@@ -11,6 +12,7 @@ interface UseLoginReturn {
 export function useLogin(): UseLoginReturn {
   const router = useRouter()
   const toast = useToast()
+  const authStore = useAuthStore()
 
   const handleLogin = async (credentials: LoginCredentials): Promise<void> => {
     try {
@@ -22,8 +24,21 @@ export function useLogin(): UseLoginReturn {
       }
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        const message = error.response?.data?.errorValue
-        toast.add({ severity: 'error', summary: 'Error', detail: message, life: 3000 })
+        if (error.response?.status === 401) {
+          authStore.$reset()
+
+          toast.add({
+            severity: 'warn',
+            summary: 'Session Expired',
+            detail: 'Your session has expired. Please log in again.',
+            life: 3000,
+          })
+
+          await router.push('/login')
+        } else {
+          const message = error.response?.data?.errorValue || 'An error occurred.'
+          toast.add({ severity: 'error', summary: 'Error', detail: message, life: 3000 })
+        }
       } else {
         console.error('Unexpected error during login:', error)
       }
