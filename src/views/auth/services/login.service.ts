@@ -17,6 +17,7 @@ export const UserLogin = async (
   if (data?.accessToken && data?.refreshToken) {
     const authStore = useAuthStore()
     authStore.setTokens(data.accessToken, data.refreshToken)
+    console.error(authStore)
   }
 
   return data

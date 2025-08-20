@@ -20,6 +20,8 @@ export const useAuthStore = defineStore(
     return { accessToken, refreshToken, setTokens, clearTokens }
   },
   {
-    persist: true,
+    persist: {
+      storage: sessionStorage,
+    },
   },
 )
