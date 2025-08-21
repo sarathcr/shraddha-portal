@@ -23,7 +23,7 @@ const tabs = ref([
   <Toast position="top-right" />
   <div class="roles__content bg-white w-full rounded-md shadow z-0">
     <Tabs :value="selectedTab" @update:value="selectedTab = String($event)">
-      <TabList class="sticky top-0 bg-white">
+      <TabList class="sticky !overflow-visible top-0 bg-white">
         <Tab v-for="tab in tabs" :key="tab.value" :value="tab.value">{{ tab.title }}</Tab>
       </TabList>
       <TabPanels class="p-0!">

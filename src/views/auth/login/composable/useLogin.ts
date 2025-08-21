@@ -3,7 +3,7 @@ import type { LoginCredentials } from '@/types/login.models'
 import { UserLogin } from '../../services/login.service'
 import { useToast } from 'primevue/usetoast'
 import axios from 'axios'
-import { useAuthStore } from '@/stores/auth' // adjust path to your pinia auth store
+import { useAuthStore } from '@/stores/auth'
 
 interface UseLoginReturn {
   handleLogin: (credentials: LoginCredentials) => Promise<void>

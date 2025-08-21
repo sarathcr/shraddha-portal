@@ -7,16 +7,19 @@ import DashboardView from '@/views/admin/dashboard/DashboardView.vue'
 import RolesView from '@/views/admin/roles/RolesView.vue'
 import LoginView from '@/views/auth/login/LoginView.vue'
 import CommitteeListView from '@/views/admin/committe/CommitteeListView.vue'
+import { useAuthStore } from '@/stores/auth'
 
 const router = createRouter({
   history: createWebHashHistory(import.meta.env.BASE_URL),
   routes: [
-    { path: '/:pathMatch(.*)*', redirect: '/login' },
+    { path: '/', redirect: '/login' },
+
     {
       path: '/login',
       name: 'login',
       component: LoginView,
     },
+
     {
       path: '/admin',
       component: DashboardLayout,
@@ -26,23 +29,28 @@ const router = createRouter({
           component: CommitteView,
           children: [
             { path: '', component: CommitteeListView },
-            {
-              path: ':id',
-              component: CommitteeDashboarView,
-            },
+            { path: ':id', component: CommitteeDashboarView },
           ],
         },
-        {
-          path: 'dashboard',
-          component: DashboardView,
-        },
-        {
-          path: 'roles',
-          component: RolesView,
-        },
+        { path: 'dashboard', component: DashboardView },
+        { path: 'roles', component: RolesView },
       ],
     },
+
+    { path: '/:pathMatch(.*)*', redirect: '/login' },
   ],
+})
+
+router.beforeEach((to, from, next) => {
+  const authStore = useAuthStore()
+  if (!authStore.accessToken && to.path.startsWith('/admin')) {
+    return next('/login')
+  }
+  if (authStore.accessToken && to.path === '/login') {
+    return next('/admin/dashboard')
+  }
+
+  next()
 })
 
 export default router
