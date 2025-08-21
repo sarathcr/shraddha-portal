@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AppLogo from '../../../components/AppLogo.vue'
 import LoginForm from './components/LoginForm.vue'
+import Toast from 'primevue/toast'
 import { useLogin } from './composable/useLogin'
 
 const { handleLogin } = useLogin()
@@ -12,6 +13,7 @@ const { handleLogin } = useLogin()
       <AppLogo />
       <div class="login__form-wrapper grow-1">
         <LoginForm @submit="handleLogin" />
+        <Toast />
       </div>
     </div>
     <figure class="login__coverImage basis-1/2 rounded-xl overflow-hidden hidden lg:block">
