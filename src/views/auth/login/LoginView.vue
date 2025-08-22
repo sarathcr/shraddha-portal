@@ -1,15 +1,10 @@
 <script setup lang="ts">
 import AppLogo from '../../../components/AppLogo.vue'
 import LoginForm from './components/LoginForm.vue'
-import type { LoginCredentials } from './models/login.models'
-import { useRouter } from 'vue-router'
+import Toast from 'primevue/toast'
+import { useLogin } from './composable/useLogin'
 
-const router = useRouter()
-const handleLogin = async (credentials: LoginCredentials): Promise<void> => {
-  // eslint-disable-next-line no-console
-  console.log('Received login data:', credentials)
-  await router.push('/admin/dashboard')
-}
+const { handleLogin } = useLogin()
 </script>
 
 <template>
@@ -18,6 +13,7 @@ const handleLogin = async (credentials: LoginCredentials): Promise<void> => {
       <AppLogo />
       <div class="login__form-wrapper grow-1">
         <LoginForm @submit="handleLogin" />
+        <Toast />
       </div>
     </div>
     <figure class="login__coverImage basis-1/2 rounded-xl overflow-hidden hidden lg:block">

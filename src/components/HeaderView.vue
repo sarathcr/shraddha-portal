@@ -1,8 +1,16 @@
 <script setup lang="ts">
 import { useSidebarStore } from '@/stores/sidebar'
 import AppLogo from './AppLogo.vue'
+import { useAuthStore } from '@/stores/auth'
+import router from '@/router'
 
 const sidebarStore = useSidebarStore()
+const authStore = useAuthStore()
+
+const handleLogout = async (): Promise<void> => {
+  authStore.clearTokens()
+  await router.push('/login')
+}
 </script>
 
 <template>
@@ -20,7 +28,7 @@ const sidebarStore = useSidebarStore()
           <a href="/about"><i class="pi pi-user"></i></a>
         </li>
         <li>
-          <a href="/contact"><i class="pi pi-sign-out"></i></a>
+          <a @click="handleLogout"><i class="pi pi-sign-out"></i></a>
         </li>
       </ul>
     </nav>

@@ -1,6 +1,6 @@
 <script lang="ts">
 import { Button as PrimeButton, FloatLabel, InputText, Password } from 'primevue'
-import type { LoginCredentials } from '../models/login.models'
+import type { LoginCredentials } from '../../../../types/login.models'
 import { defineComponent, ref } from 'vue'
 
 export default defineComponent({
@@ -16,24 +16,22 @@ export default defineComponent({
     props: Record<string, unknown>,
     { emit }: { emit: (event: 'submit', payload: LoginCredentials) => void },
   ) {
-    const username = ref('')
+    const email = ref('')
     const password = ref('')
 
     const handleSubmit = (event: Event): void => {
       event.preventDefault()
       const credentials: LoginCredentials = {
-        username: username.value,
+        email: email.value,
         password: password.value,
       }
       emit('submit', credentials)
-
-      // Reset the form fields after submission
-      username.value = ''
+      email.value = ''
       password.value = ''
     }
 
     return {
-      username,
+      email,
       password,
       handleSubmit,
     }
@@ -53,8 +51,8 @@ export default defineComponent({
       <form @submit.prevent="handleSubmit">
         <div class="form-group mb-6">
           <FloatLabel variant="on">
-            <InputText class="w-full" id="username" inputmode="email" v-model="username" required />
-            <label for="username">Username</label>
+            <InputText class="w-full" id="email" inputmode="email" v-model="email" required />
+            <label for="email">Username</label>
           </FloatLabel>
         </div>
         <div class="form-group mb-6">

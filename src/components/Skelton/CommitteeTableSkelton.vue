@@ -19,7 +19,7 @@ import Skeleton from 'primevue/skeleton'
           </tr>
         </thead>
         <tbody>
-          <tr v-for="i in 5" :key="i" class="bg-gray-50">
+          <tr v-for="i in 3" :key="i" class="bg-gray-50">
             <td class="py-2">
               <Skeleton width="6rem" height="1rem" />
             </td>

@@ -33,8 +33,11 @@
   "dependencies": {
     "@primeuix/themes": "^1.1.1",
     "@vueuse/core": "^13.5.0",
+    "axios": "^1.11.0",
     "chart.js": "^4.5.0",
+    "jsencrypt": "^3.5.4",
     "pinia": "^3.0.1",
+    "pinia-plugin-persistedstate": "^4.5.0",
     "primeicons": "^7.0.0",
     "primevue": "^4.3.4",
     "vee-validate": "^4.15.1",

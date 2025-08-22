@@ -26,3 +26,12 @@ export interface ApiResponse<T> {
   totalPages: number
   totalRecords: number
 }
+
+export interface LoginResponse<T> {
+  data?: T
+  accessToken: string
+  refreshToken: string
+  message: string
+  succeeded: boolean
+  errors: string[] | null
+}
