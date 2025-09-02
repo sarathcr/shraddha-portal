@@ -11,7 +11,7 @@ import InputText from 'primevue/inputtext'
 import Tag from 'primevue/tag'
 import { computed, reactive, ref, watch } from 'vue'
 import { useSlots } from 'vue'
-import { Select } from 'primevue'
+import Select from 'primevue/select'
 import BaseTableSkeleton from './Skelton/BaseTableSkeleton.vue'
 import Paginator from 'primevue/paginator'
 import { useValidation } from '@/views/admin/roles/composables/useValidation'
@@ -19,6 +19,7 @@ import { useValidation } from '@/views/admin/roles/composables/useValidation'
 const props = defineProps<{
   columns: ColumnDef[]
   rows: RowData[]
+  totalRecords?: number
   pageSize?: number
   editableRow?: RowData | null
   statusOptions?: { label: string; value: string }[]
@@ -32,6 +33,7 @@ const emit = defineEmits<{
   (e: 'cancel'): void
   (e: 'delete', row: RowData): void
   (e: 'update:filters', filters: Record<string, { value: unknown; matchMode: string }>): void
+  (e: 'page', event: { page: number; rows: number }): void
 }>()
 
 const tempRow = reactive<RowData>({})
@@ -90,7 +92,13 @@ function getSeverity(value: unknown): string {
 
 const slots = useSlots()
 const hasTableHeader = computed(() => !!slots['table-header'])
+
+const onPaginatorPageChange = (event: { page: number; rows: number; first: number }): void => {
+  first.value = event.first
+  emit('page', { page: event.page, rows: event.rows })
+}
 </script>
+
 <template>
   <div class="space-y-4 h-full p-4 flex flex-col justify-between">
     <div class="bg-white rounded-md max-h-[calc(100vh-200px)] overflow-hidden flex flex-col">
@@ -101,7 +109,7 @@ const hasTableHeader = computed(() => !!slots['table-header'])
       />
       <DataTable
         v-else
-        :value="rows.slice(first, first + (pageSize || 20))"
+        :value="rows"
         v-model:filters="filters"
         filterDisplay="row"
         scrollable
@@ -290,10 +298,11 @@ const hasTableHeader = computed(() => !!slots['table-header'])
     <div class="flex justify-center w-full bg-white sticky bottom-0 z-10">
       <Paginator
         :rows="pageSize || 20"
-        :totalRecords="rows.length"
-        :rowsPerPageOptions="[5, 10, 20]"
+        :totalRecords="totalRecords || rows.length"
+        :rowsPerPageOptions="[5, 10, 20, 50, 100]"
         v-model:first="first"
         class="w-full"
+        @page="onPaginatorPageChange"
       />
     </div>
   </div>
