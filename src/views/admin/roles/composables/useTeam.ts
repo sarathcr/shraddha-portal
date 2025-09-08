@@ -4,8 +4,18 @@ import { useToast } from 'primevue/usetoast'
 import type { Team } from '@/types/team'
 import type { ApiResponse } from '@/types/index'
 import api from '@/constants/api'
-import { TeamService } from '@/services/TeamService'
 import { useAuthStore } from '@/stores/auth'
+import { FilterMatchMode } from '@primevue/core/api'
+import type { DataTableFilterMeta, DataTableSortMeta } from 'primevue/datatable'
+
+type LazyLoadEvent = {
+  first: number
+  rows: number
+  filters: DataTableFilterMeta | undefined
+  sortField?: string | ((item: unknown) => string) | null
+  sortOrder?: 0 | 1 | -1 | null
+  multiSortMeta?: DataTableSortMeta[] | null
+}
 
 export const useTeams = (): {
   teams: Ref<Team[]>
@@ -15,7 +25,7 @@ export const useTeams = (): {
   pageSize: Ref<number>
   editingRows: Ref<Team[]>
   fetchInitialData: () => Promise<void>
-  fetchTeams: (page: number, size: number) => Promise<void>
+  onLazyLoad: (event: LazyLoadEvent) => Promise<void>
   createTeam: (team: Omit<Team, 'id'>) => Promise<boolean>
   editTeam: (team: Team) => Promise<void>
   deleteTeam: (team: Team, event?: Event) => void
@@ -31,20 +41,108 @@ export const useTeams = (): {
   const pageSize = ref<number>(20)
   const editingRows = ref<Team[]>([])
 
-  const fetchTeams = async (page: number, size: number): Promise<void> => {
+  const mapMatchModeToOperator = (matchMode: string, value: unknown): string => {
+    switch (matchMode) {
+      case FilterMatchMode.CONTAINS:
+        return `like %${value}%`
+      case FilterMatchMode.NOT_CONTAINS:
+        return `not like %${value}%`
+      case FilterMatchMode.STARTS_WITH:
+        return `like ${value}%`
+      case FilterMatchMode.ENDS_WITH:
+        return `like %${value}`
+      case FilterMatchMode.EQUALS:
+        return `= ${value}`
+      case FilterMatchMode.NOT_EQUALS:
+        return `!= ${value}`
+      case FilterMatchMode.LESS_THAN:
+        return `< ${value}`
+      case FilterMatchMode.LESS_THAN_OR_EQUAL_TO:
+        return `<= ${value}`
+      case FilterMatchMode.GREATER_THAN:
+        return `> ${value}`
+      case FilterMatchMode.GREATER_THAN_OR_EQUAL_TO:
+        return `>= ${value}`
+      case FilterMatchMode.DATE_IS:
+        return `= ${value}`
+      case FilterMatchMode.DATE_IS_NOT:
+        return `!= ${value}`
+      case FilterMatchMode.DATE_BEFORE:
+        return `< ${value}`
+      case FilterMatchMode.DATE_AFTER:
+        return `> ${value}`
+      default:
+        return `= ${value}`
+    }
+  }
+
+  const onLazyLoad = async (event: LazyLoadEvent): Promise<void> => {
     isLoading.value = true
     try {
-      const response = await TeamService.getTeamsData(page, size)
-      if (response.succeeded) {
-        teams.value = response.data
-        totalRecords.value = response.totalRecords
-        pageNumber.value = response.pageNumber
-        pageSize.value = response.pageSize
+      const payload: {
+        pagination: { pageNumber: number; pageSize: number }
+        multiSortedColumns: { active: string | undefined; direction: string }[]
+        filterMap: Record<string, string>
+      } = {
+        pagination: {
+          pageNumber: event.first / event.rows + 1,
+          pageSize: event.rows,
+        },
+        multiSortedColumns: [],
+        filterMap: {},
+      }
+
+      if (event.sortField) {
+        payload.multiSortedColumns.push({
+          active: event.sortField as string,
+          direction: event.sortOrder === 1 ? 'asc' : 'desc',
+        })
+      }
+
+      if (event.filters) {
+        const filters = event.filters as DataTableFilterMeta
+        Object.entries(filters).forEach(([field, filterMeta]) => {
+          const filter = filterMeta as {
+            operator: string
+            constraints: { value: unknown; matchMode: string }[]
+          }
+
+          if (filter.constraints && filter.constraints.length > 0) {
+            const validConstraints = filter.constraints.filter(
+              (c) => c.value !== null && c.value !== undefined,
+            )
+
+            if (validConstraints.length > 0) {
+              const filterString = validConstraints
+                .map((constraint, index) => {
+                  const operator =
+                    index === 0 ? '' : filter.operator.toUpperCase() === 'OR' ? 'OR' : 'AND'
+                  const condition = mapMatchModeToOperator(constraint.matchMode, constraint.value)
+                  return `${operator} ${condition}`.trim()
+                })
+                .join(' ')
+
+              payload.filterMap[field] = filterString
+            }
+          }
+        })
+      }
+
+      const response = await api.post<ApiResponse<Team[]>>(
+        '/authorization/Departments/pagination',
+        payload,
+      )
+
+      if (response.data.succeeded) {
+        teams.value = response.data.data
+        totalRecords.value = response.data.totalRecords
+        pageNumber.value = response.data.pageNumber
+        pageSize.value = response.data.pageSize
       } else {
         toast.add({
           severity: 'error',
           summary: 'Error',
-          detail: response.message || 'Failed to load team data.',
+          detail: response.data.message || 'Failed to load team data.',
           life: 3000,
         })
       }
@@ -62,7 +160,13 @@ export const useTeams = (): {
   }
 
   const fetchInitialData = async (): Promise<void> => {
-    await fetchTeams(pageNumber.value, pageSize.value)
+    await onLazyLoad({
+      first: 0,
+      rows: pageSize.value,
+      filters: undefined,
+      sortField: null,
+      sortOrder: null,
+    })
   }
 
   const createTeam = async (team: Omit<Team, 'id'>): Promise<boolean> => {
@@ -72,19 +176,20 @@ export const useTeams = (): {
         throw new Error('Authentication token not found. Please log in again.')
       }
 
-      await api.post<ApiResponse<Team>>('/authorization/Departments', team, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-      })
+      await api.post<ApiResponse<Team>>('/authorization/Departments', team)
       toast.add({
         severity: 'success',
         summary: 'Success',
         detail: 'Team created successfully.',
         life: 3000,
       })
-      await fetchTeams(pageNumber.value, pageSize.value)
+      await onLazyLoad({
+        first: (pageNumber.value - 1) * pageSize.value,
+        rows: pageSize.value,
+        filters: undefined,
+        sortField: null,
+        sortOrder: null,
+      })
       return true
     } catch (error) {
       toast.add({
@@ -105,19 +210,20 @@ export const useTeams = (): {
         throw new Error('Authentication token not found. Please log in again.')
       }
 
-      await api.put<ApiResponse<Team>>(`/authorization/Departments/${team.id}`, team, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-      })
+      await api.put<ApiResponse<Team>>(`/authorization/Departments/${team.id}`, team)
       toast.add({
         severity: 'success',
         summary: 'Success',
         detail: 'Team updated successfully.',
         life: 3000,
       })
-      await fetchTeams(pageNumber.value, pageSize.value)
+      await onLazyLoad({
+        first: (pageNumber.value - 1) * pageSize.value,
+        rows: pageSize.value,
+        filters: undefined,
+        sortField: null,
+        sortOrder: null,
+      })
     } catch (error) {
       toast.add({
         severity: 'error',
@@ -135,25 +241,27 @@ export const useTeams = (): {
       message: 'Do you want to delete this team?',
       icon: 'pi pi-info-circle',
       acceptClass: 'p-button-danger',
-
+      rejectClass: 'p-button-secondary p-button-outlined',
       accept: async () => {
         try {
           const accessToken = authStore.accessToken
           if (!accessToken) {
             throw new Error('Authentication token not found. Please log in again.')
           }
-          await api.delete(`/authorization/Departments/${team.id}`, {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          })
+          await api.delete(`/authorization/Departments/${team.id}`)
           toast.add({
             severity: 'success',
             summary: 'Success',
             detail: 'Team deleted successfully.',
             life: 3000,
           })
-          await fetchTeams(pageNumber.value, pageSize.value)
+          await onLazyLoad({
+            first: (pageNumber.value - 1) * pageSize.value,
+            rows: pageSize.value,
+            filters: undefined,
+            sortField: null,
+            sortOrder: null,
+          })
         } catch (error) {
           toast.add({
             severity: 'error',
@@ -175,7 +283,7 @@ export const useTeams = (): {
     pageSize,
     editingRows,
     fetchInitialData,
-    fetchTeams,
+    onLazyLoad,
     createTeam,
     editTeam,
     deleteTeam,

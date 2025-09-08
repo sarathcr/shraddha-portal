@@ -20,7 +20,7 @@ const {
   deleteTeam,
   totalRecords,
   pageSize,
-  fetchTeams,
+  onLazyLoad,
 } = useTeams()
 
 const { validationErrors, validateField, resetValidation, isSaveDisabled } = useValidation()
@@ -80,18 +80,13 @@ const handleDeleteConfirmation = (row: RowData, event?: Event): void => {
   deleteTeam(row as Team, event)
 }
 
-const onPageChange = (event: { page: number; rows: number }): void => {
-  const newPageNumber = event.page + 1
-  const newPageSize = event.rows
-  void fetchTeams(newPageNumber, newPageSize)
-}
-
 const columns = [
   {
     label: 'Team Name',
     key: 'teamName',
     filterable: true,
     required: true,
+    backendKey: 'Name',
   },
   {
     label: 'Description',
@@ -135,7 +130,7 @@ onMounted(() => {
       :loading="isLoading"
       @save="onSaveTeam"
       @cancel="onCancelEdit"
-      @page="onPageChange"
+      @lazy:load="onLazyLoad"
       :paginator="true"
       :saveDisabled="isSaveDisabled"
     >
@@ -160,3 +155,9 @@ onMounted(() => {
     </BaseTable>
   </div>
 </template>
+
+<style lang="scss">
+.p-datatable-header {
+  padding: 0 0 1rem 0 !important;
+}
+</style>

@@ -24,12 +24,6 @@ export const TeamService = {
     const response = await api.post<ApiResponse<Team[]>>(
       '/authorization/Departments/pagination',
       payload,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json-patch+json',
-        },
-      },
     )
 
     return response.data
