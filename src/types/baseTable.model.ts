@@ -11,6 +11,7 @@ export interface ColumnDef {
   options?: { label: string; value: string }[]
   placeholder?: string
   required?: boolean
+  backendKey?: string
 }
 
 export interface RowData {
@@ -25,4 +26,12 @@ export interface UseCommitteeTableReturn {
   onSave: () => void
   onCancel: () => void
   onDelete: (row: RowData) => void
+}
+
+export type FilterMetadata = {
+  operator?: string
+  constraints?: {
+    value: unknown
+    matchMode: string
+  }[]
 }
