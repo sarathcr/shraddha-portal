@@ -7,6 +7,7 @@ import api from '@/constants/api'
 import { useAuthStore } from '@/stores/auth'
 import { FilterMatchMode } from '@primevue/core/api'
 import type { DataTableFilterMeta, DataTableSortMeta } from 'primevue/datatable'
+import axios from 'axios'
 
 type LazyLoadEvent = {
   first: number
@@ -147,12 +148,21 @@ export const useTeams = (): {
         })
       }
     } catch (error) {
-      toast.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'An error occurred while fetching teams.',
-        life: 3000,
-      })
+      if (axios.isAxiosError(error) && error.response && error.response.data?.errorValue) {
+        toast.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: error.response.data.errorValue,
+          life: 3000,
+        })
+      } else {
+        toast.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'An error occurred while fetching teams.',
+          life: 3000,
+        })
+      }
       console.error('API call failed:', error)
     } finally {
       isLoading.value = false
@@ -192,12 +202,21 @@ export const useTeams = (): {
       })
       return true
     } catch (error) {
-      toast.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'Failed to create team.',
-        life: 3000,
-      })
+      if (axios.isAxiosError(error) && error.response && error.response.data?.errorValue) {
+        toast.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: error.response.data.errorValue,
+          life: 3000,
+        })
+      } else {
+        toast.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to create team.',
+          life: 3000,
+        })
+      }
       console.error('Error creating team:', error)
       return false
     }
@@ -225,13 +244,32 @@ export const useTeams = (): {
         sortOrder: null,
       })
     } catch (error) {
-      toast.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'Failed to update team.',
-        life: 3000,
-      })
-      console.error('Error updating team:', error)
+      if (axios.isAxiosError(error) && error.response) {
+        const errorValue = error.response.data?.errorValue
+
+        if (errorValue) {
+          toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: errorValue,
+            life: 3000,
+          })
+        } else {
+          toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'An unexpected API error occurred.',
+            life: 3000,
+          })
+        }
+      } else {
+        toast.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'An unexpected error occurred. Please try again.',
+          life: 3000,
+        })
+      }
     }
   }
 
@@ -263,12 +301,21 @@ export const useTeams = (): {
             sortOrder: null,
           })
         } catch (error) {
-          toast.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'Failed to delete team.',
-            life: 3000,
-          })
+          if (axios.isAxiosError(error) && error.response && error.response.data?.errorValue) {
+            toast.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: error.response.data.errorValue,
+              life: 3000,
+            })
+          } else {
+            toast.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: 'Failed to delete team.',
+              life: 3000,
+            })
+          }
           console.error('Error deleting team:', error)
         }
       },

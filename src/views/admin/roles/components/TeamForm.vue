@@ -7,8 +7,6 @@ import FloatLabel from 'primevue/floatlabel'
 import { useForm, useField } from 'vee-validate'
 import { teamSchema } from '@/views/admin/schemas/teamSchema'
 import type { Team } from '@/types/team'
-import { useToast } from 'primevue/usetoast'
-const toast = useToast()
 const props = defineProps<{
   initialData?: Omit<Team, 'id'>
   teams: Team[]
@@ -19,7 +17,7 @@ const emit = defineEmits<{
   (e: 'cancel'): void
 }>()
 
-const { handleSubmit, errors, resetForm, setValues, setFieldError } = useForm<Omit<Team, 'id'>>({
+const { handleSubmit, errors, resetForm, setValues } = useForm<Omit<Team, 'id'>>({
   validationSchema: teamSchema,
   initialValues: props.initialData || {
     teamName: '',
@@ -36,26 +34,6 @@ defineExpose({
 })
 
 const onSubmit = handleSubmit((values) => {
-  const isTeamNameUnique = props.teams.every(
-    (t) =>
-      t.teamName.toLowerCase() !== (values.teamName as string).trim().toLowerCase() ||
-      t.id === props.initialData?.id,
-  )
-
-  if (!isTeamNameUnique) {
-    // Show error toast
-    toast.add({
-      severity: 'error',
-      summary: 'Duplicate Name',
-      detail: 'A team with this name already exists. Please choose a different name.',
-      life: 4000,
-    })
-
-    // Optionally also mark field as invalid
-    setFieldError('teamName', 'Team name must be unique.')
-    return
-  }
-
   emit('submit', values)
 })
 
