@@ -1,7 +1,7 @@
-import api from '@/constants/api'
 import type { Team } from '@/types/team'
 import type { ApiResponse } from '@/types/index'
 import { useAuthStore } from '@/stores/auth'
+import { api } from '@/constants'
 
 export const TeamService = {
   async getTeamsData(pageNumber: number, pageSize: number): Promise<ApiResponse<Team[]>> {

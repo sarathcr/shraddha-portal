@@ -3,11 +3,11 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import type { Team } from '@/types/team'
 import type { ApiResponse } from '@/types/index'
-import api from '@/constants/api'
 import { useAuthStore } from '@/stores/auth'
 import { FilterMatchMode } from '@primevue/core/api'
 import type { DataTableFilterMeta, DataTableSortMeta } from 'primevue/datatable'
 import axios from 'axios'
+import { api } from '@/constants'
 
 type LazyLoadEvent = {
   first: number

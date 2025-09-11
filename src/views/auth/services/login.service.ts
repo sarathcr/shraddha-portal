@@ -1,8 +1,8 @@
-import api from '../../../constants/api'
 import { encryptWithRSA } from '@/utils/rsaEncrypt'
 import type { LoginCredentials } from '@/types/login.models'
 import type { LoginResponse } from '@/types'
 import { useAuthStore } from '@/stores/auth'
+import { api } from '@/constants'
 
 export const UserLogin = async (
   credentials: LoginCredentials,

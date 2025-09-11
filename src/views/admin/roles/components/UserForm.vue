@@ -1,18 +1,28 @@
 <script setup lang="ts">
-import { isLoading } from '@/stores/loader'
-import type { OptionItem, User } from '@/types/user'
-import { userSchema } from '@/views/admin/schemas/userSchema'
-import { FloatLabel } from 'primevue'
-import Button from 'primevue/button'
+import { watch } from 'vue'
 import InputText from 'primevue/inputtext'
-import MultiSelect from 'primevue/multiselect'
+import Button from 'primevue/button'
+import FloatLabel from 'primevue/floatlabel'
+import { useForm, useField } from 'vee-validate'
+import { userSchema } from '@/views/admin/schemas/userSchema'
+import type { OptionItem, User } from '@/types/user'
 import Select from 'primevue/select'
-import { useField, useForm } from 'vee-validate'
+import DatePicker from 'primevue/datepicker'
+
+interface UserFormValues {
+  name: string
+  employeeId: string
+  dob: Date | null
+  email: string
+  team: string
+  role: string
+}
 
 const props = defineProps<{
   roles: OptionItem[]
   teams: OptionItem[]
-  initialData?: Omit<User, 'id' | 'dob'>
+  initialData?: Omit<User, 'id'>
+  isLoading: boolean
 }>()
 
 const emit = defineEmits<{
@@ -20,22 +30,61 @@ const emit = defineEmits<{
   (e: 'cancel'): void
 }>()
 
-const { handleSubmit, errors, resetForm } = useForm<User>({
+const { handleSubmit, errors, resetForm, setFieldValue } = useForm<UserFormValues>({
   validationSchema: userSchema,
-  initialValues: props.initialData,
 })
+
 const { value: name } = useField<string>('name')
 const { value: employeeId } = useField<string>('employeeId')
+const { value: dob } = useField<Date | null>('dob')
 const { value: email } = useField<string>('email')
-const { value: team } = useField<string[]>('team')
+const { value: team } = useField<string>('team')
 const { value: role } = useField<string>('role')
 
-defineExpose({
-  resetForm,
-})
+watch(
+  () => props.initialData,
+  (newVal) => {
+    if (newVal) {
+      setFieldValue(
+        'dob',
+        typeof newVal.dob === 'string' && newVal.dob ? new Date(newVal.dob) : null,
+      )
+
+      setFieldValue('name', newVal.name as string)
+      setFieldValue('employeeId', newVal.employeeId as string)
+      setFieldValue('email', newVal.email as string)
+      setFieldValue('team', newVal.team as string)
+      setFieldValue('role', newVal.role as string)
+    }
+  },
+  { immediate: true },
+)
+
+defineExpose({ resetForm })
 
 const onSubmit = handleSubmit((values) => {
-  emit('submit', values)
+  let dobDate: string | undefined
+
+  if (values.dob) {
+    const parsed = new Date(values.dob)
+    if (!isNaN(parsed.getTime())) {
+      dobDate = parsed.toISOString().split('T')[0]
+    }
+  }
+
+  const selectedRole = props.roles.find((r) => r.value === values.role)
+  const selectedTeam = props.teams.find((t) => t.value === values.team)
+
+  const payload: User = {
+    name: values.name?.trim() || '',
+    employeeId: values.employeeId?.trim() || '',
+    email: values.email?.trim() || '',
+    dob: dobDate,
+    teamId: selectedTeam ? parseInt(selectedTeam.value) : 0,
+    roleId: selectedRole ? parseInt(selectedRole.value) : 0,
+  }
+
+  emit('submit', payload)
 })
 
 const onCancel = (): void => {
@@ -58,6 +107,27 @@ const onCancel = (): void => {
       >
 
       <small class="absolute left-3 pt-0.5 text-red-500">{{ errors.name }}</small>
+    </div>
+    <div class="relative mb-2.5">
+      <FloatLabel variant="on">
+        <DatePicker
+          v-model="dob"
+          showIcon
+          fluid
+          iconDisplay="input"
+          id="dob"
+          class="w-full"
+          :class="{
+            'w-full [&>input]:border [&>input]:rounded-md [&>input]:!border-red-500': errors.dob,
+            'w-full [&>input]:border [&>input]:rounded-md': !errors.dob,
+          }"
+          dateFormat="yy-mm-dd"
+        />
+
+        <label for="dob">Date of birth</label></FloatLabel
+      >
+
+      <small class="absolute left-3 pt-0.5 text-red-500">{{ errors.dob }}</small>
     </div>
 
     <div class="relative mb-2.5">
@@ -91,12 +161,11 @@ const onCancel = (): void => {
 
     <div class="relative mb-2.5">
       <FloatLabel variant="on">
-        <MultiSelect
+        <Select
           id="team"
           filter
           v-model="team"
           :options="props.teams"
-          display="chip"
           optionLabel="label"
           optionValue="value"
           class="w-full"

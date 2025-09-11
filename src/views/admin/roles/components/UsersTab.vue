@@ -3,12 +3,12 @@ import BaseTable from '@/components/baseTable.vue'
 import Dialog from 'primevue/dialog'
 import ConfirmPopup from 'primevue/confirmpopup'
 import Button from 'primevue/button'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useUsers } from '@/views/admin/roles/composables/useUser'
 import UserForm from './UserForm.vue'
 import { useValidation } from '@/views/admin/roles/composables/useValidation'
 import type { User } from '@/types/user'
-import type { RowData } from '@/types/baseTable.model'
+import type { RowData, ColumnDef } from '@/types/baseTable.model'
 
 const {
   users,
@@ -16,10 +16,13 @@ const {
   teams,
   editingRows,
   isLoading,
+  totalRecords,
+  pageSize,
   fetchInitialData,
   createUser,
   editUser,
   deleteUser,
+  onLazyLoad,
 } = useUsers()
 
 const { validationErrors, validateField, resetValidation, isSaveDisabled } = useValidation()
@@ -27,6 +30,7 @@ const { validationErrors, validateField, resetValidation, isSaveDisabled } = use
 const userFormDialogVisible = ref(false)
 const userFormRef = ref<InstanceType<typeof UserForm> | null>(null)
 const originalUser = ref<User | null>(null)
+
 const openCreateUserDialog = (): void => {
   userFormDialogVisible.value = true
   userFormRef.value?.resetForm()
@@ -43,23 +47,23 @@ const handleUserFormCancel = (): void => {
   userFormDialogVisible.value = false
 }
 
-const onEdit = (row: RowData): void => {
+const onEdit = (row: User): void => {
   originalUser.value = JSON.parse(JSON.stringify(row))
-  editingRows.value = [row]
+  editingRows.value = [row] as User[]
 }
 
 const onSave = async (newData: RowData): Promise<void> => {
-  columns.forEach((col) => {
+  const userToSave = newData as User
+
+  columns.value.forEach((col) => {
     if (col.required) {
-      validateField(col.key, newData[col.key], col.label)
+      validateField(col.key, userToSave[col.key as keyof User], col.label)
     }
   })
 
   if (Object.keys(validationErrors.value).length > 0) return
+  await editUser(userToSave)
 
-  if (originalUser.value) {
-    await editUser(newData as User, originalUser.value)
-  }
   editingRows.value = []
   originalUser.value = null
   resetValidation()
@@ -77,31 +81,33 @@ const onCancel = (): void => {
   resetValidation()
 }
 
-const handleDeleteConfirmation = (row: RowData, event?: Event): void => {
-  deleteUser(row as User, event)
+const handleDeleteConfirmation = (row: User, event?: Event): void => {
+  deleteUser(row, event)
 }
 
-const columns = [
+const columns = computed((): ColumnDef[] => [
   { label: 'Name', key: 'name', filterable: true, required: true },
   { label: 'Employee ID', key: 'employeeId', filterable: true, required: true },
-  { label: 'Email', key: 'email', filterable: true, required: true }, // Email now validated
+  { label: 'Email', key: 'email', filterable: true, required: true },
   {
     label: 'Team',
-    key: 'team',
+    key: 'teamId',
     filterable: true,
     useTag: true,
-    useMultiSelect: true,
+    filterOption: true,
+    options: teams.value,
     required: true,
   },
   {
     label: 'Role',
-    key: 'role',
+    key: 'roleId',
     filterable: true,
     useTag: true,
     filterOption: true,
+    options: roles.value,
     required: true,
   },
-]
+])
 
 onMounted(() => {
   void fetchInitialData()
@@ -111,6 +117,8 @@ onMounted(() => {
 <template>
   <div class="space-y-4 h-full">
     <ConfirmPopup class="mx-4" />
+
+    <!-- Create User Dialog -->
     <Dialog
       v-model:visible="userFormDialogVisible"
       header="Create User"
@@ -123,6 +131,7 @@ onMounted(() => {
         ref="userFormRef"
         :roles="roles"
         :teams="teams"
+        :is-loading="isLoading"
         @submit="handleUserFormSubmit"
         @cancel="handleUserFormCancel"
       />
@@ -131,13 +140,14 @@ onMounted(() => {
     <BaseTable
       :columns="columns"
       :rows="users"
-      :pageSize="10"
+      :totalRecords="totalRecords"
+      :rowsPerPage="pageSize"
       :editableRow="editingRows[0] as RowData"
-      :statusOptions="roles"
-      :multiSelectOption="teams"
       :loading="isLoading"
       @save="onSave"
       @cancel="onCancel"
+      @lazy:load="onLazyLoad"
+      :paginator="true"
       :saveDisabled="isSaveDisabled"
     >
       <template #table-header>
@@ -146,13 +156,13 @@ onMounted(() => {
 
       <template #actions="{ row }">
         <button
-          @click="onEdit(row)"
+          @click="onEdit(row as User)"
           class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
         >
           <i class="pi pi-pencil text-slate-700 text-base"></i>
         </button>
         <button
-          @click="handleDeleteConfirmation(row, $event)"
+          @click="handleDeleteConfirmation(row as User, $event)"
           class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
         >
           <i class="pi pi-trash text-red-600 text-base"></i>

@@ -1,77 +1,92 @@
-import { simulateApiCall } from '@/stores/loader'
+import { committeeApi } from '@/constants'
 import type { ApiResponse } from '@/types'
 import type { Committee } from '@/types/commitee'
-import { committeeData } from '@/services/CommiteeService'
+import axios, { AxiosError } from 'axios'
 
-const createMockApiResponse = <T>(data: T, message: string): ApiResponse<T> => ({
-  data,
-  message,
-  succeeded: true,
-  errors: null,
-  pageNumber: 1,
-  pageSize: Array.isArray(data) ? data.length : 1,
-  totalPages: 1,
-  totalRecords: Array.isArray(data) ? data.length : 1,
-})
-//get committe data
-export const getCommittee = (): Promise<ApiResponse<Committee[]>> =>
-  simulateApiCall(async () => {
-    return createMockApiResponse(committeeData.data, 'Committee list fetched')
-  })
-//create new committee
-export const createCommittee = (newCommittee: Committee): Promise<Committee> => {
-  return simulateApiCall(async () => {
-    const yearExists = committeeData.data.some((committee) => committee.year === newCommittee.year)
+// Get committee list
+export const getCommittee = async (
+  pageNumber: number,
+  pageSize: number,
+  multiSortedColumns: { active: string | undefined; direction: string }[] = [],
+  filterMap: Record<string, string> = {},
+): Promise<ApiResponse<Committee[]>> => {
+  try {
+    const response = await committeeApi.post<ApiResponse<Committee[]>>('/committee/pagination', {
+      pagination: { pageNumber, pageSize },
+      multiSortedColumns,
+      filterMap,
+    })
+    return response.data
+  } catch (err: unknown) {
+    let message = 'Failed to fetch committees'
+    const errors: string[] | null = null
 
-    if (yearExists) {
-      throw new Error(`Committee for year ${newCommittee.year} already exists`)
+    if (axios.isAxiosError(err)) {
+      const axiosErr = err as AxiosError<{ message?: string }>
+      message = axiosErr.response?.data?.message ?? err.message
     }
-    newCommittee.id = (committeeData.data.length + 1).toString()
-    newCommittee.createdAt = new Date().toISOString()
-    committeeData.data.push(newCommittee)
 
-    return newCommittee
-  })
+    console.error('Failed to fetch committees:', err)
+
+    return {
+      data: [],
+      message,
+      succeeded: false,
+      errors,
+      pageNumber: 1,
+      pageSize: 0,
+      totalPages: 0,
+      totalRecords: 0,
+    }
+  }
 }
 
-//edit committee table
-export const editCommittee = (
+// Create new committee
+export const createCommittee = async (newCommittee: Committee): Promise<Committee> => {
+  try {
+    const response = await committeeApi.post<Committee>('/committee', newCommittee)
+    return response.data
+  } catch (err: unknown) {
+    if (axios.isAxiosError(err)) {
+      const axiosErr = err as AxiosError<{ message?: string }>
+      console.error(
+        'Failed to create committee:',
+        axiosErr.response?.data?.message ?? axiosErr.message,
+      )
+    } else {
+      console.error('Failed to create committee:', err)
+    }
+    throw err
+  }
+}
+
+// Edit committee
+export const editCommittee = async (
   updatedCommittee: Committee,
 ): Promise<{ succeeded: boolean; data: Committee }> => {
-  return simulateApiCall(async () => {
-    const index = committeeData.data.findIndex((committee) => committee.id === updatedCommittee.id)
-    if (index === -1) {
-      throw new Error(`Committee with ID ${updatedCommittee.id} not found`)
-    }
-
-    const yearExists = committeeData.data.some(
-      (committee, i) => committee.year === updatedCommittee.year && i !== index,
+  try {
+    const response = await committeeApi.put<{ succeeded: boolean; data: Committee }>(
+      `/committee/${updatedCommittee.id}`,
+      updatedCommittee,
     )
-    if (yearExists) {
-      throw new Error(`Another committee for year ${updatedCommittee.year} already exists`)
-    }
-
-    committeeData.data[index] = { ...committeeData.data[index], ...updatedCommittee }
-
-    return {
-      succeeded: true,
-      data: committeeData.data[index],
-    }
-  })
+    return response.data
+  } catch (err: unknown) {
+    console.error('Failed to edit committee:', err)
+    throw err
+  }
 }
-// delete committee
-export const deleteCommittee = (id: string): Promise<{ succeeded: boolean; message: string }> => {
-  return simulateApiCall(async () => {
-    const index = committeeData.data.findIndex((committee) => committee.id === id)
-    if (index === -1) {
-      throw new Error(`Committee with ID ${id} not found`)
-    }
 
-    committeeData.data.splice(index, 1)
-
-    return {
-      succeeded: true,
-      message: `Committee with ID ${id} deleted successfully`,
-    }
-  })
+// Delete committee
+export const deleteCommittee = async (
+  id: string,
+): Promise<{ succeeded: boolean; message: string }> => {
+  try {
+    const response = await committeeApi.delete<{ succeeded: boolean; message: string }>(
+      `/committee/${id}`,
+    )
+    return response.data
+  } catch (err: unknown) {
+    console.error('Failed to delete committee:', err)
+    throw err
+  }
 }

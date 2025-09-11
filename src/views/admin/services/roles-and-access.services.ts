@@ -4,7 +4,6 @@ import type { User, OptionItem } from '@/types/user'
 import type { Role, PermissionOptions } from '@/types/role'
 import type { ApiResponse, APIError } from '@/types/index'
 import { useFetch } from '@vueuse/core'
-import { UserService } from '@/services/UserService'
 
 interface TestJsonData {
   users: User[]
@@ -35,21 +34,6 @@ const createMockApiResponse = <T>(data: T, message: string): ApiResponse<T> => (
   totalRecords: Array.isArray(data) ? data.length : 1,
 })
 
-const createApiError = (
-  businessError: number,
-  errorValue: string,
-  type: 'ConflictError' | 'NotFoundError',
-  failedAction: string,
-): APIError => ({
-  error: {
-    businessError,
-    message: `User ${failedAction} failed`,
-    errorValue,
-    type,
-  },
-  message: `User ${failedAction} failed: ${errorValue}`,
-})
-
 const simulateApiCall = async <T>(callback: () => Promise<T>): Promise<T> => {
   setLoading(true)
   try {
@@ -57,61 +41,6 @@ const simulateApiCall = async <T>(callback: () => Promise<T>): Promise<T> => {
     return await callback()
   } finally {
     setLoading(false)
-  }
-}
-
-export const createUser = async (payload: User): Promise<ApiResponse<User>> =>
-  simulateApiCall(async () => {
-    const { users } = await getMockUserData()
-
-    if (users.some((u) => u.email === payload.email)) {
-      throw createApiError(1002, 'Email already exists', 'ConflictError', 'creation')
-    }
-
-    const newUser: User = {
-      ...payload,
-      id: Math.random().toString(36).slice(2),
-      dob: new Date().toISOString().slice(0, 10),
-    }
-
-    return createMockApiResponse(newUser, 'User created successfully')
-  })
-
-export const editUser = async (
-  userId: string,
-  payload: Partial<Omit<User, 'id' | 'dob'>>,
-): Promise<ApiResponse<User>> =>
-  simulateApiCall(async () => {
-    const { users } = await getMockUserData()
-    const userIndex = users.findIndex((u) => u.id === userId)
-
-    if (userIndex === -1) {
-      throw createApiError(1003, 'User not found', 'NotFoundError', 'update')
-    }
-
-    if (
-      payload.email &&
-      users.some((u, index) => u.email === payload.email && index !== userIndex)
-    ) {
-      throw createApiError(1002, 'Email already exists for another user', 'ConflictError', 'update')
-    }
-
-    const updatedUser: User = {
-      ...users[userIndex],
-      ...payload,
-      id: userId,
-    }
-
-    return createMockApiResponse(updatedUser, 'User updated successfully')
-  })
-
-export const getAllUsers = async (): Promise<User[]> => {
-  try {
-    const response = UserService.getUsersData()
-    return response.data
-  } catch (e) {
-    console.error('Failed to fetch users', e)
-    return []
   }
 }
 

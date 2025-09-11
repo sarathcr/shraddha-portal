@@ -12,6 +12,7 @@ import { createCommittee } from '../services/committee.services'
 import CommitteeForm from './components/CommitteeForm.vue'
 import { useCommittee } from './composable/useCommitte'
 import { useRouter } from 'vue-router'
+import { useValidation } from '../roles/composables/useValidation'
 
 const {
   committee,
@@ -23,8 +24,11 @@ const {
   fetchInitialData,
   handleEdit,
   deleteUser,
+  totalRecords,
+  pageSize,
+  onLazyLoad,
 } = useCommittee()
-
+const { isSaveDisabled } = useValidation()
 const toast = useToast()
 const router = useRouter()
 const userFormDialogVisible = ref(false)
@@ -124,12 +128,16 @@ onMounted(() => {
       <BaseTable
         :columns="columns"
         :rows="allRows"
-        :pageSize="20"
+        :totalRecords="totalRecords"
+        :rowsPerPage="pageSize"
         :editableRow="editingRows[0] as RowData"
         :statusOptions="statusOptions"
         :loading="isLoading"
         @save="onSave"
         @cancel="onCancel"
+        @lazy:load="onLazyLoad"
+        :paginator="true"
+        :saveDisabled="isSaveDisabled"
       >
         <template #table-header>
           <Button

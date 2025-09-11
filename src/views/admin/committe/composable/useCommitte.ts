@@ -1,23 +1,39 @@
 import { ref, type Ref } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { FilterMatchMode } from '@primevue/core/api'
-import { isLoading, simulateApiCall } from '@/stores/loader'
-import type { Committee } from '@/types/commitee'
+import { simulateApiCall } from '@/stores/loader'
+import type { Committee, Members } from '@/types/commitee'
 import type { ColumnDef, RowData } from '@/types/baseTable.model'
-import type { OptionItem } from '@/types/user'
-import type { APIError, ApiResponse } from '@/types/index'
+import type { OptionItem, User } from '@/types/user'
+import type { ApiResponse } from '@/types/index'
 import { editCommittee, getCommittee, deleteCommittee } from '../../services/committee.services'
-import { getAllUsers } from '../../services/roles-and-access.services'
+
 import { committeeData } from '@/services/CommiteeService'
 import { useConfirm } from 'primevue/useconfirm'
+import type { DataTableFilterMeta, DataTableSortMeta } from 'primevue'
+import axios from 'axios'
+import { UserService } from '@/services/UserService'
 
-export const committeeUsers = ref<OptionItem[]>([])
+export const committeeUsers: Ref<OptionItem[]> = ref([])
 export const getUsersData = async (): Promise<void> => {
-  const users = await getAllUsers()
-  committeeUsers.value = users.map((user) => ({
-    label: user.name,
-    value: user.id,
-  }))
+  const users = await UserService.getUsersData(0, 0)
+
+  committeeUsers.value = users.data.map((user: User) => {
+    const newUsers: OptionItem = {
+      label: user.name,
+      value: user.id ?? '',
+    }
+    return newUsers
+  })
+}
+
+type LazyLoadEvent = {
+  first: number
+  rows: number
+  filters: DataTableFilterMeta | undefined
+  sortField?: string | ((item: unknown) => string) | null
+  sortOrder?: 0 | 1 | -1 | null
+  multiSortMeta?: DataTableSortMeta[] | null
 }
 
 export function useCommittee(): {
@@ -27,6 +43,9 @@ export function useCommittee(): {
   editingRows: Ref<RowData[]>
   committeeUsers: Ref<OptionItem[]>
   statusOptions: { label: string; value: string }[]
+  pageNumber: Ref<number>
+  pageSize: Ref<number>
+  onLazyLoad: (event: LazyLoadEvent) => Promise<void>
   createCommittee: (payload: Committee) => Promise<ApiResponse<Committee>>
   handleEdit: (
     newData: Committee,
@@ -37,6 +56,7 @@ export function useCommittee(): {
   filters: Ref<{ global: { value: string | null; matchMode: string } }>
   clearFilter: () => void
   fetchInitialData: () => Promise<void>
+  totalRecords: Ref<number>
 } {
   const toast = useToast()
   const committee = ref<Committee[]>([])
@@ -44,6 +64,11 @@ export function useCommittee(): {
   const editingRows = ref<RowData[]>([])
   const committeeUsers = ref<OptionItem[]>([])
   const confirm = useConfirm()
+  const pageSize = ref(10)
+  const isLoading = ref<boolean>(false)
+  const pageNumber = ref(1)
+  const totalRecords = ref(0)
+
   const filters = ref({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
   })
@@ -60,12 +85,6 @@ export function useCommittee(): {
       useTag: true,
       useMultiSelect: false,
     },
-    {
-      label: 'Created At',
-      key: 'createdAt',
-      filterable: true,
-      useDateFilter: true,
-    },
   ]
 
   const statusOptions = [
@@ -77,51 +96,136 @@ export function useCommittee(): {
     filters.value.global.value = null
   }
 
-  const withErrorHandling =
-    <T extends unknown[]>(
-      asyncFn: (...args: T) => Promise<void>,
-      defaultErrorMessage: string,
-    ): ((...args: T) => Promise<void>) =>
-    async (...args: T): Promise<void> => {
-      try {
-        await asyncFn(...args)
-      } catch (err) {
-        const error = err as APIError
-        const message = error?.error?.message || error.message || defaultErrorMessage
-        toast.add({ severity: 'error', summary: 'Error', detail: message, life: 3000 })
-      }
-    }
-
-  const handleApiResponse = <T>(
-    response: ApiResponse<T> | null,
-    state: Ref<T>,
-    defaultMessage: string,
-  ): void => {
-    if (response?.succeeded && Array.isArray(response.data)) {
-      state.value = response.data
-    } else {
-      toast.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: response?.message || defaultMessage,
-        life: 3000,
-      })
+  const mapMatchModeToOperator = (matchMode: string, value: unknown): string => {
+    switch (matchMode) {
+      case FilterMatchMode.CONTAINS:
+        return `like %${value}%`
+      case FilterMatchMode.STARTS_WITH:
+        return `like ${value}%`
+      case FilterMatchMode.ENDS_WITH:
+        return `like %${value}`
+      case FilterMatchMode.EQUALS:
+        return `= ${value}`
+      case FilterMatchMode.NOT_EQUALS:
+        return `!= ${value}`
+      default:
+        return `= ${value}`
     }
   }
 
-  const fetchInitialData = withErrorHandling(async () => {
-    await getUsersData()
-    const response = await getCommittee()
-    handleApiResponse(response, committee, 'Failed to load committee data.')
-    allRows.value = (response?.data || []).map((item) => ({
-      id: item.id,
-      year: item.year,
-      coreMembers: item.coreMembers.join(', '),
-      executiveMembers: item.executiveMembers.join(', '),
-      statusLabel: item.status ? 'Active' : 'Inactive',
-      createdAt: new Date(item.createdAt),
-    }))
-  }, 'Failed to fetch data.')
+  const onLazyLoad = async (event: LazyLoadEvent): Promise<void> => {
+    isLoading.value = true
+    try {
+      await getUsersData()
+
+      const payload: {
+        pagination: { pageNumber: number; pageSize: number }
+        multiSortedColumns: { active: string | undefined; direction: string }[]
+        filterMap: Record<string, string>
+      } = {
+        pagination: {
+          pageNumber: event.first / event.rows + 1,
+          pageSize: event.rows,
+        },
+        multiSortedColumns: [],
+        filterMap: {},
+      }
+
+      if (event.sortField) {
+        payload.multiSortedColumns.push({
+          active: event.sortField as string,
+          direction: event.sortOrder === 1 ? 'asc' : 'desc',
+        })
+      }
+
+      if (event.filters) {
+        const filters = event.filters as DataTableFilterMeta
+        Object.entries(filters).forEach(([field, filterMeta]) => {
+          const filter = filterMeta as {
+            operator: string
+            constraints: { value: unknown; matchMode: string }[]
+          }
+
+          if (filter.constraints?.length) {
+            const validConstraints = filter.constraints.filter(
+              (c) => c.value !== null && c.value !== undefined,
+            )
+
+            if (validConstraints.length > 0) {
+              const filterString = validConstraints
+                .map((constraint, index) => {
+                  const operator =
+                    index === 0 ? '' : filter.operator.toUpperCase() === 'OR' ? 'OR' : 'AND'
+                  const condition = mapMatchModeToOperator(constraint.matchMode, constraint.value)
+                  return `${operator} ${condition}`.trim()
+                })
+                .join(' ')
+
+              payload.filterMap[field] = filterString
+            }
+          }
+        })
+      }
+
+      const response = await getCommittee(
+        payload.pagination.pageNumber,
+        payload.pagination.pageSize,
+        payload.multiSortedColumns,
+        payload.filterMap,
+      )
+
+      if (response?.succeeded) {
+        console.error(response, 'response')
+        committee.value = response.data || []
+        allRows.value = (response.data || []).map((item) => ({
+          id: item.id,
+          year: item.year,
+          coreMembers: (item.coreMembers || []).map((m: Members) => m.name).join(', '),
+          executiveMembers: (item.executiveMembers || []).map((m: Members) => m.name).join(', '),
+          statusLabel: item.status ? 'Active' : 'Inactive',
+        }))
+        totalRecords.value = response.totalRecords ?? 0
+        pageNumber.value = response.pageNumber ?? payload.pagination.pageNumber
+        pageSize.value = response.pageSize ?? payload.pagination.pageSize
+      } else {
+        toast.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: response?.message || 'Failed to load committee data.',
+          life: 3000,
+        })
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.data?.errorValue) {
+        toast.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: error.response.data.errorValue,
+          life: 3000,
+        })
+      } else {
+        toast.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'An error occurred while fetching committee data.',
+          life: 3000,
+        })
+      }
+      console.error('API call failed:', error)
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  const fetchInitialData = async (): Promise<void> => {
+    await onLazyLoad({
+      first: 0,
+      rows: pageSize.value,
+      filters: undefined,
+      sortField: null,
+      sortOrder: null,
+    })
+  }
 
   const createCommittee = (newCommittee: Committee): Promise<ApiResponse<Committee>> => {
     return simulateApiCall(async () => {
@@ -258,6 +362,7 @@ export function useCommittee(): {
       reject: () => {},
     })
   }
+
   return {
     committee,
     columns,
@@ -272,5 +377,9 @@ export function useCommittee(): {
     filters,
     clearFilter,
     fetchInitialData,
+    onLazyLoad,
+    totalRecords,
+    pageNumber,
+    pageSize,
   }
 }
