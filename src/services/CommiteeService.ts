@@ -6,16 +6,44 @@ export const committeeData: ApiResponse<Committee[]> = {
     {
       id: '1',
       year: '2024-2025',
-      coreMembers: ['Alice Johnson', 'Bob Smith'],
-      executiveMembers: ['Karen Lee', 'John Doe'],
+      coreMembers: [
+        {
+          id: '1016',
+          name: 'tes 1 u',
+          designation: 'Normal User',
+          email: 'test1u@gmail.com',
+        },
+      ],
+      executiveMembers: [
+        {
+          id: '1016',
+          name: 'tes 1 u',
+          designation: 'Normal User',
+          email: 'test1u@gmail.com',
+        },
+      ],
       status: true,
       createdAt: '2025-07-21T00:00:00Z',
     },
     {
       id: '2',
       year: '2023-2024',
-      coreMembers: ['Johnson', 'Smith'],
-      executiveMembers: ['Lee', 'John Doe'],
+      coreMembers: [
+        {
+          id: '1016',
+          name: 'tes 1 u',
+          designation: 'Normal User',
+          email: 'test1u@gmail.com',
+        },
+      ],
+      executiveMembers: [
+        {
+          id: '1016',
+          name: 'tes 1 u',
+          designation: 'Normal User',
+          email: 'test1u@gmail.com',
+        },
+      ],
       status: true,
       createdAt: '2025-07-20T00:00:00Z',
     },

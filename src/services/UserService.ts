@@ -1,7 +1,7 @@
-import api from '@/constants/api'
 import type { ApiResponse } from '@/types/index'
 import type { User } from '@/types/user'
 import { useAuthStore } from '@/stores/auth'
+import { api } from '@/constants'
 
 export const UserService = {
   async getUsersData(pageNumber: number, pageSize: number): Promise<ApiResponse<User[]>> {
