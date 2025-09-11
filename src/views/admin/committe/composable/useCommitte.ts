@@ -4,22 +4,27 @@ import { FilterMatchMode } from '@primevue/core/api'
 import { simulateApiCall } from '@/stores/loader'
 import type { Committee, Members } from '@/types/commitee'
 import type { ColumnDef, RowData } from '@/types/baseTable.model'
-import type { OptionItem } from '@/types/user'
+import type { OptionItem, User } from '@/types/user'
 import type { ApiResponse } from '@/types/index'
 import { editCommittee, getCommittee, deleteCommittee } from '../../services/committee.services'
-import { getAllUsers } from '../../services/roles-and-access.services'
+
 import { committeeData } from '@/services/CommiteeService'
 import { useConfirm } from 'primevue/useconfirm'
 import type { DataTableFilterMeta, DataTableSortMeta } from 'primevue'
 import axios from 'axios'
+import { UserService } from '@/services/UserService'
 
-export const committeeUsers = ref<OptionItem[]>([])
+export const committeeUsers: Ref<OptionItem[]> = ref([])
 export const getUsersData = async (): Promise<void> => {
-  const users = await getAllUsers()
-  committeeUsers.value = users.map((user) => ({
-    label: user.name,
-    value: user.id,
-  }))
+  const users = await UserService.getUsersData(0, 0)
+
+  committeeUsers.value = users.data.map((user: User) => {
+    const newUsers: OptionItem = {
+      label: user.name,
+      value: user.id ?? '',
+    }
+    return newUsers
+  })
 }
 
 type LazyLoadEvent = {

@@ -1,6 +1,6 @@
 import type { RowData } from './baseTable.model'
 export interface Team extends RowData {
-  id: number
+  id: string
   teamName: string
   description: string
 }
