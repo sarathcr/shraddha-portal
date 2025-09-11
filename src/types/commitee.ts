@@ -3,10 +3,11 @@ import type { RowData } from './baseTable.model'
 export interface Committee extends RowData {
   id: string
   year: string
-  coreMembers: string[]
-  executiveMembers: string[]
+  startDate?: Date
+  endDate?: Date
+  coreMembers: Members[]
+  executiveMembers: Members[]
   status: boolean
-  createdAt: string
 }
 
 export interface CommitteeCard {
@@ -72,4 +73,11 @@ export interface Tournament {
 export interface Mom {
   date: string
   pdfUrl: string
+}
+
+export interface Members {
+  id: string
+  name: string
+  designation: string
+  email: string
 }
