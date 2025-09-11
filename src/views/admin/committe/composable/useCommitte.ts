@@ -7,19 +7,15 @@ import type { ColumnDef, RowData } from '@/types/baseTable.model'
 import type { OptionItem } from '@/types/user'
 import type { APIError, ApiResponse } from '@/types/index'
 import { editCommittee, getCommittee, deleteCommittee } from '../../services/committee.services'
-import { getAllUsers } from '../../services/roles-and-access.services'
+
 import { committeeData } from '@/services/CommiteeService'
 import { useConfirm } from 'primevue/useconfirm'
 
 export const committeeUsers = ref<OptionItem[]>([])
-export const getUsersData = async (): Promise<void> => {
-  const users = await getAllUsers()
-  committeeUsers.value = users.map((user) => ({
-    label: user.name,
-    value: user.id,
-  }))
-}
 
+export const getAllUser = async (): Promise<void> => {
+  // const usersResponse = await getUser(1, -1)
+}
 export function useCommittee(): {
   committee: Ref<Committee[]>
   columns: ColumnDef[]
@@ -110,7 +106,7 @@ export function useCommittee(): {
   }
 
   const fetchInitialData = withErrorHandling(async () => {
-    await getUsersData()
+    // await getUsersData()
     const response = await getCommittee()
     handleApiResponse(response, committee, 'Failed to load committee data.')
     allRows.value = (response?.data || []).map((item) => ({

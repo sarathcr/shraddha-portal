@@ -180,6 +180,7 @@ const onLazyLoad = (
           :filter="col.filterable"
           :filterField="col.backendKey || col.key"
           style="min-width: 200px"
+          class="!py-4"
         >
           <template #body="{ data }">
             <div v-if="editableRow === data">
@@ -194,24 +195,24 @@ const onLazyLoad = (
               <div v-else-if="col.filterOption">
                 <Select
                   v-model="tempRow[col.key]"
-                  :options="props.statusOptions"
+                  :options="col.options"
                   optionLabel="label"
                   optionValue="value"
-                  :placeholder="col.placeholder || `Select${col.label}`"
+                  :placeholder="col.placeholder || `Select ${col.label}`"
                   class="w-full"
                   @change="
                     col.required ? validateField(col.key, tempRow[col.key], col.label) : null
                   "
                   @blur="col.required ? validateField(col.key, tempRow[col.key], col.label) : null"
                 />
-                <p v-if="validationErrors[col.key]" class="text-red-500 text-xs mt-1">
+                <p v-if="validationErrors[col.key]" class="text-red-500 text-xs absolute">
                   {{ validationErrors[col.key] }}
                 </p>
               </div>
               <div v-else-if="col.useMultiSelect">
                 <MultiSelect
                   v-model="tempRow[col.key]"
-                  :options="props.multiSelectOption"
+                  :options="col.options"
                   optionLabel="label"
                   optionValue="value"
                   :placeholder="col.placeholder || `Select ${col.label}`"
@@ -223,7 +224,7 @@ const onLazyLoad = (
                   "
                   @blur="col.required ? validateField(col.key, tempRow[col.key], col.label) : null"
                 />
-                <p v-if="validationErrors[col.key]" class="text-red-500 text-xs mt-1">
+                <p v-if="validationErrors[col.key]" class="text-red-500 text-xs absolute">
                   {{ validationErrors[col.key] }}
                 </p>
               </div>
@@ -234,25 +235,27 @@ const onLazyLoad = (
                   class="w-full"
                   @blur="validateField(col.key, tempRow[col.key], col.label)"
                 />
-                <p v-if="validationErrors[col.key]" class="text-red-500 text-xs mt-1">
+                <p v-if="validationErrors[col.key]" class="text-red-500 text-xs absolute">
                   {{ validationErrors[col.key] }}
                 </p>
               </div>
             </div>
             <div v-else>
               <span v-if="col.useDateFilter">{{ formatDate(data[col.key]) }}</span>
-              <template v-else-if="col.useMultiSelect && Array.isArray(data[col.key])">
+              <template v-else-if="col.useMultiSelect">
                 <Tag
-                  v-for="item in data[col.key]"
-                  :key="item"
-                  :value="props.multiSelectOption?.find((opt) => opt.value === item)?.label || item"
+                  v-if="data[col.key]"
+                  :value="
+                    col.options?.find((opt: any) => opt.value === data[col.key])?.label ||
+                    data[col.key]
+                  "
                   class="mr-1"
                 />
               </template>
               <Tag
                 v-else-if="col.useTag"
                 :value="
-                  props.statusOptions?.find((opt) => opt.value === data[col.key])?.label ||
+                  col.options?.find((opt: any) => opt.value === data[col.key])?.label ||
                   data[col.key]
                 "
                 :severity="getSeverity(data[col.key])"
@@ -266,7 +269,7 @@ const onLazyLoad = (
               <Select
                 v-if="col.filterOption"
                 v-model="filterModel.value"
-                :options="props.statusOptions"
+                :options="col.options"
                 optionLabel="label"
                 optionValue="value"
                 :placeholder="col.placeholder || `Select ${col.label}`"
@@ -283,7 +286,7 @@ const onLazyLoad = (
               <MultiSelect
                 v-else-if="col.useMultiSelect"
                 v-model="filterModel.value"
-                :options="props.multiSelectOption"
+                :options="col.options"
                 optionLabel="label"
                 optionValue="value"
                 :placeholder="col.placeholder || `Select ${col.label}`"
