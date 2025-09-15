@@ -34,7 +34,10 @@ defineExpose({
 })
 
 const onSubmit = handleSubmit((values) => {
-  emit('submit', values)
+  emit('submit', {
+    ...values,
+    teamName: (values.teamName as string)?.trim() || '',
+  })
 })
 
 const onCancel = (): void => {
