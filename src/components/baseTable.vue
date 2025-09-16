@@ -166,7 +166,7 @@ const onLazyLoad = (
         :rowsPerPageOptions="dynamicRowsPerPageOptions"
       >
         <template #header v-if="hasTableHeader">
-          <div class="flex justify-between items-center bg-white sticky top-0 z-20">
+          <div class="flex justify-between items-center sticky top-0 z-0">
             <slot name="table-header" />
           </div>
         </template>
