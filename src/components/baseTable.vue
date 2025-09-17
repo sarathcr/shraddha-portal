@@ -15,7 +15,7 @@ import DataTable from 'primevue/datatable'
 import MultiSelect from 'primevue/multiselect'
 import InputText from 'primevue/inputtext'
 import Tag from 'primevue/tag'
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useSlots } from 'vue'
 import Select from 'primevue/select'
 import BaseTableSkeleton from './Skelton/BaseTableSkeleton.vue'
@@ -59,14 +59,25 @@ const dynamicRowsPerPageOptions = computed((): number[] => {
 
   const options: number[] = []
   const step = 5
-  const max = Math.ceil(total / step) * step
-
-  for (let i = step; i <= max; i += step) {
+  for (let i = step; i <= total; i += step) {
     options.push(i)
+  }
+
+  if (total % step !== 0 && !options.includes(total)) {
+    options.push(total)
   }
 
   return options
 })
+watch(
+  dynamicRowsPerPageOptions,
+  (options) => {
+    if (!options.includes(internalPageSize.value)) {
+      internalPageSize.value = options.at(-1)!
+    }
+  },
+  { immediate: true },
+)
 
 const initFilters = (): void => {
   const initialFilters: DataTableFilterMeta = {}
@@ -132,6 +143,16 @@ const onLazyLoad = (
   internalPageSize.value = event.rows
   emit('lazy:load', event)
 }
+onMounted(() => {
+  onLazyLoad({
+    first: first.value,
+    rows: internalPageSize.value,
+    page: 0,
+    sortField: sortField.value,
+    sortOrder: sortOrder.value,
+    filters: tableFilters.value,
+  } as DataTablePageEvent)
+})
 </script>
 
 <template>
@@ -166,7 +187,7 @@ const onLazyLoad = (
         :rowsPerPageOptions="dynamicRowsPerPageOptions"
       >
         <template #header v-if="hasTableHeader">
-          <div class="flex justify-between items-center bg-white sticky top-0 z-20">
+          <div class="flex justify-between items-center sticky top-0 z-0">
             <slot name="table-header" />
           </div>
         </template>

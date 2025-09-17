@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import Button from 'primevue/button'
 import ConfirmPopup from 'primevue/confirmpopup'
 import Dialog from 'primevue/dialog'
@@ -26,6 +26,13 @@ const {
 const { validationErrors, validateField, resetValidation, isSaveDisabled } = useValidation()
 
 const teamFormDialogVisible = ref(false)
+watch(teamFormDialogVisible, (isVisible) => {
+  if (isVisible) {
+    document.body.classList.add('no-scroll')
+  } else {
+    document.body.classList.remove('no-scroll')
+  }
+})
 const teamFormRef = ref<InstanceType<typeof TeamForm> | null>(null)
 const originalTeam = ref<Team | null>(null)
 
