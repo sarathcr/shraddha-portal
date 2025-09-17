@@ -3,7 +3,7 @@ import BaseTable from '@/components/baseTable.vue'
 import Dialog from 'primevue/dialog'
 import ConfirmPopup from 'primevue/confirmpopup'
 import Button from 'primevue/button'
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useUsers } from '@/views/admin/roles/composables/useUser'
 import UserForm from './UserForm.vue'
 import { useValidation } from '@/views/admin/roles/composables/useValidation'
@@ -28,6 +28,13 @@ const {
 const { validationErrors, validateField, resetValidation, isSaveDisabled } = useValidation()
 
 const userFormDialogVisible = ref(false)
+watch(userFormDialogVisible, (isVisible) => {
+  if (isVisible) {
+    document.body.classList.add('no-scroll')
+  } else {
+    document.body.classList.remove('no-scroll')
+  }
+})
 const userFormRef = ref<InstanceType<typeof UserForm> | null>(null)
 const originalUser = ref<User | null>(null)
 

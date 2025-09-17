@@ -4,50 +4,76 @@ import Column from 'primevue/column'
 import DataTable from 'primevue/datatable'
 
 defineProps<{
-  columnsCount: number // Number of columns in your table
-  rowsCount?: number // Number of skeleton rows to display
+  columnsCount: number
+  rowsCount?: number
 }>()
 </script>
 
 <template>
-  <DataTable
-    :value="Array(rowsCount || 10).fill({})"
-    :paginator="true"
-    :rows="rowsCount || 10"
-    :rowsPerPageOptions="[5, 10, 20]"
-    dataKey="id"
-    class="min-w-full"
-    paginatorPosition="bottom"
-  >
-    <template #header>
-      <div class="flex justify-between items-center w-full">
-        <Skeleton width="10rem" height="2rem" class="mr-2"></Skeleton>
-        <Skeleton width="8rem" height="2rem"></Skeleton>
+  <div class="base-table-skeleton">
+    <DataTable
+      :value="Array(rowsCount || 10).fill({})"
+      :paginator="false"
+      :rows="rowsCount || 10"
+      dataKey="id"
+      class="min-w-full"
+      scrollable
+    >
+      <template #header>
+        <div class="flex justify-between items-center w-full">
+          <Skeleton width="8rem" height="3rem" class="mr-2"></Skeleton>
+        </div>
+      </template>
+
+      <Column v-for="i in columnsCount - 1" :key="i" style="min-width: 200px">
+        <template #header>
+          <Skeleton width="7rem" height="1.5rem" />
+        </template>
+        <template #body>
+          <Skeleton />
+        </template>
+        <template #filter>
+          <Skeleton width="100%" height="2rem" />
+        </template>
+      </Column>
+
+      <Column style="min-width: 150px">
+        <template #header>
+          <Skeleton width="5rem" height="1.5rem" />
+        </template>
+        <template #body>
+          <Skeleton width="5rem" height="2rem" />
+        </template>
+        <template #filter>
+          <Skeleton width="100%" height="2rem" />
+        </template>
+      </Column>
+    </DataTable>
+
+    <div class="p-datatable-paginator p-datatable-paginator-bottom">
+      <div
+        class="p-paginator p-component p-paginator-bottom flex items-center justify-between px-3"
+      >
+        <div class="flex items-center gap-2">
+          <Skeleton width="2rem" height="2rem" />
+          <Skeleton width="2rem" height="2rem" />
+
+          <div class="flex items-center gap-2 px-2">
+            <Skeleton shape="circle" size="2rem" />
+            <Skeleton shape="circle" size="2rem" />
+            <Skeleton shape="circle" size="2rem" />
+            <Skeleton shape="circle" size="2rem" />
+            <Skeleton shape="circle" size="2rem" />
+          </div>
+
+          <Skeleton width="2rem" height="2rem" />
+          <Skeleton width="2rem" height="2rem" />
+        </div>
+
+        <div class="flex items-center gap-2">
+          <Skeleton width="6rem" height="2.2rem" />
+        </div>
       </div>
-    </template>
-
-    <Column v-for="i in columnsCount - 1" :key="i" style="min-width: 200px">
-      <template #header>
-        <Skeleton width="7rem" height="1.5rem"></Skeleton>
-      </template>
-      <template #body>
-        <Skeleton></Skeleton>
-      </template>
-      <template #filter>
-        <Skeleton width="100%" height="2rem"></Skeleton>
-      </template>
-    </Column>
-
-    <Column style="min-width: 150px">
-      <template #header>
-        <Skeleton width="5rem" height="1.5rem"></Skeleton>
-      </template>
-      <template #body>
-        <Skeleton width="5rem" height="2rem"></Skeleton>
-      </template>
-      <template #filter>
-        <Skeleton width="100%" height="2rem"></Skeleton>
-      </template>
-    </Column>
-  </DataTable>
+    </div>
+  </div>
 </template>
