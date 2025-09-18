@@ -1,5 +1,4 @@
 import { ref, type Ref } from 'vue'
-import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import type { User, OptionItem } from '@/types/user'
 import type { ApiResponse } from '@/types/index'
@@ -33,9 +32,8 @@ export const useUsers = (): {
   onLazyLoad: (event: LazyLoadEvent) => Promise<void>
   createUser: (payload: User) => Promise<boolean>
   editUser: (newData: User) => Promise<void>
-  deleteUser: (user: User, event?: Event) => void
+  deleteUser: (user: User) => Promise<void>
 } => {
-  const confirm = useConfirm()
   const toast = useToast()
   const authStore = useAuthStore()
 
@@ -331,53 +329,44 @@ export const useUsers = (): {
     }
   }
 
-  const deleteUser = (user: User, event?: Event): void => {
-    confirm.require({
-      target: event?.currentTarget as HTMLElement,
-      message: 'Do you want to delete this user?',
-      icon: 'pi pi-info-circle',
-      acceptClass: 'p-button-danger',
-      rejectClass: 'p-button-secondary p-button-outlined',
-      accept: async () => {
-        try {
-          const accessToken = authStore.accessToken
-          if (!accessToken) {
-            throw new Error('Authentication token not found. Please log in again.')
-          }
-          await api.delete(`/authorization/users/${user.id}`)
-          toast.add({
-            severity: 'success',
-            summary: 'Success',
-            detail: 'User deleted successfully.',
-            life: 3000,
-          })
-          await onLazyLoad({
-            first: (pageNumber.value - 1) * pageSize.value,
-            rows: pageSize.value,
-            filters: undefined,
-            sortField: null,
-            sortOrder: null,
-          })
-        } catch (error) {
-          if (axios.isAxiosError(error) && error.response && error.response.data?.errorValue) {
-            toast.add({
-              severity: 'error',
-              summary: 'Error',
-              detail: error.response.data.errorValue,
-              life: 3000,
-            })
-          } else {
-            toast.add({
-              severity: 'error',
-              summary: 'Error',
-              detail: 'Failed to delete user.',
-              life: 3000,
-            })
-          }
-          console.error('Error deleting user:', error)
-        }
-      },
-    })
+  const deleteUser = async (user: User): Promise<void> => {
+    try {
+      const accessToken = authStore.accessToken
+      if (!accessToken) {
+        throw new Error('Authentication token not found. Please log in again.')
+      }
+      await api.delete(`/authorization/users/${user.id}`)
+      toast.add({
+        severity: 'success',
+        summary: 'Success',
+        detail: 'User deleted successfully.',
+        life: 3000,
+      })
+      await onLazyLoad({
+        first: (pageNumber.value - 1) * pageSize.value,
+        rows: pageSize.value,
+        filters: undefined,
+        sortField: null,
+        sortOrder: null,
+      })
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response && error.response.data?.errorValue) {
+        toast.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: error.response.data.errorValue,
+          life: 3000,
+        })
+      } else {
+        toast.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to delete user.',
+          life: 3000,
+        })
+      }
+      console.error('Error deleting user:', error)
+    }
   }
 
   return {
