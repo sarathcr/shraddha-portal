@@ -128,7 +128,12 @@ const columns = [
     filterable: true,
     required: true,
   },
-  { label: 'Status', key: 'status', filterable: true, useToggle: true },
+  {
+    label: 'Status',
+    key: 'isActive',
+    filterable: true,
+    useToggle: true,
+  },
 ]
 </script>
 
@@ -184,16 +189,22 @@ const columns = [
         <Button label="Add New Team" icon="pi pi-plus" severity="help" @click="onAddNewTeam" />
       </template>
       <template #body-status="{ row }">
-        <template v-if="editingRows.includes(row)">
-          <ToggleSwitch v-if="editableTeam" v-model="editableTeam.status" />
-        </template>
-        <template v-else>
-          <ToggleSwitch
-            :modelValue="row.status"
-            @change="onStatusToggle(row, ($event.target as HTMLInputElement).checked)"
-          />
-        </template>
+        <ToggleSwitch
+          v-if="editingRows.includes(row)"
+          :modelValue="editableTeam?.status"
+          @update:modelValue="
+            (newValue: boolean) => {
+              if (editableTeam) editableTeam.status = newValue
+            }
+          "
+        />
+        <ToggleSwitch
+          v-else
+          :modelValue="row.status"
+          @update:modelValue="(newValue: boolean) => onStatusToggle(row, newValue)"
+        />
       </template>
+
       <template #actions="{ row }">
         <button
           @click="onEditTeam(row)"
