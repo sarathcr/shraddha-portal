@@ -63,7 +63,10 @@ const handleTeamFormCancel = (): void => {
 
 const onEditTeam = (row: RowData): void => {
   originalTeam.value = JSON.parse(JSON.stringify(row))
-  editableTeam.value = JSON.parse(JSON.stringify(row))
+  editableTeam.value = {
+    ...JSON.parse(JSON.stringify(row)),
+    status: Boolean(row.status),
+  }
   editingRows.value = [row as Team]
 }
 
@@ -128,7 +131,12 @@ const columns = [
     filterable: true,
     required: true,
   },
-  { label: 'Status', key: 'status', filterable: true, useToggle: true },
+  {
+    label: 'Status',
+    key: 'isActive',
+    filterable: true,
+    useToggle: true,
+  },
 ]
 </script>
 
