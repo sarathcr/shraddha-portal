@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import BaseTable from '@/components/baseTable.vue'
 import Dialog from 'primevue/dialog'
-import ConfirmPopup from 'primevue/confirmpopup'
 import Button from 'primevue/button'
 import { ref, onMounted, computed, watch } from 'vue'
 import { useUsers } from '@/views/admin/roles/composables/useUser'
@@ -28,6 +27,9 @@ const {
 const { validationErrors, validateField, resetValidation, isSaveDisabled } = useValidation()
 
 const userFormDialogVisible = ref(false)
+const deleteDialogVisible = ref(false)
+const userToDelete = ref<User | null>(null)
+
 watch(userFormDialogVisible, (isVisible) => {
   if (isVisible) {
     document.body.classList.add('no-scroll')
@@ -88,8 +90,17 @@ const onCancel = (): void => {
   resetValidation()
 }
 
-const handleDeleteConfirmation = (row: User, event?: Event): void => {
-  deleteUser(row, event)
+const handleDeleteConfirmation = (row: User): void => {
+  userToDelete.value = row
+  deleteDialogVisible.value = true
+}
+
+const onPerformDelete = async (): Promise<void> => {
+  if (userToDelete.value) {
+    await deleteUser(userToDelete.value)
+    deleteDialogVisible.value = false
+    userToDelete.value = null
+  }
 }
 
 const columns = computed((): ColumnDef[] => [
@@ -137,9 +148,6 @@ onMounted(() => {
 
 <template>
   <div class="space-y-4 h-full">
-    <ConfirmPopup class="mx-4" />
-
-    <!-- Create User Dialog -->
     <Dialog
       v-model:visible="userFormDialogVisible"
       header="Create User"
@@ -156,6 +164,22 @@ onMounted(() => {
         @submit="handleUserFormSubmit"
         @cancel="handleUserFormCancel"
       />
+    </Dialog>
+
+    <Dialog
+      v-model:visible="deleteDialogVisible"
+      header="Confirm Deletion"
+      :style="{ width: '30rem' }"
+      modal
+    >
+      <div class="flex items-center gap-4">
+        <i class="pi pi-exclamation-triangle text-red-600 text-3xl" />
+        <span>Are you sure you want to delete this user?</span>
+      </div>
+      <template #footer>
+        <Button label="Cancel" severity="secondary" @click="deleteDialogVisible = false" />
+        <Button label="Delete" severity="danger" @click="onPerformDelete" />
+      </template>
     </Dialog>
 
     <BaseTable
@@ -183,7 +207,7 @@ onMounted(() => {
           <i class="pi pi-pencil text-slate-700 text-base"></i>
         </button>
         <button
-          @click="handleDeleteConfirmation(row as User, $event)"
+          @click="handleDeleteConfirmation(row as User)"
           class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
         >
           <i class="pi pi-trash text-red-600 text-base"></i>
