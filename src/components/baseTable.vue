@@ -256,11 +256,17 @@ onMounted(() => {
                 </p>
               </div>
               <div v-else>
+                <ToggleSwitch
+                  v-if="col.useToggle"
+                  v-model="tempRow[col.key] as boolean | undefined"
+                />
+
                 <InputText
+                  v-else
                   v-model="tempRow[col.key] as string"
                   :type="col.key === 'email' ? 'email' : 'text'"
                   class="w-full"
-                  @blur="validateField(col.key, tempRow[col.key], col.label)"
+                  @blur="col.required ? validateField(col.key, tempRow[col.key], col.label) : null"
                 />
                 <p v-if="validationErrors[col.key]" class="text-red-500 text-xs absolute">
                   {{ validationErrors[col.key] }}
