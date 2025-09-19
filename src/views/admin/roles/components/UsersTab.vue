@@ -95,6 +95,12 @@ const handleDeleteConfirmation = (row: User, event?: Event): void => {
 const columns = computed((): ColumnDef[] => [
   { label: 'Name', key: 'name', filterable: true, required: true },
   { label: 'Employee ID', key: 'employeeId', filterable: true, required: true },
+  {
+    label: 'Date of Birth',
+    key: 'dob',
+    filterable: false,
+    required: false,
+  },
   { label: 'Email', key: 'email', filterable: true, required: true },
   {
     label: 'Team',
@@ -112,6 +118,14 @@ const columns = computed((): ColumnDef[] => [
     useTag: true,
     filterOption: true,
     options: roles.value,
+    required: true,
+  },
+  {
+    label: 'Status',
+    key: 'status',
+    filterable: true,
+    useTag: true,
+    filterOption: true,
     required: true,
   },
 ])

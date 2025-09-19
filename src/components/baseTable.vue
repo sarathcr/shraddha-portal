@@ -14,6 +14,7 @@ import Column from 'primevue/column'
 import DataTable from 'primevue/datatable'
 import MultiSelect from 'primevue/multiselect'
 import InputText from 'primevue/inputtext'
+import ToggleSwitch from 'primevue/toggleswitch'
 import Tag from 'primevue/tag'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useSlots } from 'vue'
@@ -125,12 +126,6 @@ const saveEdit = (): void => {
 
 const cancelEdit = (): void => {
   emit('cancel')
-}
-
-function getSeverity(value: unknown): string {
-  if (value === 'Active') return 'success'
-  if (value === 'Inactive') return 'danger'
-  return 'info'
 }
 
 const slots = useSlots()
@@ -261,11 +256,17 @@ onMounted(() => {
                 </p>
               </div>
               <div v-else>
+                <ToggleSwitch
+                  v-if="col.useToggle"
+                  v-model="tempRow[col.key] as boolean | undefined"
+                />
+
                 <InputText
+                  v-else
                   v-model="tempRow[col.key] as string"
                   :type="col.key === 'email' ? 'email' : 'text'"
                   class="w-full"
-                  @blur="validateField(col.key, tempRow[col.key], col.label)"
+                  @blur="col.required ? validateField(col.key, tempRow[col.key], col.label) : null"
                 />
                 <p v-if="validationErrors[col.key]" class="text-red-500 text-xs absolute">
                   {{ validationErrors[col.key] }}
@@ -284,13 +285,12 @@ onMounted(() => {
                   class="mr-1"
                 />
               </template>
-              <Tag
-                v-else-if="col.useTag"
-                :value="
-                  col.options?.find((opt: any) => opt.value === data[col.key])?.label ||
-                  data[col.key]
+              <ToggleSwitch
+                v-else-if="col.useToggle"
+                :modelValue="Boolean(data[col.key])"
+                @update:modelValue="
+                  (newValue: boolean) => $emit('save', { ...data, [col.key]: newValue })
                 "
-                :severity="getSeverity(data[col.key])"
               />
               <span v-else>{{ data[col.key] }}</span>
             </template>

@@ -8,6 +8,7 @@ import FloatLabel from 'primevue/floatlabel'
 import { useForm, useField } from 'vee-validate'
 import { teamSchema } from '@/views/admin/schemas/teamSchema'
 import type { Team } from '@/types/team'
+
 const props = defineProps<{
   initialData?: Omit<Team, 'id'>
   teams: Team[]
@@ -23,13 +24,14 @@ const { handleSubmit, errors, resetForm, setValues } = useForm<Omit<Team, 'id'>>
   initialValues: props.initialData || {
     teamName: '',
     description: '',
-    status: true,
+    isActive: true,
   },
 })
 
 const { value: teamName } = useField<string>('teamName')
 const { value: description } = useField<string>('description')
-const { value: status } = useField<boolean>('status')
+const { value: isActive } = useField<boolean>('isActive')
+
 defineExpose({
   resetForm,
   setFormValues: setValues,
@@ -83,17 +85,18 @@ watch(
         />
         <label for="description">Team Description</label>
       </FloatLabel>
-      <small class="absolute left-3 pt-0.5 text-red-500 leading-none">{{
-        errors.description
-      }}</small>
+      <small class="absolute left-3 pt-0.5 text-red-500 leading-none">
+        {{ errors.description }}
+      </small>
     </div>
+
     <div class="relative mb-2.5">
       <div>
-        <label for="status">Status</label>
+        <label for="isActive">Status</label>
       </div>
-      <ToggleSwitch v-model="status" :class="{ 'p-invalid': errors.status }" />
-      <small v-if="errors.status" class="left-3 pt-0.5 text-red-500">
-        {{ errors.status }}
+      <ToggleSwitch v-model="isActive" :class="{ 'p-invalid': errors.isActive }" />
+      <small v-if="errors.isActive" class="left-3 pt-0.5 text-red-500">
+        {{ errors.isActive }}
       </small>
     </div>
 
