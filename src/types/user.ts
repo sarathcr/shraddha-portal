@@ -10,6 +10,7 @@ export interface User extends RowData {
   role?: string
   roleId: number
   dob?: string
+  status: boolean
 }
 
 export interface OptionItem {

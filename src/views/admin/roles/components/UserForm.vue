@@ -8,6 +8,7 @@ import { userSchema } from '@/views/admin/schemas/userSchema'
 import type { OptionItem, User } from '@/types/user'
 import Select from 'primevue/select'
 import DatePicker from 'primevue/datepicker'
+import ToggleSwitch from 'primevue/toggleswitch'
 
 interface UserFormValues {
   name: string
@@ -16,6 +17,7 @@ interface UserFormValues {
   email: string
   team: string
   role: string
+  status: boolean
 }
 
 const props = defineProps<{
@@ -40,6 +42,7 @@ const { value: dob } = useField<Date | null>('dob')
 const { value: email } = useField<string>('email')
 const { value: team } = useField<string>('team')
 const { value: role } = useField<string>('role')
+const { value: status } = useField<boolean>('status')
 
 watch(
   () => props.initialData,
@@ -55,6 +58,7 @@ watch(
       setFieldValue('email', newVal.email as string)
       setFieldValue('team', newVal.team as string)
       setFieldValue('role', newVal.role as string)
+      setFieldValue('status', (newVal.status as boolean) ?? true)
     }
   },
   { immediate: true },
@@ -82,6 +86,7 @@ const onSubmit = handleSubmit((values) => {
     dob: dobDate,
     teamId: selectedTeam ? parseInt(selectedTeam.value) : 0,
     roleId: selectedRole ? parseInt(selectedRole.value) : 0,
+    status: values.status,
   }
 
   emit('submit', payload)
@@ -191,6 +196,16 @@ const onCancel = (): void => {
       </FloatLabel>
 
       <small class="absolute left-3 pt-0.5 text-red-500">{{ errors.role }}</small>
+    </div>
+
+    <div class="relative mb-2.5">
+      <div>
+        <label for="status">Status</label>
+      </div>
+      <ToggleSwitch v-model="status" :class="{ 'p-invalid': errors.status }" />
+      <small v-if="errors.status" class="left-3 pt-0.5 text-red-500">
+        {{ errors.status }}
+      </small>
     </div>
 
     <div class="flex justify-end gap-2 mt-2">
