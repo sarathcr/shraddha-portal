@@ -203,8 +203,19 @@ onMounted(() => {
           style="min-width: 200px"
           class="!py-4"
         >
-          <template #body="{ data }">
-            <div v-if="editableRow === data">
+          <template #body="{ data, column }">
+            <template v-if="slots[`body-${col.key}`]">
+              <slot
+                :name="`body-${col.key}`"
+                :row="data"
+                :column="column"
+                :options="col.options"
+                optionLabel="label"
+                optionValue="value"
+                :placeholder="col.placeholder || `Select ${col.label}`"
+              ></slot>
+            </template>
+            <template v-else-if="editableRow === data">
               <DatePicker
                 v-if="col.useDateFilter"
                 v-model="tempRow[col.key] as Date | null"
@@ -260,8 +271,8 @@ onMounted(() => {
                   {{ validationErrors[col.key] }}
                 </p>
               </div>
-            </div>
-            <div v-else>
+            </template>
+            <template v-else>
               <span v-if="col.useDateFilter">{{ formatDate(data[col.key]) }}</span>
               <template v-else-if="col.useMultiSelect">
                 <Tag
@@ -282,7 +293,7 @@ onMounted(() => {
                 :severity="getSeverity(data[col.key])"
               />
               <span v-else>{{ data[col.key] }}</span>
-            </div>
+            </template>
           </template>
 
           <template #filter="{ filterModel }">
@@ -313,6 +324,15 @@ onMounted(() => {
                 :placeholder="col.placeholder || `Select ${col.label}`"
                 filter
                 display="chip"
+                class="w-full"
+              />
+              <Select
+                v-else-if="col.useToggle"
+                v-model="filterModel.value"
+                :options="statusOptions"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Select Status"
                 class="w-full"
               />
               <InputText

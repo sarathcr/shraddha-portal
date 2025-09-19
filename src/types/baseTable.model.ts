@@ -12,6 +12,7 @@ export interface ColumnDef {
   placeholder?: string
   required?: boolean
   backendKey?: string
+  useToggle?: boolean
 }
 
 export interface RowData {

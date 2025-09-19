@@ -3,6 +3,7 @@ import { watch } from 'vue'
 import InputText from 'primevue/inputtext'
 import Textarea from 'primevue/textarea'
 import Button from 'primevue/button'
+import ToggleSwitch from 'primevue/toggleswitch'
 import FloatLabel from 'primevue/floatlabel'
 import { useForm, useField } from 'vee-validate'
 import { teamSchema } from '@/views/admin/schemas/teamSchema'
@@ -22,12 +23,13 @@ const { handleSubmit, errors, resetForm, setValues } = useForm<Omit<Team, 'id'>>
   initialValues: props.initialData || {
     teamName: '',
     description: '',
+    status: true,
   },
 })
 
 const { value: teamName } = useField<string>('teamName')
 const { value: description } = useField<string>('description')
-
+const { value: status } = useField<boolean>('status')
 defineExpose({
   resetForm,
   setFormValues: setValues,
@@ -84,6 +86,15 @@ watch(
       <small class="absolute left-3 pt-0.5 text-red-500 leading-none">{{
         errors.description
       }}</small>
+    </div>
+    <div class="relative mb-2.5">
+      <div>
+        <label for="status">Status</label>
+      </div>
+      <ToggleSwitch v-model="status" :class="{ 'p-invalid': errors.status }" />
+      <small v-if="errors.status" class="left-3 pt-0.5 text-red-500">
+        {{ errors.status }}
+      </small>
     </div>
 
     <div class="flex justify-end gap-2 mt-2">

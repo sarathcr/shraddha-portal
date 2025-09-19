@@ -1,5 +1,4 @@
 import { ref, type Ref } from 'vue'
-import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import type { Team } from '@/types/team'
 import type { ApiResponse } from '@/types/index'
@@ -25,13 +24,14 @@ export const useTeams = (): {
   pageNumber: Ref<number>
   pageSize: Ref<number>
   editingRows: Ref<Team[]>
+  statusOptions: { label: string; value: string }[]
   fetchInitialData: () => Promise<void>
   onLazyLoad: (event: LazyLoadEvent) => Promise<void>
   createTeam: (team: Omit<Team, 'id'>) => Promise<boolean>
   editTeam: (team: Team) => Promise<void>
-  deleteTeam: (team: Team, event?: Event) => void
+  deleteTeam: (team: Team) => Promise<boolean>
+  onStatusToggle: (team: Team, newStatus: boolean) => Promise<void>
 } => {
-  const confirm = useConfirm()
   const toast = useToast()
   const authStore = useAuthStore()
 
@@ -42,6 +42,48 @@ export const useTeams = (): {
   const pageSize = ref<number>(20)
   const editingRows = ref<Team[]>([])
 
+  const onStatusToggle = async (team: Team, newStatus: boolean): Promise<void> => {
+    const originalStatus = team.status
+
+    try {
+      const accessToken = authStore.accessToken
+      if (!accessToken) {
+        throw new Error('Authentication token not found. Please log in again.')
+      }
+
+      await api.put(`/authorization/Departments/${team.id}/status`, { status: newStatus })
+      team.status = newStatus
+      toast.add({
+        severity: 'success',
+        summary: 'Success',
+        detail: 'Team status updated successfully.',
+        life: 3000,
+      })
+    } catch (error) {
+      team.status = originalStatus
+
+      if (axios.isAxiosError(error) && error.response && error.response.data?.errorValue) {
+        toast.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: error.response.data.errorValue,
+          life: 3000,
+        })
+      } else {
+        toast.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to update team status.',
+          life: 3000,
+        })
+      }
+      console.error('Error updating team status:', error)
+    }
+  }
+  const statusOptions = [
+    { label: 'Active', value: 'True' },
+    { label: 'Inactive', value: 'False' },
+  ]
   const mapMatchModeToOperator = (matchMode: string, value: unknown): string => {
     switch (matchMode) {
       case FilterMatchMode.CONTAINS:
@@ -53,6 +95,9 @@ export const useTeams = (): {
       case FilterMatchMode.ENDS_WITH:
         return `like %${value}`
       case FilterMatchMode.EQUALS:
+        if (typeof value === 'boolean') {
+          return `= ${value}`
+        }
         return `= ${value}`
       case FilterMatchMode.NOT_EQUALS:
         return `!= ${value}`
@@ -273,53 +318,46 @@ export const useTeams = (): {
     }
   }
 
-  const deleteTeam = (team: Team, event?: Event): void => {
-    confirm.require({
-      target: event?.currentTarget as HTMLElement,
-      message: 'Do you want to delete this team?',
-      icon: 'pi pi-info-circle',
-      acceptClass: 'p-button-danger',
-      rejectClass: 'p-button-secondary p-button-outlined',
-      accept: async () => {
-        try {
-          const accessToken = authStore.accessToken
-          if (!accessToken) {
-            throw new Error('Authentication token not found. Please log in again.')
-          }
-          await api.delete(`/authorization/Departments/${team.id}`)
-          toast.add({
-            severity: 'success',
-            summary: 'Success',
-            detail: 'Team deleted successfully.',
-            life: 3000,
-          })
-          await onLazyLoad({
-            first: (pageNumber.value - 1) * pageSize.value,
-            rows: pageSize.value,
-            filters: undefined,
-            sortField: null,
-            sortOrder: null,
-          })
-        } catch (error) {
-          if (axios.isAxiosError(error) && error.response && error.response.data?.errorValue) {
-            toast.add({
-              severity: 'error',
-              summary: 'Error',
-              detail: error.response.data.errorValue,
-              life: 3000,
-            })
-          } else {
-            toast.add({
-              severity: 'error',
-              summary: 'Error',
-              detail: 'Failed to delete team.',
-              life: 3000,
-            })
-          }
-          console.error('Error deleting team:', error)
-        }
-      },
-    })
+  const deleteTeam = async (team: Team): Promise<boolean> => {
+    try {
+      const accessToken = authStore.accessToken
+      if (!accessToken) {
+        throw new Error('Authentication token not found. Please log in again.')
+      }
+      await api.delete(`/authorization/Departments/${team.id}`)
+      toast.add({
+        severity: 'success',
+        summary: 'Success',
+        detail: 'Team deleted successfully.',
+        life: 3000,
+      })
+      await onLazyLoad({
+        first: (pageNumber.value - 1) * pageSize.value,
+        rows: pageSize.value,
+        filters: undefined,
+        sortField: null,
+        sortOrder: null,
+      })
+      return true
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response && error.response.data?.errorValue) {
+        toast.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: error.response.data.errorValue,
+          life: 3000,
+        })
+      } else {
+        toast.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to delete team.',
+          life: 3000,
+        })
+      }
+      console.error('Error deleting team:', error)
+      return false
+    }
   }
 
   return {
@@ -329,6 +367,8 @@ export const useTeams = (): {
     pageNumber,
     pageSize,
     editingRows,
+    statusOptions,
+    onStatusToggle,
     fetchInitialData,
     onLazyLoad,
     createTeam,

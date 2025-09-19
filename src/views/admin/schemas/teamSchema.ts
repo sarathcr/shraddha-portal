@@ -5,7 +5,7 @@ export const teamSchema = yup.object({
     .string()
     .trim()
     .min(2, 'Team name must be at least 2 characters')
-    .matches(/^[a-zA-Z0-9 ]+$/, 'team can only contain letters, numbers, and spaces')
+    .matches(/^[a-zA-Z0-9 ]+$/, 'Team can only contain letters, numbers and spaces')
     .required('User name is required'),
   description: yup
     .string()
