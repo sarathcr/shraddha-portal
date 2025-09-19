@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, watch } from 'vue'
 import Button from 'primevue/button'
-import ConfirmPopup from 'primevue/confirmpopup'
 import Dialog from 'primevue/dialog'
 import BaseTable from '@/components/baseTable.vue'
 import { useTeams } from '@/views/admin/roles/composables/useTeam'
@@ -9,30 +8,40 @@ import TeamForm from './TeamForm.vue'
 import type { Team } from '@/types/team'
 import type { RowData } from '@/types/baseTable.model'
 import { useValidation } from '@/views/admin/roles/composables/useValidation'
+import ToggleSwitch from 'primevue/toggleswitch'
 
 const {
   teams,
   editingRows,
-  fetchInitialData,
   isLoading,
+  statusOptions,
   createTeam,
   editTeam,
   deleteTeam,
   totalRecords,
   pageSize,
   onLazyLoad,
+  onStatusToggle,
 } = useTeams()
 
 const { validationErrors, validateField, resetValidation, isSaveDisabled } = useValidation()
 
 const teamFormDialogVisible = ref(false)
-watch(teamFormDialogVisible, (isVisible) => {
-  if (isVisible) {
-    document.body.classList.add('no-scroll')
-  } else {
-    document.body.classList.remove('no-scroll')
-  }
-})
+const deleteDialogVisible = ref(false)
+const teamToDelete = ref<Team | null>(null)
+const editableTeam = ref<Team | null>(null)
+
+watch(
+  [teamFormDialogVisible, deleteDialogVisible],
+  ([isTeamFormVisible, isDeleteDialogVisible]) => {
+    if (isTeamFormVisible || isDeleteDialogVisible) {
+      document.body.classList.add('no-scroll')
+    } else {
+      document.body.classList.remove('no-scroll')
+    }
+  },
+)
+
 const teamFormRef = ref<InstanceType<typeof TeamForm> | null>(null)
 const originalTeam = ref<Team | null>(null)
 
@@ -54,6 +63,7 @@ const handleTeamFormCancel = (): void => {
 
 const onEditTeam = (row: RowData): void => {
   originalTeam.value = JSON.parse(JSON.stringify(row))
+  editableTeam.value = JSON.parse(JSON.stringify(row))
   editingRows.value = [row as Team]
 }
 
@@ -66,9 +76,14 @@ const onSaveTeam = async (newData: RowData): Promise<void> => {
 
   if (Object.keys(validationErrors.value).length > 0) return
 
+  if (editableTeam.value) {
+    newData.status = editableTeam.value.status
+  }
+
   await editTeam(newData as Team)
   editingRows.value = []
   resetValidation()
+  editableTeam.value = null
 }
 
 const onCancelEdit = (): void => {
@@ -81,10 +96,22 @@ const onCancelEdit = (): void => {
   editingRows.value = []
   originalTeam.value = null
   resetValidation()
+  editableTeam.value = null
 }
 
-const handleDeleteConfirmation = (row: RowData, event?: Event): void => {
-  deleteTeam(row as Team, event)
+const handleDeleteConfirmation = (row: RowData): void => {
+  teamToDelete.value = row as Team
+  deleteDialogVisible.value = true
+}
+
+const onDeleteTeam = async (): Promise<void> => {
+  if (teamToDelete.value) {
+    const success = await deleteTeam(teamToDelete.value)
+    if (success) {
+      deleteDialogVisible.value = false
+      teamToDelete.value = null
+    }
+  }
 }
 
 const columns = [
@@ -101,17 +128,12 @@ const columns = [
     filterable: true,
     required: true,
   },
+  { label: 'Status', key: 'status', filterable: true, useToggle: true },
 ]
-
-onMounted(() => {
-  void fetchInitialData()
-})
 </script>
 
 <template>
   <div class="space-y-4 h-full">
-    <ConfirmPopup class="mx-4" />
-
     <Dialog
       v-model:visible="teamFormDialogVisible"
       header="Create Team"
@@ -128,12 +150,29 @@ onMounted(() => {
       />
     </Dialog>
 
+    <Dialog
+      v-model:visible="deleteDialogVisible"
+      header="Confirm Deletion"
+      :style="{ width: '30rem' }"
+      modal
+    >
+      <div class="flex items-center gap-4">
+        <i class="pi pi-exclamation-triangle text-red-600 text-3xl" />
+        <span>Are you sure you want to delete this team?</span>
+      </div>
+      <template #footer>
+        <Button label="Cancel" severity="secondary" @click="deleteDialogVisible = false" />
+        <Button label="Delete" severity="danger" @click="onDeleteTeam" />
+      </template>
+    </Dialog>
+
     <BaseTable
       :columns="columns"
       :rows="teams"
       :totalRecords="totalRecords"
       :rowsPerPage="pageSize"
       :editableRow="editingRows[0] as RowData"
+      :statusOptions="statusOptions"
       :loading="isLoading"
       @save="onSaveTeam"
       @cancel="onCancelEdit"
@@ -144,7 +183,17 @@ onMounted(() => {
       <template #table-header>
         <Button label="Add New Team" icon="pi pi-plus" severity="help" @click="onAddNewTeam" />
       </template>
-
+      <template #body-status="{ row }">
+        <template v-if="editingRows.includes(row)">
+          <ToggleSwitch v-if="editableTeam" v-model="editableTeam.status" />
+        </template>
+        <template v-else>
+          <ToggleSwitch
+            :modelValue="row.status"
+            @change="onStatusToggle(row, ($event.target as HTMLInputElement).checked)"
+          />
+        </template>
+      </template>
       <template #actions="{ row }">
         <button
           @click="onEditTeam(row)"
@@ -153,7 +202,7 @@ onMounted(() => {
           <i class="pi pi-pencil text-slate-700 text-base"></i>
         </button>
         <button
-          @click="handleDeleteConfirmation(row, $event)"
+          @click="handleDeleteConfirmation(row)"
           class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
         >
           <i class="pi pi-trash text-red-600 text-base"></i>
