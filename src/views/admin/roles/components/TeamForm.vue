@@ -24,7 +24,7 @@ const { handleSubmit, errors, resetForm, setValues } = useForm<Omit<Team, 'id'>>
   initialValues: props.initialData || {
     teamName: '',
     description: '',
-    isActive: true,
+    isActive: false,
   },
 })
 
