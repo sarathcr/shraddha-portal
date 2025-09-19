@@ -18,6 +18,7 @@ const {
   totalRecords,
   pageSize,
   fetchInitialData,
+  statusOptions,
   createUser,
   editUser,
   deleteUser,
@@ -94,7 +95,6 @@ const handleDeleteConfirmation = (row: User): void => {
   userToDelete.value = row
   deleteDialogVisible.value = true
 }
-
 const onPerformDelete = async (): Promise<void> => {
   if (userToDelete.value) {
     await deleteUser(userToDelete.value)
@@ -102,7 +102,6 @@ const onPerformDelete = async (): Promise<void> => {
     userToDelete.value = null
   }
 }
-
 const columns = computed((): ColumnDef[] => [
   { label: 'Name', key: 'name', filterable: true, required: true },
   { label: 'Employee ID', key: 'employeeId', filterable: true, required: true },
@@ -133,9 +132,10 @@ const columns = computed((): ColumnDef[] => [
   },
   {
     label: 'Status',
-    key: 'status',
+    key: 'isActive',
     filterable: true,
-    useTag: true,
+    useToggle: true,
+    options: statusOptions,
     filterOption: true,
     required: true,
   },
@@ -189,6 +189,7 @@ onMounted(() => {
       :rowsPerPage="pageSize"
       :editableRow="editingRows[0] as RowData"
       :loading="isLoading"
+      :statusOptions="statusOptions"
       @save="onSave"
       @cancel="onCancel"
       @lazy:load="onLazyLoad"

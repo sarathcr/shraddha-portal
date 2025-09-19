@@ -28,6 +28,7 @@ export const useUsers = (): {
   pageNumber: Ref<number>
   pageSize: Ref<number>
   editingRows: Ref<User[]>
+  statusOptions: { label: string; value: string }[]
   fetchInitialData: () => Promise<void>
   onLazyLoad: (event: LazyLoadEvent) => Promise<void>
   createUser: (payload: User) => Promise<boolean>
@@ -104,7 +105,6 @@ export const useUsers = (): {
         '/authorization/users/pagination',
         payload,
       )
-
       if (response.data.succeeded) {
         users.value = response.data.data.map((u: User) => {
           const newUser: User = {
@@ -269,6 +269,10 @@ export const useUsers = (): {
       return false
     }
   }
+  const statusOptions = [
+    { label: 'Active', value: 'true' },
+    { label: 'Inactive', value: 'false' },
+  ]
 
   const editUser = async (newData: User): Promise<void> => {
     try {
@@ -378,6 +382,7 @@ export const useUsers = (): {
     pageNumber,
     pageSize,
     editingRows,
+    statusOptions,
     fetchInitialData,
     onLazyLoad,
     createUser,

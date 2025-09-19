@@ -292,7 +292,14 @@ onMounted(() => {
                   (newValue: boolean) => $emit('save', { ...data, [col.key]: newValue })
                 "
               />
-              <span v-else>{{ data[col.key] }}</span>
+              <span v-else>
+                {{
+                  col.options
+                    ? col.options.find((opt: any) => String(opt.value) === String(data[col.key]))
+                        ?.label || data[col.key]
+                    : data[col.key]
+                }}
+              </span>
             </template>
           </template>
 
