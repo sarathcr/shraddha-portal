@@ -19,8 +19,10 @@ export interface OptionItem {
 }
 
 export interface UserOptionItem {
+  id?: string
   name?: string
   label: string
-  value: string
   roleId: string
+  userId?: string
+  value: string
 }

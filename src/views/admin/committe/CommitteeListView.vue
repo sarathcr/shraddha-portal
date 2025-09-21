@@ -20,7 +20,7 @@ const {
   editingRows,
   statusOptions,
   fetchInitialData,
-  handleEdit,
+  // handleEdit,
   totalRecords,
   pageSize,
   onLazyLoad,
@@ -42,17 +42,18 @@ const handleCommitteeFormCancel = (): void => {
 
 const handleEditCommittee = (row: Committee): void => {
   selectedCommittee.value = JSON.parse(JSON.stringify(row))
-  editingRows.value = [row]
+  userFormDialogVisible.value = true
 }
-const onSave = async (newData: RowData): Promise<void> => {
-  if (selectedCommittee.value) {
-    const result = await handleEdit(newData as Committee, selectedCommittee.value)
-    if (result && result.success) {
-      editingRows.value = []
-      selectedCommittee.value = null
-    }
-  }
-}
+
+// const onSave = async (newData: RowData): Promise<void> => {
+//   if (selectedCommittee.value) {
+//     const result = await handleEdit(newData as Committee, selectedCommittee.value)
+//     if (result && result.success) {
+//       editingRows.value = []
+//       selectedCommittee.value = null
+//     }
+//   }
+// }
 const onCancel = (): void => {
   if (selectedCommittee.value) {
     const index = committee.value.findIndex((u) => u.id === selectedCommittee.value!.id)
@@ -63,31 +64,6 @@ const onCancel = (): void => {
   editingRows.value = []
   selectedCommittee.value = null
 }
-// const handleUserFormSubmit = async (payload: Committee): Promise<void> => {
-//   try {
-//     const result = await createCommittee(payload)
-//     userFormDialogVisible.value = false
-//     toast.add({
-//       severity: 'success',
-//       summary: 'Success',
-//       detail: `Committee for year ${result.year} created successfully`,
-//       life: 3000,
-//     })
-//   } catch (error: unknown) {
-//     let errorMessage = 'An error occurred while creating the committee.'
-//     if (error instanceof Error) {
-//       errorMessage = error.message
-//     }
-//     toast.add({
-//       severity: 'error',
-//       summary: 'Creation Failed',
-//       detail: errorMessage,
-//       life: 4000,
-//     })
-//   } finally {
-//     await fetchInitialData()
-//   }
-// }
 const handleViewCommittee = async (row: { id: string }): Promise<void> => {
   await router.push(`/admin/committe/${row.id}`)
 }
@@ -125,7 +101,6 @@ onMounted(() => {
         :editableRow="editingRows[0] as RowData"
         :statusOptions="statusOptions"
         :loading="isLoading"
-        @save="onSave"
         @cancel="onCancel"
         @lazy:load="onLazyLoad"
         :paginator="true"

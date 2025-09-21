@@ -46,20 +46,9 @@ export const createCommittee = (newCommittee: Committee): Promise<AxiosResponse<
   return committeeApi.post<Committee>('/committee', newCommittee)
 }
 
-// Edit committee
-export const editCommittee = async (
-  updatedCommittee: Committee,
-): Promise<{ succeeded: boolean; data: Committee }> => {
-  try {
-    const response = await committeeApi.put<{ succeeded: boolean; data: Committee }>(
-      `/committee/${updatedCommittee.id}`,
-      updatedCommittee,
-    )
-    return response.data
-  } catch (err: unknown) {
-    console.error('Failed to edit committee:', err)
-    throw err
-  }
+//Edit committee
+export const editCommittee = (): Promise<AxiosResponse<Committee>> => {
+  return committeeApi.put<Committee>(`/committee/`)
 }
 
 // Delete committee

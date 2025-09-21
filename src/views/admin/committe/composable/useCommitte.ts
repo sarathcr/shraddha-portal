@@ -8,7 +8,6 @@ import type { ApiResponse } from '@/types/index'
 import type { DataTableFilterMeta, DataTableSortMeta } from 'primevue'
 import {
   createCommittee,
-  editCommittee,
   fetchRoles,
   fetchUsers,
   getCommittee,
@@ -21,11 +20,13 @@ export const committeeRoles: Ref<OptionItem[]> = ref([])
 export const getUsersData = async (): Promise<void> => {
   const users: ApiResponse<CommitteeUser[]> = await fetchUsers(1, 0, { isActive: '= true' })
   if (users?.succeeded && users.data) {
-    committeeUsers.value = users.data.map((user: CommitteeUser) => ({
-      label: user.name ?? '',
-      value: user.userId ?? '',
-      roleId: user.roleId,
-    }))
+    committeeUsers.value = users.data
+      .filter((user) => user.id)
+      .map((user: CommitteeUser) => ({
+        label: user.name ?? '',
+        roleId: user.roleId,
+        value: user.id!,
+      }))
   } else {
     committeeUsers.value = []
   }
@@ -63,10 +64,10 @@ export function useCommittee(): {
   pageSize: Ref<number>
   onLazyLoad: (event: LazyLoadEvent) => Promise<void>
   addCommittee: (payload: Committee) => Promise<ApiResponse<Committee>>
-  handleEdit: (
-    newData: Committee,
-    oldData: Committee,
-  ) => Promise<{ success: boolean; committee: Committee } | null>
+  // handleEdit: (
+  //   newData: Committee,
+  //   oldData: Committee,
+  // ) => Promise<{ success: boolean; committee: Committee } | null>
   isLoading: Ref<boolean>
   filters: Ref<{ global: { value: string | null; matchMode: string } }>
   clearFilter: () => void
@@ -287,81 +288,80 @@ export function useCommittee(): {
     }
   }
 
-  const handleEdit = async (
-    newData: Committee,
-    oldData: Committee,
-  ): Promise<{ success: boolean; committee: Committee } | null> => {
-    try {
-      const yearPattern = /^\d{4}-\d{4}$/
-      if (!yearPattern.test(newData.year)) {
-        toast.add({
-          severity: 'error',
-          summary: 'Validation Error',
-          detail: 'Year must be in the format YYYY-YYYY',
-          life: 3000,
-        })
-        return null
-      }
-      const [startYear, endYear] = newData.year.split('-').map(Number)
-      if (endYear !== startYear + 1) {
-        toast.add({
-          severity: 'error',
-          summary: 'Validation Error',
-          detail: 'Years must be consecutive',
-          life: 3000,
-        })
-        return null
-      }
+  // const handleEdit = async (
+  //   newData: Committee,
+  //   oldData: Committee,
+  // ): Promise<{ success: boolean; committee: Committee } | null> => {
+  //   try {
+  //     const yearPattern = /^\d{4}-\d{4}$/
+  //     if (!yearPattern.test(newData.year)) {
+  //       toast.add({
+  //         severity: 'error',
+  //         summary: 'Validation Error',
+  //         detail: 'Year must be in the format YYYY-YYYY',
+  //         life: 3000,
+  //       })
+  //       return null
+  //     }
+  //     const [startYear, endYear] = newData.year.split('-').map(Number)
+  //     if (endYear !== startYear + 1) {
+  //       toast.add({
+  //         severity: 'error',
+  //         summary: 'Validation Error',
+  //         detail: 'Years must be consecutive',
+  //         life: 3000,
+  //       })
+  //       return null
+  //     }
 
-      if (JSON.stringify(newData) === JSON.stringify(oldData)) {
-        toast.add({
-          severity: 'info',
-          summary: 'No Changes',
-          detail: 'No modifications detected.',
-          life: 3000,
-        })
-        return { success: true, committee: oldData }
-      }
+  //     if (JSON.stringify(newData) === JSON.stringify(oldData)) {
+  //       toast.add({
+  //         severity: 'info',
+  //         summary: 'No Changes',
+  //         detail: 'No modifications detected.',
+  //         life: 3000,
+  //       })
+  //       return { success: true, committee: oldData }
+  //     }
 
-      const response = await editCommittee(newData)
+  //     const response = await editCommittee()
 
-      if (response && response.succeeded && response.data) {
-        const updatedCommittee = response.data
-        const committeeIndex = committee.value.findIndex((c) => c.id === oldData.id)
+  //     if (response && response.succeeded && response.data) {
+  //       const updatedCommittee = response.data
+  //       const committeeIndex = committee.value.findIndex((c) => c.id === oldData.id)
 
-        if (committeeIndex !== -1) {
-          committee.value[committeeIndex] = updatedCommittee
-        }
+  //       if (committeeIndex !== -1) {
+  //         committee.value[committeeIndex] = updatedCommittee
+  //       }
 
-        toast.add({
-          severity: 'success',
-          summary: 'Success',
-          detail: `Committee for year ${updatedCommittee.year} updated successfully.`,
-          life: 3000,
-        })
+  //       toast.add({
+  //         severity: 'success',
+  //         summary: 'Success',
+  //         detail: `Committee for year ${updatedCommittee.year} updated successfully.`,
+  //         life: 3000,
+  //       })
 
-        return { success: true, committee: updatedCommittee }
-      } else {
-        toast.add({
-          severity: 'error',
-          summary: 'Update Failed',
-          life: 3000,
-        })
-      }
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error occurred while updating.'
-      toast.add({
-        severity: 'error',
-        summary: 'Update Failed',
-        detail: errorMessage,
-        life: 3000,
-      })
-    }
+  //       return { success: true, committee: updatedCommittee }
+  //     } else {
+  //       toast.add({
+  //         severity: 'error',
+  //         summary: 'Update Failed',
+  //         life: 3000,
+  //       })
+  //     }
+  //   } catch (error: unknown) {
+  //     const errorMessage =
+  //       error instanceof Error ? error.message : 'Unknown error occurred while updating.'
+  //     toast.add({
+  //       severity: 'error',
+  //       summary: 'Update Failed',
+  //       detail: errorMessage,
+  //       life: 3000,
+  //     })
+  //   }
 
-    return null
-  }
-
+  //   return null
+  // }
   return {
     committee,
     columns,
@@ -371,7 +371,6 @@ export function useCommittee(): {
     editingRows,
     statusOptions,
     addCommittee,
-    handleEdit,
     isLoading,
     filters,
     clearFilter,

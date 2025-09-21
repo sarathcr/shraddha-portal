@@ -50,21 +50,29 @@ onMounted(async () => {
   executiveRole.value = exec ? { id: exec.value, name: exec.label } : null
   coreRoles.value.forEach((role) => {
     const roleUsers = committeeUsers.value
-      .filter((u) => u.roleId === role.id)
-      .map((u) => ({ id: u.value, fullName: u.label }))
+      .filter((u) => u.roleId === role.id && u.value && u.label)
+      .map((u) => ({
+        id: u.value ?? '',
+        fullName: u.label ?? '',
+      }))
 
     usersByRole.value[role.id] = roleUsers
-    if (roleUsers.length > 0) {
+    if (roleUsers.length === 1) {
       selectedCoreMembers.value[role.id] = roleUsers[0].id
     }
   })
+
   if (executiveRole.value) {
     const execUsers = committeeUsers.value
-      .filter((u) => u.roleId === executiveRole.value!.id)
-      .map((u) => ({ id: u.value, fullName: u.label }))
+      .filter((u) => u.roleId === executiveRole.value!.id && u.userId && u.label)
+      .map((u) => ({
+        id: u.userId ?? '',
+        fullName: u.label ?? '',
+      }))
 
     usersByRole.value[executiveRole.value.id] = execUsers
-    if (execUsers.length > 0) {
+
+    if (execUsers.length === 1) {
       selectedExecutiveMember.value = execUsers[0].id
     }
   }
@@ -84,7 +92,7 @@ const onSubmit = handleSubmit(async () => {
       executiveRole.value && selectedExecutiveMember.value
         ? [
             {
-              userId: selectedExecutiveMember.value,
+              value: selectedExecutiveMember.value,
               roleId: executiveRole.value.id.toString(),
             },
           ]
@@ -92,7 +100,6 @@ const onSubmit = handleSubmit(async () => {
   }
 
   const response = await addCommittee(committeePayload)
-
   if (response.succeeded && response.data) {
     emit('submit', response.data)
     resetForm()
