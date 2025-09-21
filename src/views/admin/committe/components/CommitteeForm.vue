@@ -7,13 +7,15 @@ import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import ToggleSwitch from 'primevue/toggleswitch'
 import DatePicker from 'primevue/datepicker'
-import type { Committee, CommitteeUser } from '@/types/commitee'
+import type { Committee } from '@/types/commitee'
 import {
   committeeRoles,
   committeeUsers,
   getRolesData,
   getUsersData,
+  useCommittee,
 } from '../composable/useCommitte'
+import { committeeSchema } from '../../schemas/committeeSchema'
 
 const emit = defineEmits<{
   (e: 'submit', payload: Committee): void
@@ -21,24 +23,26 @@ const emit = defineEmits<{
 }>()
 
 const { handleSubmit, errors, resetForm } = useForm<Committee>({
-  // validationSchema: committeeSchema,
+  validationSchema: committeeSchema,
 })
 
 const { value: year } = useField<string>('year')
-const startDate = ref<Date | null>(null)
-const endDate = ref<Date | null>(null)
+const { value: startDate, errorMessage: startDateError } = useField<Date | null>('startDate')
+const { value: endDate, errorMessage: endDateError } = useField<Date | null>('endDate')
 const { value: isActive } = useField<boolean>('isActive')
+isActive.value = false
 const coreRoles = ref<{ id: string; name: string }[]>([])
 const executiveRole = ref<{ id: string; name: string } | null>(null)
 const usersByRole = ref<Record<string, { id: string; fullName: string }[]>>({})
 
 const selectedCoreMembers = ref<Record<string, string>>({})
 const selectedExecutiveMember = ref<string | null>(null)
+const { addCommittee } = useCommittee()
 
 onMounted(async () => {
   await Promise.all([getRolesData(), getUsersData()])
 
-  const allowedRoles = ['Treasurer', 'Admin', 'Super Admin', 'Test HR']
+  const allowedRoles = ['Treasurer', 'admin', 'Super Admin', 'Test HR']
   coreRoles.value = committeeRoles.value
     .filter((r) => allowedRoles.includes(r.label) && r.label !== 'Executive Committee Member')
     .map((r) => ({ id: r.value, name: r.label }))
@@ -66,27 +70,33 @@ onMounted(async () => {
   }
 })
 
-const onSubmit = handleSubmit(() => {
+const onSubmit = handleSubmit(async () => {
   const committeePayload: Committee = {
     year: year.value,
     startDate: startDate.value ? startDate.value.toISOString().split('T')[0] : undefined,
     endDate: endDate.value ? endDate.value.toISOString().split('T')[0] : undefined,
     isActive: isActive.value,
-    coreMembers: Object.entries(selectedCoreMembers.value)
-      .map(([userId]) => {
-        const user = committeeUsers.value.find((u) => u.id === userId)
-        return user ? { id: user.id, name: user.name, roleId: user.roleId } : null
-      })
-      .filter((m): m is CommitteeUser => m !== null),
+    coreMembers: Object.entries(selectedCoreMembers.value).map(([roleId, userId]) => ({
+      userId: userId,
+      roleId: roleId.toString(),
+    })),
     executiveMembers:
       executiveRole.value && selectedExecutiveMember.value
-        ? ((): { id: string; name: string; roleId: string }[] => {
-            const user = committeeUsers.value.find((u) => u.id === selectedExecutiveMember.value)
-            return user ? [{ id: user.id, name: user.name ?? '', roleId: user.roleId ?? '' }] : []
-          })()
+        ? [
+            {
+              userId: selectedExecutiveMember.value,
+              roleId: executiveRole.value.id.toString(),
+            },
+          ]
         : [],
   }
-  emit('submit', committeePayload)
+
+  const response = await addCommittee(committeePayload)
+
+  if (response.succeeded && response.data) {
+    emit('submit', response.data)
+    resetForm()
+  }
 })
 
 const onCancel = (): void => {
@@ -110,10 +120,13 @@ const onCancel = (): void => {
       <FloatLabel variant="on" class="w-1/2">
         <DatePicker v-model="startDate" dateFormat="yy-mm-dd" />
         <label>Start Date</label>
+        <small v-if="startDateError" class="text-red-500">{{ startDateError }}</small>
       </FloatLabel>
+
       <FloatLabel variant="on" class="w-1/2">
         <DatePicker v-model="endDate" dateFormat="yy-mm-dd" />
         <label>End Date</label>
+        <small v-if="endDateError" class="text-red-500">{{ endDateError }}</small>
       </FloatLabel>
     </div>
     <div>

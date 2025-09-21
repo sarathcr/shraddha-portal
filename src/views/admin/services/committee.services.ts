@@ -96,17 +96,22 @@ export const fetchRoles = async (
 
 // Get Users
 export const fetchUsers = async (
-  pageNumber: -1,
-  pageSize: 0,
+  pageNumber = 1,
+  pageSize = 0,
+  filterMap?: Record<string, string>,
 ): Promise<ApiResponse<CommitteeUser[]>> => {
   try {
+    const payload = {
+      pageNumber,
+      pageSize,
+      filterMap: filterMap || {},
+    }
+
     const response = await api.post<ApiResponse<CommitteeUser[]>>(
       `/authorization/users/pagination`,
-      {
-        pageNumber,
-        pageSize,
-      },
+      payload,
     )
+
     return response.data
   } catch (err: unknown) {
     console.error('Failed to fetch users:', err)

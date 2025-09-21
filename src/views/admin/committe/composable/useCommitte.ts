@@ -19,12 +19,11 @@ export const committeeUsers: Ref<UserOptionItem[]> = ref([])
 export const committeeRoles: Ref<OptionItem[]> = ref([])
 
 export const getUsersData = async (): Promise<void> => {
-  const users: ApiResponse<CommitteeUser[]> = await fetchUsers(-1, 0)
+  const users: ApiResponse<CommitteeUser[]> = await fetchUsers(1, 0, { isActive: '= true' })
   if (users?.succeeded && users.data) {
     committeeUsers.value = users.data.map((user: CommitteeUser) => ({
-      id: user.id ?? '',
-      label: user.name,
-      value: user.id ?? '',
+      label: user.name ?? '',
+      value: user.userId ?? '',
       roleId: user.roleId,
     }))
   } else {
@@ -82,7 +81,6 @@ export function useCommittee(): {
   const isLoading = ref<boolean>(false)
   const pageNumber = ref(1)
   const totalRecords = ref(0)
-  const loading = ref(false)
   const error = ref<string | null>(null)
 
   const filters = ref({
@@ -95,12 +93,7 @@ export function useCommittee(): {
     { label: 'End Date', key: 'endDate', filterable: true },
     { label: 'Core Members', key: 'coreMembers', filterable: true },
     { label: 'Executive Members', key: 'executiveMembers', filterable: true },
-    {
-      label: 'Status',
-      key: 'isActive',
-      filterable: true,
-      useToggle: true,
-    },
+    { label: 'Status', key: 'isActive', filterable: true, useToggle: true },
   ]
 
   const statusOptions = [
@@ -192,13 +185,11 @@ export function useCommittee(): {
           year: item.year,
           startDate: item.startDate,
           endDate: item.endDate,
-          coreMembers: (item.coreMembers || [])
-            .map((m: CommitteeUser) => m.name) // only use `name`
-            .join(', '),
+          coreMembers: (item.coreMembers || []).map((m: CommitteeUser) => m.name).join(', '),
           executiveMembers: (item.executiveMembers || [])
-            .map((m: CommitteeUser) => m.name) // only use `name`
+            .map((m: CommitteeUser) => m.name)
             .join(', '),
-          isActive: item.isActive ?? false, // fallback in case it's undefined
+          isActive: item.isActive ?? false,
         }))
 
         totalRecords.value = response.totalRecords ?? 0
@@ -252,12 +243,16 @@ export function useCommittee(): {
   }
 
   const addCommittee = async (committeeItem: Committee): Promise<ApiResponse<Committee>> => {
-    loading.value = true
-    error.value = null
-
     try {
       const response = await createCommittee(committeeItem)
       committee.value.push(response.data)
+
+      toast.add({
+        severity: 'success',
+        summary: 'Success',
+        detail: 'Committee created successfully',
+      })
+
       return {
         data: response.data,
         message: 'Committee created successfully',
@@ -271,10 +266,12 @@ export function useCommittee(): {
     } catch (err: unknown) {
       let message = 'Failed to create committee'
 
-      if ((err as AxiosError<{ message?: string }>).response?.data?.message) {
-        message = (err as AxiosError<{ message?: string }>).response!.data!.message!
+      const axiosErr = err as AxiosError<{ errorValue?: string }>
+      if (axiosErr.response?.data?.errorValue) {
+        message = axiosErr.response.data.errorValue
       }
 
+      toast.add({ severity: 'error', summary: 'Error', detail: message })
       error.value = message
 
       return {
@@ -287,8 +284,6 @@ export function useCommittee(): {
         totalPages: 0,
         totalRecords: 0,
       }
-    } finally {
-      loading.value = false
     }
   }
 
