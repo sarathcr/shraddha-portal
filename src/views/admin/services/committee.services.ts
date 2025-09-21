@@ -1,7 +1,7 @@
-import { committeeApi } from '@/constants'
+import { api, committeeApi } from '@/constants'
 import type { ApiResponse } from '@/types'
-import type { Committee } from '@/types/commitee'
-import axios, { AxiosError } from 'axios'
+import type { Committee, CommitteeRole, CommitteeUser } from '@/types/commitee'
+import axios, { AxiosError, type AxiosResponse } from 'axios'
 
 // Get committee list
 export const getCommittee = async (
@@ -42,22 +42,8 @@ export const getCommittee = async (
 }
 
 // Create new committee
-export const createCommittee = async (newCommittee: Committee): Promise<Committee> => {
-  try {
-    const response = await committeeApi.post<Committee>('/committee', newCommittee)
-    return response.data
-  } catch (err: unknown) {
-    if (axios.isAxiosError(err)) {
-      const axiosErr = err as AxiosError<{ message?: string }>
-      console.error(
-        'Failed to create committee:',
-        axiosErr.response?.data?.message ?? axiosErr.message,
-      )
-    } else {
-      console.error('Failed to create committee:', err)
-    }
-    throw err
-  }
+export const createCommittee = (newCommittee: Committee): Promise<AxiosResponse<Committee>> => {
+  return committeeApi.post<Committee>('/committee', newCommittee)
 }
 
 // Edit committee
@@ -87,6 +73,43 @@ export const deleteCommittee = async (
     return response.data
   } catch (err: unknown) {
     console.error('Failed to delete committee:', err)
+    throw err
+  }
+}
+
+// Get Roles
+export const fetchRoles = async (
+  pageNumber = -1,
+  pageSize = 0,
+): Promise<ApiResponse<CommitteeRole[]>> => {
+  try {
+    const response = await api.post<ApiResponse<CommitteeRole[]>>(
+      `/authorization/Roles/pagination`,
+      { pageNumber, pageSize },
+    )
+    return response.data
+  } catch (err: unknown) {
+    console.error('Failed to fetch roles:', err)
+    throw err
+  }
+}
+
+// Get Users
+export const fetchUsers = async (
+  pageNumber: -1,
+  pageSize: 0,
+): Promise<ApiResponse<CommitteeUser[]>> => {
+  try {
+    const response = await api.post<ApiResponse<CommitteeUser[]>>(
+      `/authorization/users/pagination`,
+      {
+        pageNumber,
+        pageSize,
+      },
+    )
+    return response.data
+  } catch (err: unknown) {
+    console.error('Failed to fetch users:', err)
     throw err
   }
 }

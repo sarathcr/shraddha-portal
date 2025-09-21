@@ -105,22 +105,16 @@ export const useUsers = (): {
         payload,
       )
 
-      if (response.data.succeeded) {
-        users.value = response.data.data.map((u: User) => {
-          const newUser: User = {
-            ...u,
-          }
-          return newUser
-        })
-
-        totalRecords.value = response.data.totalRecords
-        pageNumber.value = response.data.pageNumber
-        pageSize.value = response.data.pageSize
+      if (response.data?.succeeded && response.data.data) {
+        users.value = response.data.data.map((u: User) => ({ ...u }))
+        totalRecords.value = response.data.totalRecords ?? 0
+        pageNumber.value = response.data.pageNumber ?? 1
+        pageSize.value = response.data.pageSize ?? 10
       } else {
         toast.add({
           severity: 'error',
           summary: 'Error',
-          detail: response.data.message || 'Failed to load user data.',
+          detail: response.data?.message || 'Failed to load user data.',
           life: 3000,
         })
       }
@@ -158,35 +152,33 @@ export const useUsers = (): {
         }),
       ])
 
-      if (rolesResponse.data.succeeded) {
-        roles.value = rolesResponse.data.data.map((role: Role) => {
-          const newRoles: OptionItem = {
+      if (rolesResponse.data?.succeeded && rolesResponse.data.data) {
+        roles.value = rolesResponse.data.data.map(
+          (role: Role): OptionItem => ({
             label: role.roleName,
             value: role.id,
-          }
-          return newRoles
-        })
+          }),
+        )
       } else {
         toast.add({
           severity: 'error',
           summary: 'Error',
-          detail: rolesResponse.data.message || 'Failed to load roles.',
+          detail: rolesResponse.data?.message || 'Failed to load roles.',
           life: 3000,
         })
       }
-      if (teamsResponse.data.succeeded) {
-        teams.value = teamsResponse.data.data.map((team: Team) => {
-          const newTeam: OptionItem = {
+      if (teamsResponse.data?.succeeded && teamsResponse.data.data) {
+        teams.value = teamsResponse.data.data.map(
+          (team: Team): OptionItem => ({
             label: team.teamName ?? '',
             value: team.id,
-          }
-          return newTeam
-        })
+          }),
+        )
       } else {
         toast.add({
           severity: 'error',
           summary: 'Error',
-          detail: teamsResponse.data.message || 'Failed to load teams.',
+          detail: teamsResponse.data?.message || 'Failed to load teams.',
           life: 3000,
         })
       }

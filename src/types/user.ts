@@ -17,3 +17,11 @@ export interface OptionItem {
   label: string
   value: string
 }
+
+export interface UserOptionItem {
+  id: string
+  name?: string
+  label: string
+  value: string
+  roleId: string
+}
