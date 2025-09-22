@@ -105,7 +105,13 @@ watch(
 watch(
   () => props.editableRow,
   (newRow) => {
-    if (newRow) Object.assign(tempRow, newRow)
+    if (newRow) {
+      // Deep copy so reactive works
+      Object.keys(tempRow).forEach((key) => delete tempRow[key])
+      Object.assign(tempRow, JSON.parse(JSON.stringify(newRow)))
+    } else {
+      Object.keys(tempRow).forEach((key) => delete tempRow[key])
+    }
   },
   { immediate: true },
 )

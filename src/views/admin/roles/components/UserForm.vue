@@ -50,9 +50,10 @@ watch(
     if (newVal) {
       setFieldValue(
         'dob',
-        typeof newVal.dob === 'string' && newVal.dob ? new Date(newVal.dob) : null,
+        typeof newVal.dob === 'string' && newVal.dob
+          ? new Date(newVal.dob.split('-').reverse().join('-'))
+          : null,
       )
-
       setFieldValue('name', newVal.name as string)
       setFieldValue('employeeId', newVal.employeeId as string)
       setFieldValue('email', newVal.email as string)
@@ -67,12 +68,12 @@ watch(
 defineExpose({ resetForm })
 
 const onSubmit = handleSubmit((values) => {
-  let dobDate: string | undefined
+  let dobDate: Date | undefined
 
   if (values.dob) {
     const parsed = new Date(values.dob)
     if (!isNaN(parsed.getTime())) {
-      dobDate = parsed.toISOString().split('T')[0]
+      dobDate = parsed
     }
   }
 
@@ -86,7 +87,7 @@ const onSubmit = handleSubmit((values) => {
     dob: dobDate,
     teamId: selectedTeam ? parseInt(selectedTeam.value) : 0,
     roleId: selectedRole ? parseInt(selectedRole.value) : 0,
-    status: values.status,
+    isActive: values.status,
   }
 
   emit('submit', payload)
