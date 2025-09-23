@@ -367,6 +367,7 @@ onMounted(() => {
                 :disabled="isSaveDisabled"
                 @click="saveEdit()"
               />
+
               <Button icon="pi pi-times" severity="danger" size="small" @click="cancelEdit" />
             </div>
             <div v-else>
