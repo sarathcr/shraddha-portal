@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ColumnDef, RowData } from '@/types/baseTable.model'
-import { formatDate } from '@/utils/dateUtils'
+import { formatDateForUI } from '@/utils/dateUtils'
 import { FilterMatchMode, FilterOperator } from '@primevue/core/api'
 import type {
   DataTablePageEvent,
@@ -106,7 +106,6 @@ watch(
   () => props.editableRow,
   (newRow) => {
     if (newRow) {
-      // Deep copy so reactive works
       Object.keys(tempRow).forEach((key) => delete tempRow[key])
       Object.assign(tempRow, JSON.parse(JSON.stringify(newRow)))
     } else {
@@ -155,7 +154,6 @@ onMounted(() => {
   } as DataTablePageEvent)
 })
 </script>
-
 <template>
   <div class="space-y-4 h-full p-4 flex flex-col justify-between">
     <div class="bg-white rounded-md max-h-[calc(100vh-200px)] overflow-hidden flex flex-col">
@@ -220,7 +218,7 @@ onMounted(() => {
               <DatePicker
                 v-if="col.useDateFilter"
                 v-model="tempRow[col.key] as Date | null"
-                dateFormat="dd/mm/yy"
+                dateFormat="yy/mm/dd"
                 showIcon
                 class="w-full"
                 @blur="col.required ? validateField(col.key, tempRow[col.key], col.label) : null"
@@ -285,7 +283,7 @@ onMounted(() => {
               </div>
             </template>
             <template v-else>
-              <span v-if="col.useDateFilter">{{ formatDate(data[col.key]) }}</span>
+              <span v-if="col.useDateFilter">{{ formatDateForUI(data[col.key]) }}</span>
               <template v-else-if="col.useMultiSelect">
                 <Tag
                   v-if="data[col.key]"

@@ -9,6 +9,7 @@ import type { OptionItem, User } from '@/types/user'
 import Select from 'primevue/select'
 import DatePicker from 'primevue/datepicker'
 import ToggleSwitch from 'primevue/toggleswitch'
+import { formatDateForAPI } from '@/utils/dateUtils'
 
 interface UserFormValues {
   name: string
@@ -84,7 +85,7 @@ const onSubmit = handleSubmit((values) => {
     name: values.name?.trim() || '',
     employeeId: values.employeeId?.trim() || '',
     email: values.email?.trim() || '',
-    dob: dobDate,
+    dob: dobDate ? formatDateForAPI(dobDate) : null,
     teamId: selectedTeam ? parseInt(selectedTeam.value) : 0,
     roleId: selectedRole ? parseInt(selectedRole.value) : 0,
     isActive: values.status,

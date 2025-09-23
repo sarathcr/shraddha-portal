@@ -9,6 +9,7 @@ import { mapMatchModeToOperator } from '@/utils/filterUtils'
 import type { Role } from '@/types/role'
 import type { Team } from '@/types/team'
 import { api } from '@/constants'
+import { formatDateForAPI } from '@/utils/dateUtils'
 
 type LazyLoadEvent = {
   first: number
@@ -48,14 +49,16 @@ export const useUsers = (): {
   const pageSize = ref<number>(20)
   const editingRows = ref<User[]>([])
 
+  const statusOptions = [
+    { label: 'Active', value: 'true' },
+    { label: 'Inactive', value: 'false' },
+  ]
+
   const onStatusToggle = async (user: User, newStatus: boolean): Promise<void> => {
     const originalStatus = user.isActive
-
     try {
       const accessToken = authStore.accessToken
-      if (!accessToken) {
-        throw new Error('Authentication token not found. Please log in again.')
-      }
+      if (!accessToken) throw new Error('Authentication token not found. Please log in again.')
 
       const response = await api.put<{ message: string }>(
         `/authorization/users/${user.id}/toggleStatus`,
@@ -80,22 +83,11 @@ export const useUsers = (): {
       })
     } catch (error) {
       user.isActive = originalStatus
-
-      if (axios.isAxiosError(error) && error.response?.data?.errorValue) {
-        toast.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: error.response.data.errorValue,
-          life: 3000,
-        })
-      } else {
-        toast.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'Failed to update user status.',
-          life: 3000,
-        })
-      }
+      const detail =
+        axios.isAxiosError(error) && error.response?.data?.errorValue
+          ? error.response.data.errorValue
+          : 'Failed to update user status.'
+      toast.add({ severity: 'error', summary: 'Error', detail, life: 3000 })
       console.error('Error updating user status:', error)
     }
   }
@@ -124,18 +116,13 @@ export const useUsers = (): {
       }
 
       if (event.filters) {
-        const filters = event.filters as DataTableFilterMeta
-        Object.entries(filters).forEach(([field, filterMeta]) => {
+        Object.entries(event.filters).forEach(([field, filterMeta]) => {
           const filter = filterMeta as {
             operator: string
             constraints: { value: unknown; matchMode: string }[]
           }
-
           if (filter.constraints && filter.constraints.length > 0) {
-            const validConstraints = filter.constraints.filter(
-              (c) => c.value !== null && c.value !== undefined,
-            )
-
+            const validConstraints = filter.constraints.filter((c) => c.value != null)
             if (validConstraints.length > 0) {
               const filterString = validConstraints
                 .map((constraint, index) => {
@@ -145,7 +132,6 @@ export const useUsers = (): {
                   return `${operator} ${condition}`.trim()
                 })
                 .join(' ')
-
               payload.filterMap[field] = filterString
             }
           }
@@ -156,11 +142,13 @@ export const useUsers = (): {
         '/authorization/users/pagination',
         payload,
       )
+
       if (response.data.succeeded) {
         users.value = response.data.data.map((user: User) => ({
           ...user,
-          dob: user.dob ? new Date(user.dob) : null,
+          dob: user.dob || null,
         }))
+
         totalRecords.value = response.data.totalRecords
         pageNumber.value = response.data.pageNumber
         pageSize.value = response.data.pageSize
@@ -173,21 +161,11 @@ export const useUsers = (): {
         })
       }
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response && error.response.data?.errorValue) {
-        toast.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: error.response.data.errorValue,
-          life: 3000,
-        })
-      } else {
-        toast.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'An error occurred while fetching users.',
-          life: 3000,
-        })
-      }
+      const detail =
+        axios.isAxiosError(error) && error.response?.data?.errorValue
+          ? error.response.data.errorValue
+          : 'An error occurred while fetching users.'
+      toast.add({ severity: 'error', summary: 'Error', detail, life: 3000 })
       console.error('API call failed:', error)
     } finally {
       isLoading.value = false
@@ -207,13 +185,10 @@ export const useUsers = (): {
       ])
 
       if (rolesResponse.data.succeeded) {
-        roles.value = rolesResponse.data.data.map((role: Role) => {
-          const newRoles: OptionItem = {
-            label: role.roleName,
-            value: role.id,
-          }
-          return newRoles
-        })
+        roles.value = rolesResponse.data.data.map((role: Role) => ({
+          label: role.roleName,
+          value: role.id,
+        }))
       } else {
         toast.add({
           severity: 'error',
@@ -222,14 +197,12 @@ export const useUsers = (): {
           life: 3000,
         })
       }
+
       if (teamsResponse.data.succeeded) {
-        teams.value = teamsResponse.data.data.map((team: Team) => {
-          const newTeam: OptionItem = {
-            label: team.teamName ?? '',
-            value: team.id,
-          }
-          return newTeam
-        })
+        teams.value = teamsResponse.data.data.map((team: Team) => ({
+          label: team.teamName ?? '',
+          value: team.id,
+        }))
       } else {
         toast.add({
           severity: 'error',
@@ -259,25 +232,14 @@ export const useUsers = (): {
     }
   }
 
-  const formatDateForAPI = (date: Date | string | null | undefined): string | null => {
-    if (!date) return null
-    const d = new Date(date)
-    const year = d.getFullYear()
-    const month = String(d.getMonth() + 1).padStart(2, '0')
-    const day = String(d.getDate()).padStart(2, '0')
-    return `${year}-${month}-${day}`
-  }
-
   const createUser = async (payload: User): Promise<boolean> => {
     try {
       const accessToken = authStore.accessToken
-      if (!accessToken) {
-        throw new Error('Authentication token not found. Please log in again.')
-      }
+      if (!accessToken) throw new Error('Authentication token not found. Please log in again.')
 
       const formattedPayload = {
         ...payload,
-        dob: formatDateForAPI(payload.dob),
+        dob: payload.dob ? formatDateForAPI(new Date(payload.dob)) : null,
         TeamID: payload.team,
         RoleID: payload.role,
       }
@@ -289,6 +251,7 @@ export const useUsers = (): {
         detail: 'User created successfully.',
         life: 3000,
       })
+
       await onLazyLoad({
         first: (pageNumber.value - 1) * pageSize.value,
         rows: pageSize.value,
@@ -298,40 +261,24 @@ export const useUsers = (): {
       })
       return true
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response && error.response.data?.errorValue) {
-        toast.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: error.response.data.errorValue,
-          life: 3000,
-        })
-      } else {
-        toast.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'Failed to create user.',
-          life: 3000,
-        })
-      }
+      const detail =
+        axios.isAxiosError(error) && error.response?.data?.errorValue
+          ? error.response.data.errorValue
+          : 'Failed to create user.'
+      toast.add({ severity: 'error', summary: 'Error', detail, life: 3000 })
       console.error('Error creating user:', error)
       return false
     }
   }
-  const statusOptions = [
-    { label: 'Active', value: 'true' },
-    { label: 'Inactive', value: 'false' },
-  ]
 
   const editUser = async (newData: User): Promise<void> => {
     try {
       const accessToken = authStore.accessToken
-      if (!accessToken) {
-        throw new Error('Authentication token not found. Please log in again.')
-      }
+      if (!accessToken) throw new Error('Authentication token not found. Please log in again.')
 
       const formattedNewData = {
         ...newData,
-        dob: formatDateForAPI(newData.dob),
+        dob: newData.dob ? formatDateForAPI(new Date(newData.dob)) : null,
         id: newData.id,
         teamId: newData.teamId ?? newData.TeamID,
         roleId: newData.roleId ?? newData.RoleID,
@@ -344,6 +291,7 @@ export const useUsers = (): {
         detail: 'User updated successfully.',
         life: 3000,
       })
+
       await onLazyLoad({
         first: (pageNumber.value - 1) * pageSize.value,
         rows: pageSize.value,
@@ -352,41 +300,20 @@ export const useUsers = (): {
         sortOrder: null,
       })
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response) {
-        const errorValue = error.response.data?.errorValue
-
-        if (errorValue) {
-          toast.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: errorValue,
-            life: 3000,
-          })
-        } else {
-          toast.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'An unexpected API error occurred.',
-            life: 3000,
-          })
-        }
-      } else {
-        toast.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'An unexpected error occurred. Please try again.',
-          life: 3000,
-        })
-      }
+      const detail =
+        axios.isAxiosError(error) && error.response?.data?.errorValue
+          ? error.response.data.errorValue
+          : 'An unexpected error occurred. Please try again.'
+      toast.add({ severity: 'error', summary: 'Error', detail, life: 3000 })
+      console.error('Error editing user:', error)
     }
   }
 
   const deleteUser = async (user: User): Promise<void> => {
     try {
       const accessToken = authStore.accessToken
-      if (!accessToken) {
-        throw new Error('Authentication token not found. Please log in again.')
-      }
+      if (!accessToken) throw new Error('Authentication token not found. Please log in again.')
+
       await api.delete(`/authorization/users/${user.id}`)
       toast.add({
         severity: 'success',
@@ -394,6 +321,7 @@ export const useUsers = (): {
         detail: 'User deleted successfully.',
         life: 3000,
       })
+
       await onLazyLoad({
         first: (pageNumber.value - 1) * pageSize.value,
         rows: pageSize.value,
@@ -402,21 +330,11 @@ export const useUsers = (): {
         sortOrder: null,
       })
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response && error.response.data?.errorValue) {
-        toast.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: error.response.data.errorValue,
-          life: 3000,
-        })
-      } else {
-        toast.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'Failed to delete user.',
-          life: 3000,
-        })
-      }
+      const detail =
+        axios.isAxiosError(error) && error.response?.data?.errorValue
+          ? error.response.data.errorValue
+          : 'Failed to delete user.'
+      toast.add({ severity: 'error', summary: 'Error', detail, life: 3000 })
       console.error('Error deleting user:', error)
     }
   }
