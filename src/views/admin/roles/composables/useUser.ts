@@ -157,22 +157,10 @@ export const useUsers = (): {
         payload,
       )
       if (response.data.succeeded) {
-        users.value = response.data.data.map((u: User) => {
-          let dobDate: Date | undefined
-
-          const dobString = u.dob as unknown as string
-          if (dobString) {
-            const parsed = new Date(dobString)
-            if (!isNaN(parsed.getTime())) {
-              dobDate = parsed
-            }
-          }
-          return {
-            ...u,
-            dob: dobDate,
-          }
-        })
-
+        users.value = response.data.data.map((user: User) => ({
+          ...user,
+          dob: user.dob ? new Date(user.dob) : null,
+        }))
         totalRecords.value = response.data.totalRecords
         pageNumber.value = response.data.pageNumber
         pageSize.value = response.data.pageSize

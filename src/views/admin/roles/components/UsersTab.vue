@@ -26,7 +26,6 @@ const {
   onLazyLoad,
   onStatusToggle,
 } = useUsers()
-
 const { resetValidation, isSaveDisabled } = useValidation()
 
 const userFormDialogVisible = ref(false)
@@ -65,17 +64,18 @@ const onEdit = (row: User): void => {
   editingRows.value = [row]
 }
 
-const onSave = async (): Promise<void> => {
+const onSave = async (newData: RowData): Promise<void> => {
   if (editableUser.value) {
-    await editUser(editableUser.value)
-
-    const index = users.value.findIndex((u) => u.id === editableUser.value!.id)
-    if (index !== -1) users.value[index] = { ...editableUser.value }
-
-    editingRows.value = []
-    editableUser.value = null
-    originalUser.value = null
+    newData.isActive = editableUser.value.isActive
   }
+  const userToSave = newData as User
+  await editUser(userToSave)
+  const index = users.value.findIndex((u) => u.id === userToSave.id)
+  if (index !== -1) users.value[index] = { ...userToSave }
+  editingRows.value = []
+  editableUser.value = null
+  originalUser.value = null
+  resetValidation()
 }
 
 const onCancel = (): void => {
@@ -186,17 +186,18 @@ onMounted(() => {
       <template #table-header>
         <Button label="New User" icon="pi pi-plus" severity="help" @click="openCreateUserDialog" />
       </template>
-
       <template #body-isActive="{ row }">
-        <ToggleSwitch
-          v-if="editingRows.includes(row)"
-          :modelValue="editableUser?.isActive"
-          @update:modelValue="
-            (newValue: boolean) => {
-              if (editableUser) editableUser.isActive = newValue
-            }
-          "
-        />
+        <div v-if="editingRows.includes(row)" class="flex items-center gap-2">
+          <ToggleSwitch
+            :modelValue="editableUser?.isActive"
+            @update:modelValue="
+              (newValue: boolean) => {
+                if (editableUser) editableUser.isActive = newValue
+              }
+            "
+          />
+        </div>
+
         <ToggleSwitch
           v-else
           :modelValue="row.isActive"

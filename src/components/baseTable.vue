@@ -225,6 +225,11 @@ onMounted(() => {
                 class="w-full"
                 @blur="col.required ? validateField(col.key, tempRow[col.key], col.label) : null"
               />
+
+              <p v-if="col.useDateFilter" class="text-red-500 text-xs absolute">
+                {{ validationErrors[col.key] }}
+              </p>
+
               <div v-else-if="col.filterOption">
                 <Select
                   v-model="tempRow[col.key]"

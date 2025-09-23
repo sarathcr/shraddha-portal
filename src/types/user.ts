@@ -7,7 +7,7 @@ export interface User extends RowData {
   email: string
   team?: string
   role?: string
-  dob?: Date
+  dob?: Date | null
   isActive: boolean
 }
 
