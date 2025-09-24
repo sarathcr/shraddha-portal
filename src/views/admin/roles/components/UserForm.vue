@@ -128,7 +128,7 @@ const onCancel = (): void => {
             'w-full [&>input]:border [&>input]:rounded-md [&>input]:!border-red-500': errors.dob,
             'w-full [&>input]:border [&>input]:rounded-md': !errors.dob,
           }"
-          dateFormat="yy-mm-dd"
+          dateFormat="yy/mm/dd"
         />
 
         <label for="dob">Date of birth</label></FloatLabel

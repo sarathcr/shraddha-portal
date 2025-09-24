@@ -137,6 +137,11 @@ export const useUsers = (): {
           }
         })
       }
+      function formatDateForDisplay(dob: string | null): string | null {
+        if (!dob) return null
+        const [year, month, day] = dob.split('-')
+        return `${day}-${month}-${year}`
+      }
 
       const response = await api.post<ApiResponse<User[]>>(
         '/authorization/users/pagination',
@@ -146,7 +151,7 @@ export const useUsers = (): {
       if (response.data.succeeded) {
         users.value = response.data.data.map((user: User) => ({
           ...user,
-          dob: user.dob || null,
+          dob: user.dob ? formatDateForDisplay(user.dob) : null,
         }))
 
         totalRecords.value = response.data.totalRecords
