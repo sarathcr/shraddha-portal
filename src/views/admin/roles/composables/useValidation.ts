@@ -1,5 +1,6 @@
 import { ref, computed, type Ref, type ComputedRef } from 'vue'
 
+import * as yup from 'yup'
 interface ValidationComposable {
   validationErrors: Ref<Record<string, string>>
   validateField: (field: string, value: unknown, label: string) => void
@@ -9,28 +10,36 @@ interface ValidationComposable {
 
 export const useValidation = (): ValidationComposable => {
   const validationErrors = ref<Record<string, string>>({})
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+  const validateField = async (field: string, value: unknown, label: string) => {
+    try {
+      if (field === 'dob') {
+        const dobSchema = yup
+          .date()
+          .required(`${label} is required`)
+          .typeError(`${label} must be a valid date`)
+          .test('age', 'User must be at least 18 years old', (value) => {
+            if (!value) return false
+            const today = new Date()
+            let age = today.getFullYear() - value.getFullYear()
+            const monthDiff = today.getMonth() - value.getMonth()
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < value.getDate())) {
+              age--
+            }
+            return age >= 18
+          })
 
-  const validateField = (field: string, value: unknown, label: string): void => {
-    const isEmpty =
-      value === null ||
-      value === undefined ||
-      (typeof value === 'string' && !value.trim()) ||
-      (Array.isArray(value) && value.length === 0)
+        await dobSchema.validate(value)
+      }
 
-    if (isEmpty) {
-      validationErrors.value[field] = `${label} is required`
-      return
-    }
-
-    if (field === 'email' && typeof value === 'string') {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-      if (!emailRegex.test(value)) {
-        validationErrors.value[field] = `Please enter a valid ${label}`
-        return
+      delete validationErrors.value[field]
+    } catch (err) {
+      if (err instanceof yup.ValidationError) {
+        validationErrors.value[field] = err.message
+      } else {
+        validationErrors.value[field] = 'Validation failed'
       }
     }
-
-    delete validationErrors.value[field]
   }
 
   const resetValidation = (): void => {
