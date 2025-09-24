@@ -64,18 +64,19 @@ const dynamicRowsPerPageOptions = computed((): number[] => {
     options.push(i)
   }
 
-  if (total % step !== 0 && !options.includes(total)) {
-    options.push(total)
-  }
-
-  return options
+  const finalMultipleOf5 = Math.ceil(total / 5) * 5
+  options.push(finalMultipleOf5)
+  return Array.from(options).sort((a, b) => a - b)
 })
+
 watch(
   dynamicRowsPerPageOptions,
   (options) => {
     if (!options.includes(internalPageSize.value)) {
-      internalPageSize.value = options.at(-1)!
+      const newPageSize = options.at(-1)!
+      internalPageSize.value = newPageSize
     }
+    first.value = 0
   },
   { immediate: true },
 )
@@ -182,7 +183,7 @@ onMounted(() => {
         :rowsPerPageOptions="dynamicRowsPerPageOptions"
       >
         <template #header v-if="hasTableHeader">
-          <div class="flex justify-between items-center sticky top-0 z-0">
+          <div class="flex justify-between items-center sticky top-0 !z-0">
             <slot name="table-header" />
           </div>
         </template>
