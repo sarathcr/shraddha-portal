@@ -93,7 +93,8 @@ export interface CommitteeRole {
 
 export interface CommitteeUser {
   id?: string
-  roleId: string
+  roleId?: string
+  userId?: string
   name?: string
   value?: string
 }

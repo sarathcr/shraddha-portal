@@ -8,23 +8,26 @@ import type { ApiResponse } from '@/types/index'
 import type { DataTableFilterMeta, DataTableSortMeta } from 'primevue'
 import {
   createCommittee,
+  editCommittee,
   fetchRoles,
   fetchUsers,
   getCommittee,
 } from '../../services/committee.services'
 import axios, { AxiosError } from 'axios'
+import { useAuthStore } from '@/stores/auth'
+import { committeeApi } from '@/constants'
 
 export const committeeUsers: Ref<UserOptionItem[]> = ref([])
 export const committeeRoles: Ref<OptionItem[]> = ref([])
 
 export const getUsersData = async (): Promise<void> => {
-  const users: ApiResponse<CommitteeUser[]> = await fetchUsers(1, 0, { isActive: '= true' })
+  const users: ApiResponse<CommitteeUser[]> = await fetchUsers(-1, -1, { isActive: '= true' })
   if (users?.succeeded && users.data) {
     committeeUsers.value = users.data
       .filter((user) => user.id)
       .map((user: CommitteeUser) => ({
         label: user.name ?? '',
-        roleId: user.roleId,
+        roleId: user.roleId ?? '',
         value: user.id!,
       }))
   } else {
@@ -64,16 +67,18 @@ export function useCommittee(): {
   pageSize: Ref<number>
   onLazyLoad: (event: LazyLoadEvent) => Promise<void>
   addCommittee: (payload: Committee) => Promise<ApiResponse<Committee>>
-  // handleEdit: (
-  //   newData: Committee,
-  //   oldData: Committee,
-  // ) => Promise<{ success: boolean; committee: Committee } | null>
+  handleEdit: (
+    newData: Committee,
+    oldData: Committee,
+  ) => Promise<{ success: boolean; committee: Committee } | null>
   isLoading: Ref<boolean>
   filters: Ref<{ global: { value: string | null; matchMode: string } }>
   clearFilter: () => void
   fetchInitialData: () => Promise<void>
   totalRecords: Ref<number>
+  onStatusToggle: (committee: Committee, newStatus: boolean) => Promise<void>
 } {
+  const authStore = useAuthStore()
   const toast = useToast()
   const committee = ref<Committee[]>([])
   const allRows = ref<RowData[]>([])
@@ -88,7 +93,7 @@ export function useCommittee(): {
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
   })
 
-  const columns: ColumnDef[] = [
+  const columns = [
     { label: 'Committee Year', key: 'year', filterable: true },
     { label: 'Start Date', key: 'startDate', filterable: true },
     { label: 'End Date', key: 'endDate', filterable: true },
@@ -101,6 +106,46 @@ export function useCommittee(): {
     { label: 'Active', value: 'Active' },
     { label: 'Inactive', value: 'Inactive' },
   ]
+
+  const onStatusToggle = async (committee: Committee, newStatus: boolean): Promise<void> => {
+    const originalStatus = committee.status
+    try {
+      const accessToken = authStore.accessToken
+      if (!accessToken) {
+        throw new Error('Authentication token not found. Please log in again.')
+      }
+
+      await committeeApi.put(`/committee/${committee.id}/toggleStatus`, {
+        status: newStatus,
+      })
+      committee.status = newStatus
+      toast.add({
+        severity: 'success',
+        summary: 'Success',
+        detail: 'Committee status updated successfully.',
+        life: 3000,
+      })
+    } catch (error) {
+      committee.status = originalStatus
+
+      if (axios.isAxiosError(error) && error.response && error.response.data?.errorValue) {
+        toast.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: error.response.data.errorValue,
+          life: 3000,
+        })
+      } else {
+        toast.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to update team status.',
+          life: 3000,
+        })
+      }
+      console.error('Error updating team status:', error)
+    }
+  }
 
   const clearFilter = (): void => {
     filters.value.global.value = null
@@ -192,7 +237,6 @@ export function useCommittee(): {
             .join(', '),
           isActive: item.isActive ?? false,
         }))
-
         totalRecords.value = response.totalRecords ?? 0
         pageNumber.value = response.pageNumber ?? payload.pagination.pageNumber
         pageSize.value = response.pageSize ?? payload.pagination.pageSize
@@ -288,80 +332,80 @@ export function useCommittee(): {
     }
   }
 
-  // const handleEdit = async (
-  //   newData: Committee,
-  //   oldData: Committee,
-  // ): Promise<{ success: boolean; committee: Committee } | null> => {
-  //   try {
-  //     const yearPattern = /^\d{4}-\d{4}$/
-  //     if (!yearPattern.test(newData.year)) {
-  //       toast.add({
-  //         severity: 'error',
-  //         summary: 'Validation Error',
-  //         detail: 'Year must be in the format YYYY-YYYY',
-  //         life: 3000,
-  //       })
-  //       return null
-  //     }
-  //     const [startYear, endYear] = newData.year.split('-').map(Number)
-  //     if (endYear !== startYear + 1) {
-  //       toast.add({
-  //         severity: 'error',
-  //         summary: 'Validation Error',
-  //         detail: 'Years must be consecutive',
-  //         life: 3000,
-  //       })
-  //       return null
-  //     }
+  const handleEdit = async (
+    newData: Committee,
+    oldData: Committee,
+  ): Promise<{ success: boolean; committee: Committee } | null> => {
+    try {
+      const yearPattern = /^\d{4}-\d{4}$/
+      if (!yearPattern.test(newData.year)) {
+        toast.add({
+          severity: 'error',
+          summary: 'Validation Error',
+          detail: 'Year must be in the format YYYY-YYYY',
+          life: 3000,
+        })
+        return null
+      }
+      const [startYear, endYear] = newData.year.split('-').map(Number)
+      if (endYear !== startYear + 1) {
+        toast.add({
+          severity: 'error',
+          summary: 'Validation Error',
+          detail: 'Years must be consecutive',
+          life: 3000,
+        })
+        return null
+      }
 
-  //     if (JSON.stringify(newData) === JSON.stringify(oldData)) {
-  //       toast.add({
-  //         severity: 'info',
-  //         summary: 'No Changes',
-  //         detail: 'No modifications detected.',
-  //         life: 3000,
-  //       })
-  //       return { success: true, committee: oldData }
-  //     }
+      if (JSON.stringify(newData) === JSON.stringify(oldData)) {
+        toast.add({
+          severity: 'info',
+          summary: 'No Changes',
+          detail: 'No modifications detected.',
+          life: 3000,
+        })
+        return { success: true, committee: oldData }
+      }
 
-  //     const response = await editCommittee()
+      const response = await editCommittee()
 
-  //     if (response && response.succeeded && response.data) {
-  //       const updatedCommittee = response.data
-  //       const committeeIndex = committee.value.findIndex((c) => c.id === oldData.id)
+      if (response && response.succeeded && response.data) {
+        const updatedCommittee = response.data
+        const committeeIndex = committee.value.findIndex((c) => c.id === oldData.id)
 
-  //       if (committeeIndex !== -1) {
-  //         committee.value[committeeIndex] = updatedCommittee
-  //       }
+        if (committeeIndex !== -1) {
+          committee.value[committeeIndex] = updatedCommittee
+        }
 
-  //       toast.add({
-  //         severity: 'success',
-  //         summary: 'Success',
-  //         detail: `Committee for year ${updatedCommittee.year} updated successfully.`,
-  //         life: 3000,
-  //       })
+        toast.add({
+          severity: 'success',
+          summary: 'Success',
+          detail: `Committee for year ${updatedCommittee.year} updated successfully.`,
+          life: 3000,
+        })
 
-  //       return { success: true, committee: updatedCommittee }
-  //     } else {
-  //       toast.add({
-  //         severity: 'error',
-  //         summary: 'Update Failed',
-  //         life: 3000,
-  //       })
-  //     }
-  //   } catch (error: unknown) {
-  //     const errorMessage =
-  //       error instanceof Error ? error.message : 'Unknown error occurred while updating.'
-  //     toast.add({
-  //       severity: 'error',
-  //       summary: 'Update Failed',
-  //       detail: errorMessage,
-  //       life: 3000,
-  //     })
-  //   }
+        return { success: true, committee: updatedCommittee }
+      } else {
+        toast.add({
+          severity: 'error',
+          summary: 'Update Failed',
+          life: 3000,
+        })
+      }
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error occurred while updating.'
+      toast.add({
+        severity: 'error',
+        summary: 'Update Failed',
+        detail: errorMessage,
+        life: 3000,
+      })
+    }
 
-  //   return null
-  // }
+    return null
+  }
   return {
     committee,
     columns,
@@ -371,6 +415,8 @@ export function useCommittee(): {
     editingRows,
     statusOptions,
     addCommittee,
+    handleEdit,
+    onStatusToggle,
     isLoading,
     filters,
     clearFilter,

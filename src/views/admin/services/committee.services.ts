@@ -47,8 +47,28 @@ export const createCommittee = (newCommittee: Committee): Promise<AxiosResponse<
 }
 
 //Edit committee
-export const editCommittee = (): Promise<AxiosResponse<Committee>> => {
-  return committeeApi.put<Committee>(`/committee/`)
+export const editCommittee = async (): Promise<ApiResponse<Committee>> => {
+  try {
+    const { data } = await committeeApi.put<ApiResponse<Committee>>(`/committee`)
+    return data
+  } catch (err: unknown) {
+    let message = 'Failed to update committee'
+    const axiosErr = err as AxiosError<{ errorValue?: string }>
+    if (axiosErr.response?.data?.errorValue) {
+      message = axiosErr.response.data.errorValue
+    }
+
+    return {
+      data: null,
+      succeeded: false,
+      message,
+      errors: err,
+      pageNumber: 0,
+      pageSize: 0,
+      totalPages: 0,
+      totalRecords: 0,
+    }
+  }
 }
 
 // Delete committee

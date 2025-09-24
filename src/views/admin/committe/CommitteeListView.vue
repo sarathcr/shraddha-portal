@@ -6,6 +6,7 @@ import Button from 'primevue/button'
 import ConfirmPopup from 'primevue/confirmpopup'
 import Dialog from 'primevue/dialog'
 import Toast from 'primevue/toast'
+import ToggleSwitch from 'primevue/toggleswitch'
 import { onMounted, ref } from 'vue'
 import CommitteeForm from './components/CommitteeForm.vue'
 import { useCommittee } from './composable/useCommitte'
@@ -20,11 +21,12 @@ const {
   editingRows,
   statusOptions,
   fetchInitialData,
-  // handleEdit,
   totalRecords,
   pageSize,
   onLazyLoad,
+  onStatusToggle,
 } = useCommittee()
+
 const { isSaveDisabled } = useValidation()
 const router = useRouter()
 const userFormDialogVisible = ref(false)
@@ -47,13 +49,14 @@ const handleEditCommittee = (row: Committee): void => {
 
 // const onSave = async (newData: RowData): Promise<void> => {
 //   if (selectedCommittee.value) {
-//     const result = await handleEdit(newData as Committee, selectedCommittee.value)
-//     if (result && result.success) {
-//       editingRows.value = []
-//       selectedCommittee.value = null
-//     }
+//     // const result = await handleEdit(newData as Committee, selectedCommittee.value)
+//     // if (result && result.success) {
+//     //   editingRows.value = []
+//     //   selectedCommittee.value = null
+//     // }
 //   }
 // }
+
 const onCancel = (): void => {
   if (selectedCommittee.value) {
     const index = committee.value.findIndex((u) => u.id === selectedCommittee.value!.id)
@@ -64,8 +67,13 @@ const onCancel = (): void => {
   editingRows.value = []
   selectedCommittee.value = null
 }
+
 const handleViewCommittee = async (row: { id: string }): Promise<void> => {
   await router.push(`/admin/committe/${row.id}`)
+}
+const handleCommitteeSubmit = (newCommittee: Committee): void => {
+  userFormDialogVisible.value = false
+  committee.value.push(newCommittee)
 }
 
 onMounted(() => {
@@ -78,7 +86,6 @@ onMounted(() => {
     <div class="h-full bg-white">
       <ConfirmPopup class="mx-4" />
       <Toast />
-
       <Dialog
         class="m-4"
         v-model:visible="userFormDialogVisible"
@@ -99,6 +106,7 @@ onMounted(() => {
         :totalRecords="totalRecords"
         :rowsPerPage="pageSize"
         :editableRow="editingRows[0] as RowData"
+        @submit="handleCommitteeSubmit"
         :statusOptions="statusOptions"
         :loading="isLoading"
         @cancel="onCancel"
@@ -114,7 +122,12 @@ onMounted(() => {
             @click="openCreateUserDialog"
           />
         </template>
-
+        <template #body-isActive="{ row }">
+          <ToggleSwitch
+            :modelValue="row.isActive"
+            @update:modelValue="(newValue: boolean) => onStatusToggle(row, newValue)"
+          />
+        </template>
         <template #actions="{ row }">
           <button
             @click="handleEditCommittee(row)"
@@ -126,6 +139,7 @@ onMounted(() => {
           <button class="p-2 rounded hover:bg-gray-200 transition cursor-pointer">
             <i class="pi pi-trash text-red-600 text-base"></i>
           </button>
+
           <button
             @click="handleViewCommittee(row)"
             class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
