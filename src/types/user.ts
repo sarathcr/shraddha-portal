@@ -6,11 +6,9 @@ export interface User extends RowData {
   employeeId: string
   email: string
   team?: string
-  teamId: number
   role?: string
-  roleId: number
-  dob?: string
-  status: boolean
+  dob?: string | null
+  isActive: boolean
 }
 
 export interface OptionItem {
