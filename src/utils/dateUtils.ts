@@ -1,18 +1,15 @@
-export function formatDate(value: unknown, format: 'dd/mm/yy' | 'yyyy-mm-dd' = 'dd/mm/yy'): string {
+export const formatDateForUI = (value: string | Date | null): string => {
   if (!value) return ''
-
-  const date = new Date(value as string)
-
+  const date = new Date(value)
+  if (isNaN(date.getTime())) return ''
   const day = String(date.getDate()).padStart(2, '0')
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const year = date.getFullYear()
-
-  switch (format) {
-    case 'dd/mm/yy':
-      return `${day}/${month}/${String(year).slice(-2)}`
-    case 'yyyy-mm-dd':
-      return `${year}-${month}-${day}`
-    default:
-      return `${day}/${month}/${year}`
-  }
+  return `${day}-${month}-${year}`
+}
+export function formatDateForAPI(date: Date): string {
+  const yyyy = date.getFullYear()
+  const mm = String(date.getMonth() + 1).padStart(2, '0')
+  const dd = String(date.getDate()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd}`
 }

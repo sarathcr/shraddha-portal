@@ -44,7 +44,6 @@ export const useTeams = (): {
 
   const onStatusToggle = async (team: Team, newStatus: boolean): Promise<void> => {
     const originalStatus = team.status
-
     try {
       const accessToken = authStore.accessToken
       if (!accessToken) {
