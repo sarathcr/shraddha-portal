@@ -2,7 +2,8 @@
 import BaseTable from '@/components/baseTable.vue'
 import Dialog from 'primevue/dialog'
 import Button from 'primevue/button'
-import { ref, onMounted, computed, watch } from 'vue'
+import ToggleSwitch from 'primevue/toggleswitch'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useUsers } from '@/views/admin/roles/composables/useUser'
 import UserForm from './UserForm.vue'
 import { useValidation } from '@/views/admin/roles/composables/useValidation'
@@ -18,27 +19,26 @@ const {
   totalRecords,
   pageSize,
   fetchInitialData,
+  statusOptions,
   createUser,
   editUser,
   deleteUser,
   onLazyLoad,
+  onStatusToggle,
 } = useUsers()
-
-const { validationErrors, validateField, resetValidation, isSaveDisabled } = useValidation()
+const { resetValidation, isSaveDisabled } = useValidation()
 
 const userFormDialogVisible = ref(false)
 const deleteDialogVisible = ref(false)
 const userToDelete = ref<User | null>(null)
+const editableUser = ref<User | null>(null)
+const originalUser = ref<User | null>(null)
+const userFormRef = ref<InstanceType<typeof UserForm> | null>(null)
 
 watch(userFormDialogVisible, (isVisible) => {
-  if (isVisible) {
-    document.body.classList.add('no-scroll')
-  } else {
-    document.body.classList.remove('no-scroll')
-  }
+  if (isVisible) document.body.classList.add('no-scroll')
+  else document.body.classList.remove('no-scroll')
 })
-const userFormRef = ref<InstanceType<typeof UserForm> | null>(null)
-const originalUser = ref<User | null>(null)
 
 const openCreateUserDialog = (): void => {
   userFormDialogVisible.value = true
@@ -47,9 +47,7 @@ const openCreateUserDialog = (): void => {
 
 const handleUserFormSubmit = async (payload: User): Promise<void> => {
   const success = await createUser(payload)
-  if (success) {
-    userFormDialogVisible.value = false
-  }
+  if (success) userFormDialogVisible.value = false
 }
 
 const handleUserFormCancel = (): void => {
@@ -58,22 +56,24 @@ const handleUserFormCancel = (): void => {
 
 const onEdit = (row: User): void => {
   originalUser.value = JSON.parse(JSON.stringify(row))
-  editingRows.value = [row] as User[]
+  editableUser.value = {
+    ...row,
+    teamId: row.teamId != null ? String(row.teamId) : null,
+    roleId: row.roleId != null ? String(row.roleId) : null,
+  }
+  editingRows.value = [row]
 }
 
 const onSave = async (newData: RowData): Promise<void> => {
+  if (editableUser.value) {
+    newData.isActive = editableUser.value.isActive
+  }
   const userToSave = newData as User
-
-  columns.value.forEach((col) => {
-    if (col.required) {
-      validateField(col.key, userToSave[col.key as keyof User], col.label)
-    }
-  })
-
-  if (Object.keys(validationErrors.value).length > 0) return
   await editUser(userToSave)
-
+  const index = users.value.findIndex((u) => u.id === userToSave.id)
+  if (index !== -1) users.value[index] = { ...userToSave }
   editingRows.value = []
+  editableUser.value = null
   originalUser.value = null
   resetValidation()
 }
@@ -81,11 +81,10 @@ const onSave = async (newData: RowData): Promise<void> => {
 const onCancel = (): void => {
   if (originalUser.value) {
     const index = users.value.findIndex((u) => u.id === originalUser.value!.id)
-    if (index !== -1) {
-      users.value[index] = originalUser.value
-    }
+    if (index !== -1) users.value[index] = originalUser.value
   }
   editingRows.value = []
+  editableUser.value = null
   originalUser.value = null
   resetValidation()
 }
@@ -106,12 +105,7 @@ const onPerformDelete = async (): Promise<void> => {
 const columns = computed((): ColumnDef[] => [
   { label: 'Name', key: 'name', filterable: true, required: true },
   { label: 'Employee ID', key: 'employeeId', filterable: true, required: true },
-  {
-    label: 'Date of Birth',
-    key: 'dob',
-    filterable: false,
-    required: false,
-  },
+  { label: 'Date of Birth', key: 'dob', filterable: false, required: true, useDateFilter: true },
   { label: 'Email', key: 'email', filterable: true, required: true },
   {
     label: 'Team',
@@ -119,7 +113,7 @@ const columns = computed((): ColumnDef[] => [
     filterable: true,
     useTag: true,
     filterOption: true,
-    options: teams.value,
+    options: teams.value.map((t) => ({ label: t.label, value: String(t.value) })),
     required: true,
   },
   {
@@ -128,17 +122,10 @@ const columns = computed((): ColumnDef[] => [
     filterable: true,
     useTag: true,
     filterOption: true,
-    options: roles.value,
+    options: roles.value.map((r) => ({ label: r.label, value: String(r.value) })),
     required: true,
   },
-  {
-    label: 'Status',
-    key: 'status',
-    filterable: true,
-    useTag: true,
-    filterOption: true,
-    required: true,
-  },
+  { label: 'Status', key: 'isActive', filterable: true, useToggle: true },
 ])
 
 onMounted(() => {
@@ -189,6 +176,7 @@ onMounted(() => {
       :rowsPerPage="pageSize"
       :editableRow="editingRows[0] as RowData"
       :loading="isLoading"
+      :statusOptions="statusOptions"
       @save="onSave"
       @cancel="onCancel"
       @lazy:load="onLazyLoad"
@@ -197,6 +185,24 @@ onMounted(() => {
     >
       <template #table-header>
         <Button label="New User" icon="pi pi-plus" severity="help" @click="openCreateUserDialog" />
+      </template>
+      <template #body-isActive="{ row }">
+        <div v-if="editingRows.includes(row)" class="flex items-center gap-2">
+          <ToggleSwitch
+            :modelValue="editableUser?.isActive"
+            @update:modelValue="
+              (newValue: boolean) => {
+                if (editableUser) editableUser.isActive = newValue
+              }
+            "
+          />
+        </div>
+
+        <ToggleSwitch
+          v-else
+          :modelValue="row.isActive"
+          @update:modelValue="(newValue: boolean) => onStatusToggle(row, newValue)"
+        />
       </template>
 
       <template #actions="{ row }">

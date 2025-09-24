@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ColumnDef, RowData } from '@/types/baseTable.model'
-import { formatDate } from '@/utils/dateUtils'
+import { formatDateForUI } from '@/utils/dateUtils'
 import { FilterMatchMode, FilterOperator } from '@primevue/core/api'
 import type {
   DataTablePageEvent,
@@ -106,7 +106,12 @@ watch(
 watch(
   () => props.editableRow,
   (newRow) => {
-    if (newRow) Object.assign(tempRow, newRow)
+    if (newRow) {
+      Object.keys(tempRow).forEach((key) => delete tempRow[key])
+      Object.assign(tempRow, JSON.parse(JSON.stringify(newRow)))
+    } else {
+      Object.keys(tempRow).forEach((key) => delete tempRow[key])
+    }
   },
   { immediate: true },
 )
@@ -150,7 +155,6 @@ onMounted(() => {
   } as DataTablePageEvent)
 })
 </script>
-
 <template>
   <div class="space-y-4 h-full p-4 flex flex-col justify-between">
     <div class="bg-white rounded-md max-h-[calc(100vh-200px)] overflow-hidden flex flex-col">
@@ -215,11 +219,16 @@ onMounted(() => {
               <DatePicker
                 v-if="col.useDateFilter"
                 v-model="tempRow[col.key] as Date | null"
-                dateFormat="dd/mm/yy"
+                dateFormat="yy/mm/dd"
                 showIcon
                 class="w-full"
                 @blur="col.required ? validateField(col.key, tempRow[col.key], col.label) : null"
               />
+
+              <p v-if="col.useDateFilter" class="text-red-500 text-xs absolute">
+                {{ validationErrors[col.key] }}
+              </p>
+
               <div v-else-if="col.filterOption">
                 <Select
                   v-model="tempRow[col.key]"
@@ -275,7 +284,7 @@ onMounted(() => {
               </div>
             </template>
             <template v-else>
-              <span v-if="col.useDateFilter">{{ formatDate(data[col.key]) }}</span>
+              <span v-if="col.useDateFilter">{{ formatDateForUI(data[col.key]) }}</span>
               <template v-else-if="col.useMultiSelect">
                 <Tag
                   v-if="data[col.key]"
@@ -293,7 +302,14 @@ onMounted(() => {
                   (newValue: boolean) => $emit('save', { ...data, [col.key]: newValue })
                 "
               />
-              <span v-else>{{ data[col.key] }}</span>
+              <span v-else>
+                {{
+                  col.options
+                    ? col.options.find((opt: any) => String(opt.value) === String(data[col.key]))
+                        ?.label || data[col.key]
+                    : data[col.key]
+                }}
+              </span>
             </template>
           </template>
 
@@ -355,6 +371,7 @@ onMounted(() => {
                 :disabled="isSaveDisabled"
                 @click="saveEdit()"
               />
+
               <Button icon="pi pi-times" severity="danger" size="small" @click="cancelEdit" />
             </div>
             <div v-else>
