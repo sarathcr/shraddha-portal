@@ -24,8 +24,14 @@ const emit = defineEmits<{
   (e: 'cancel'): void
 }>()
 
+const props = defineProps<{
+  coremembers: { label: string; value: string }[]
+  executivemembers: { label: string; value: string }[]
+  committee?: Committee | null
+}>()
 const { handleSubmit, errors, resetForm } = useForm<Committee>({
   validationSchema: committeeSchema,
+  validateOnMount: false,
 })
 
 const { value: year } = useField<string>('year')
@@ -41,17 +47,17 @@ const usersByRole = ref<Record<string, { userId: string; fullName: string; roleI
 const selectedCoreMembers = ref<Record<string, string>>({})
 const selectedExecutiveMember = ref<string[]>([])
 
-const { addCommittee } = useCommittee()
-const coreMembers = ref<{ userId: string; roleId: string }[]>([])
+const { addCommittee, handleEdit } = useCommittee()
 
 onMounted(async () => {
   await Promise.all([getRolesData(), getUsersData()])
-  const allowedRoles = ['Treasurer', 'admin', 'Super Admin', 'Test HR']
+  const allowedRoles = ['President', 'Secretary', 'Treasurer', 'Assistant Treasurer']
   coreRoles.value = committeeRoles.value
     .filter((r) => allowedRoles.includes(r.label) && r.label !== 'Executive Committee Member')
     .map((r) => ({ id: r.value, name: r.label }))
   const exec = committeeRoles.value.find((r) => r.value === '6')
   executiveRole.value = exec ? { id: exec.value, name: exec.label } : null
+
   coreRoles.value.forEach((role) => {
     const roleUsers = committeeUsers.value
       .filter((u) => u.roleId === role.id && u.value && u.label)
@@ -65,10 +71,7 @@ onMounted(async () => {
       selectedCoreMembers.value[role.id] = roleUsers[0].userId
     }
   })
-  coreMembers.value = Object.entries(selectedCoreMembers.value).map(([roleId, userId]) => ({
-    userId,
-    roleId,
-  }))
+
   if (executiveRole.value) {
     const execUsers = committeeUsers.value
       .filter((u) => String(u.roleId) === String(executiveRole.value!.id))
@@ -86,13 +89,14 @@ onMounted(async () => {
 
 const onSubmit = handleSubmit(async () => {
   const committeePayload: Committee = {
+    id: props.committee?.id ?? '',
     year: year.value,
     startDate: startDate.value ? formatDateForAPI(startDate.value) : '',
     endDate: endDate.value ? formatDateForAPI(endDate.value) : '',
     isActive: isActive.value,
     coreMembers: Object.entries(selectedCoreMembers.value).map(([roleId, userId]) => ({
       userId,
-      roleId: roleId.toString(),
+      roleId,
     })),
     executiveMembers: selectedExecutiveMember.value.map((userId: string) => ({
       userId,
@@ -100,10 +104,12 @@ const onSubmit = handleSubmit(async () => {
     })),
   }
 
-  const response = await addCommittee(committeePayload)
-  if (response.succeeded && response.data) {
-    emit('submit', response.data)
-    resetForm()
+  if (props.committee?.id) {
+    const result = await handleEdit(committeePayload, props.committee)
+    if (result?.success) emit('submit', result.committee)
+  } else {
+    const response = await addCommittee(committeePayload)
+    if (response.succeeded && response.data) emit('submit', response.data)
   }
 })
 
@@ -127,14 +133,14 @@ const onCancel = (): void => {
     <div class="flex gap-3 w-full">
       <div class="w-1/2">
         <FloatLabel variant="on" class="w-full">
-          <DatePicker v-model="startDate" class="w-full" dateFormat="yy-mm-dd" />
+          <DatePicker v-model="startDate" class="w-full" dateFormat="dd-mm-yy" />
           <label>Start Date</label>
           <small v-if="startDateError" class="text-red-500">{{ startDateError }}</small>
         </FloatLabel>
       </div>
       <div class="w-1/2">
         <FloatLabel variant="on" class="w-full">
-          <DatePicker v-model="endDate" class="w-full" dateFormat="yy-mm-dd" />
+          <DatePicker v-model="endDate" class="w-full" dateFormat="dd-mm-yy" />
           <label>End Date</label>
           <small v-if="endDateError" class="text-red-500">{{ endDateError }}</small>
         </FloatLabel>

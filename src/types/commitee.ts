@@ -1,6 +1,7 @@
 import type { RowData } from './baseTable.model'
 
 export interface Committee extends RowData {
+  id: string
   year: string
   startDate?: string
   endDate?: string

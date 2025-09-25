@@ -7,14 +7,13 @@ import ConfirmPopup from 'primevue/confirmpopup'
 import Dialog from 'primevue/dialog'
 import Toast from 'primevue/toast'
 import ToggleSwitch from 'primevue/toggleswitch'
-import { onMounted, ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import CommitteeForm from './components/CommitteeForm.vue'
 import { useCommittee } from './composable/useCommitte'
 import { useRouter } from 'vue-router'
 import { useValidation } from '../roles/composables/useValidation'
 
 const {
-  committee,
   isLoading,
   columns,
   allRows,
@@ -29,51 +28,36 @@ const {
 
 const { isSaveDisabled } = useValidation()
 const router = useRouter()
+
 const userFormDialogVisible = ref(false)
+const formMode = ref<'create' | 'edit'>('create')
 const coreMemberOptions = ref<{ label: string; value: string }[]>([])
 const executiveMemberOptions = ref<{ label: string; value: string }[]>([])
 const selectedCommittee = ref<Committee | null>(null)
 
 const openCreateUserDialog = (): void => {
+  formMode.value = 'create'
+  selectedCommittee.value = null
   userFormDialogVisible.value = true
+}
+
+const handleEditCommittee = (row: Committee): void => {
+  formMode.value = 'edit'
+  selectedCommittee.value = JSON.parse(JSON.stringify(row))
+  userFormDialogVisible.value = true
+}
+
+const handleCommitteeFormSubmit = async (): Promise<void> => {
+  userFormDialogVisible.value = false
+  await fetchInitialData()
 }
 
 const handleCommitteeFormCancel = (): void => {
   userFormDialogVisible.value = false
 }
 
-const handleEditCommittee = (row: Committee): void => {
-  selectedCommittee.value = JSON.parse(JSON.stringify(row))
-  userFormDialogVisible.value = true
-}
-
-// const onSave = async (newData: RowData): Promise<void> => {
-//   if (selectedCommittee.value) {
-//     // const result = await handleEdit(newData as Committee, selectedCommittee.value)
-//     // if (result && result.success) {
-//     //   editingRows.value = []
-//     //   selectedCommittee.value = null
-//     // }
-//   }
-// }
-
-const onCancel = (): void => {
-  if (selectedCommittee.value) {
-    const index = committee.value.findIndex((u) => u.id === selectedCommittee.value!.id)
-    if (index !== -1) {
-      committee.value[index] = selectedCommittee.value
-    }
-  }
-  editingRows.value = []
-  selectedCommittee.value = null
-}
-
 const handleViewCommittee = async (row: { id: string }): Promise<void> => {
   await router.push(`/admin/committe/${row.id}`)
-}
-const handleCommitteeSubmit = (newCommittee: Committee): void => {
-  userFormDialogVisible.value = false
-  committee.value.push(newCommittee)
 }
 
 onMounted(() => {
@@ -89,7 +73,7 @@ onMounted(() => {
       <Dialog
         class="m-4"
         v-model:visible="userFormDialogVisible"
-        header="Create Committee"
+        :header="formMode === 'create' ? 'Create Committee' : 'Edit Committee'"
         :style="{ width: '50rem' }"
         modal
         @hide="handleCommitteeFormCancel"
@@ -98,6 +82,8 @@ onMounted(() => {
           :coremembers="coreMemberOptions"
           :executivemembers="executiveMemberOptions"
           @cancel="handleCommitteeFormCancel"
+          @submit="handleCommitteeFormSubmit"
+          :committee="selectedCommittee"
         />
       </Dialog>
       <BaseTable
@@ -106,10 +92,8 @@ onMounted(() => {
         :totalRecords="totalRecords"
         :rowsPerPage="pageSize"
         :editableRow="editingRows[0] as RowData"
-        @submit="handleCommitteeSubmit"
         :statusOptions="statusOptions"
         :loading="isLoading"
-        @cancel="onCancel"
         @lazy:load="onLazyLoad"
         :paginator="true"
         :saveDisabled="isSaveDisabled"

@@ -24,14 +24,14 @@ export const committeeSchema = yup.object({
     .date()
     .required('End date is required')
     .test(
-      'within-one-year',
-      'End date must be within 1 year of start date and after start date',
+      'minimum-one-year',
+      'End date must be at least 1 year after start date',
       function (value) {
         const startDate = this.parent.startDate
         if (!startDate || !value) return false
-        const maxDate = new Date(startDate)
-        maxDate.setFullYear(maxDate.getFullYear() + 1)
-        return value > startDate && value <= maxDate
+        const minDate = new Date(startDate)
+        minDate.setFullYear(minDate.getFullYear() + 1)
+        return value >= minDate
       },
     ),
 })

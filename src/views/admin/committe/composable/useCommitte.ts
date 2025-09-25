@@ -36,7 +36,7 @@ export const getUsersData = async (): Promise<void> => {
 }
 
 export const getRolesData = async (): Promise<void> => {
-  const roles: ApiResponse<CommitteeRole[]> = await fetchRoles(-1, 0)
+  const roles: ApiResponse<CommitteeRole[]> = await fetchRoles(-1, -1)
   if (roles?.succeeded && roles.data) {
     committeeRoles.value = roles.data.map((role: CommitteeRole) => ({
       label: role.roleName,
@@ -125,6 +125,7 @@ export function useCommittee(): {
         detail: 'Committee status updated successfully.',
         life: 3000,
       })
+      await fetchInitialData()
     } catch (error) {
       committee.status = originalStatus
 
@@ -333,79 +334,39 @@ export function useCommittee(): {
   }
 
   const handleEdit = async (
-    newData: Committee,
-    oldData: Committee,
+    committeePayload: Committee,
   ): Promise<{ success: boolean; committee: Committee } | null> => {
     try {
-      const yearPattern = /^\d{4}-\d{4}$/
-      if (!yearPattern.test(newData.year)) {
-        toast.add({
-          severity: 'error',
-          summary: 'Validation Error',
-          detail: 'Year must be in the format YYYY-YYYY',
-          life: 3000,
-        })
-        return null
-      }
-      const [startYear, endYear] = newData.year.split('-').map(Number)
-      if (endYear !== startYear + 1) {
-        toast.add({
-          severity: 'error',
-          summary: 'Validation Error',
-          detail: 'Years must be consecutive',
-          life: 3000,
-        })
-        return null
-      }
-
-      if (JSON.stringify(newData) === JSON.stringify(oldData)) {
-        toast.add({
-          severity: 'info',
-          summary: 'No Changes',
-          detail: 'No modifications detected.',
-          life: 3000,
-        })
-        return { success: true, committee: oldData }
-      }
-
-      const response = await editCommittee()
-
-      if (response && response.succeeded && response.data) {
-        const updatedCommittee = response.data
-        const committeeIndex = committee.value.findIndex((c) => c.id === oldData.id)
-
-        if (committeeIndex !== -1) {
-          committee.value[committeeIndex] = updatedCommittee
-        }
+      if (!committeePayload.id) throw new Error('Committee ID missing for edit')
+      const response: Committee = await editCommittee(committeePayload.id, committeePayload)
+      if (response && response.id) {
+        const index = committee.value.findIndex((c) => c.id === response.id)
+        if (index !== -1) committee.value[index] = response
 
         toast.add({
           severity: 'success',
           summary: 'Success',
-          detail: `Committee for year ${updatedCommittee.year} updated successfully.`,
+          detail: `Committee for year ${response.year} updated successfully.`,
           life: 3000,
         })
 
-        return { success: true, committee: updatedCommittee }
+        return { success: true, committee: response }
       } else {
         toast.add({
           severity: 'error',
           summary: 'Update Failed',
+          detail: 'Failed to update committee.',
           life: 3000,
         })
+        return { success: false, committee: committeePayload }
       }
     } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error occurred while updating.'
-      toast.add({
-        severity: 'error',
-        summary: 'Update Failed',
-        detail: errorMessage,
-        life: 3000,
-      })
+      const message = error instanceof Error ? error.message : 'Unknown error occurred'
+      toast.add({ severity: 'error', summary: 'Error', detail: message, life: 3000 })
+      return null
     }
-
-    return null
   }
+
   return {
     committee,
     columns,

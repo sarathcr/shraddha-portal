@@ -47,9 +47,12 @@ export const createCommittee = (newCommittee: Committee): Promise<AxiosResponse<
 }
 
 //Edit committee
-export const editCommittee = async (): Promise<ApiResponse<Committee>> => {
+export const editCommittee = async (
+  id: string,
+  updatedCommittee: Committee,
+): Promise<Committee> => {
   try {
-    const { data } = await committeeApi.put<ApiResponse<Committee>>(`/committee`)
+    const { data } = await committeeApi.put<Committee>(`/committee/${id}`, updatedCommittee)
     return data
   } catch (err: unknown) {
     let message = 'Failed to update committee'
@@ -57,17 +60,7 @@ export const editCommittee = async (): Promise<ApiResponse<Committee>> => {
     if (axiosErr.response?.data?.errorValue) {
       message = axiosErr.response.data.errorValue
     }
-
-    return {
-      data: null,
-      succeeded: false,
-      message,
-      errors: err,
-      pageNumber: 0,
-      pageSize: 0,
-      totalPages: 0,
-      totalRecords: 0,
-    }
+    throw new Error(message)
   }
 }
 
@@ -89,12 +82,17 @@ export const deleteCommittee = async (
 // Get Roles
 export const fetchRoles = async (
   pageNumber = -1,
-  pageSize = 0,
+  pageSize = -1,
 ): Promise<ApiResponse<CommitteeRole[]>> => {
   try {
     const response = await api.post<ApiResponse<CommitteeRole[]>>(
       `/authorization/Roles/pagination`,
-      { pageNumber, pageSize },
+      {
+        pagination: {
+          pageNumber,
+          pageSize,
+        },
+      },
     )
     return response.data
   } catch (err: unknown) {
@@ -111,8 +109,10 @@ export const fetchUsers = async (
 ): Promise<ApiResponse<CommitteeUser[]>> => {
   try {
     const payload = {
-      pageNumber,
-      pageSize,
+      pagination: {
+        pageNumber,
+        pageSize,
+      },
       filterMap: filterMap || {},
     }
 
