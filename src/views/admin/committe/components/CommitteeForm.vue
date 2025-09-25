@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useForm, useField } from 'vee-validate'
 import FloatLabel from 'primevue/floatlabel'
 import Dropdown from 'primevue/dropdown'
@@ -8,7 +8,7 @@ import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import ToggleSwitch from 'primevue/toggleswitch'
 import DatePicker from 'primevue/datepicker'
-import type { Committee } from '@/types/commitee'
+import type { Committee, CommitteeStringMembers } from '@/types/commitee'
 import {
   committeeRoles,
   committeeUsers,
@@ -17,7 +17,7 @@ import {
   useCommittee,
 } from '../composable/useCommitte'
 import { committeeSchema } from '../../schemas/committeeSchema'
-import { formatDateForAPI } from '@/utils/dateUtils'
+import { formatDateForAPI, parseDDMMYYYY } from '@/utils/dateUtils'
 
 const emit = defineEmits<{
   (e: 'submit', payload: Committee): void
@@ -112,7 +112,62 @@ const onSubmit = handleSubmit(async () => {
     if (response.succeeded && response.data) emit('submit', response.data)
   }
 })
+const initializeForm = (): void => {
+  if (!props.committee) return
 
+  year.value = props.committee.year
+  startDate.value = parseDDMMYYYY(props.committee.startDate)
+  endDate.value = parseDDMMYYYY(props.committee.endDate)
+  isActive.value = props.committee.isActive ?? false
+
+  selectedCoreMembers.value = {}
+  if (props.committee) {
+    const committeeData = props.committee as unknown as CommitteeStringMembers
+    if (committeeData.coreMembers) {
+      const coreNames = committeeData.coreMembers.split(',').map((n) => n.trim())
+
+      coreRoles.value.forEach((role) => {
+        const roleUsers = usersByRole.value[role.id] || []
+        const match = roleUsers.find((u) => coreNames.includes(u.fullName))
+        if (match) selectedCoreMembers.value[role.id] = match.userId
+      })
+    }
+
+    selectedExecutiveMember.value = []
+    if (committeeData.executiveMembers) {
+      const execNames = committeeData.executiveMembers.split(',').map((n) => n.trim())
+
+      const execRoleId = executiveRole.value?.id
+      if (execRoleId) {
+        const execUsers = usersByRole.value[execRoleId] || []
+        selectedExecutiveMember.value = execUsers
+          .filter((u) => execNames.includes(u.fullName))
+          .map((u) => u.userId)
+      }
+    }
+  }
+}
+const isDataReady = computed(() => {
+  return executiveRole.value !== null && Object.keys(usersByRole.value).length > 0
+})
+watch(
+  [(): Committee | null | undefined => props.committee, isDataReady],
+  ([committee, ready]): void => {
+    if (committee && ready) {
+      initializeForm()
+    }
+  },
+  { immediate: true },
+)
+
+resetForm({
+  values: {
+    year: year.value,
+    startDate: startDate.value ? formatDateForAPI(startDate.value) : undefined,
+    endDate: endDate.value ? formatDateForAPI(endDate.value) : undefined,
+    isActive: isActive.value,
+  },
+})
 const onCancel = (): void => {
   emit('cancel')
   resetForm()

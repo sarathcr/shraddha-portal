@@ -15,6 +15,11 @@ export interface CommitteeMember {
   name: string
 }
 
+export interface CommitteeStringMembers {
+  coreMembers: string
+  executiveMembers: string
+}
+
 export interface CommitteeCard {
   title: string
   icon: string
