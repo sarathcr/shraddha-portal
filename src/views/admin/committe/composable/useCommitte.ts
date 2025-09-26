@@ -1,30 +1,51 @@
 import { ref, type Ref } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { FilterMatchMode } from '@primevue/core/api'
-import { simulateApiCall } from '@/stores/loader'
-import type { Committee, Members } from '@/types/commitee'
+import type { Committee, CommitteeRole, CommitteeUser } from '@/types/commitee'
 import type { ColumnDef, RowData } from '@/types/baseTable.model'
-import type { OptionItem, User } from '@/types/user'
+import type { OptionItem, UserOptionItem } from '@/types/user'
 import type { ApiResponse } from '@/types/index'
-import { editCommittee, getCommittee, deleteCommittee } from '../../services/committee.services'
-
-import { committeeData } from '@/services/CommiteeService'
-import { useConfirm } from 'primevue/useconfirm'
 import type { DataTableFilterMeta, DataTableSortMeta } from 'primevue'
-import axios from 'axios'
-import { UserService } from '@/services/UserService'
+import {
+  createCommittee,
+  deleteCommittee,
+  editCommittee,
+  fetchRoles,
+  fetchUsers,
+  getCommittee,
+} from '../../services/committee.services'
+import axios, { AxiosError } from 'axios'
+import { useAuthStore } from '@/stores/auth'
+import { committeeApi } from '@/constants'
 
-export const committeeUsers: Ref<OptionItem[]> = ref([])
+export const committeeUsers: Ref<UserOptionItem[]> = ref([])
+export const committeeRoles: Ref<OptionItem[]> = ref([])
+
 export const getUsersData = async (): Promise<void> => {
-  const users = await UserService.getUsersData(0, 0)
+  const users: ApiResponse<CommitteeUser[]> = await fetchUsers(-1, -1, { isActive: '= true' })
+  if (users?.succeeded && users.data) {
+    committeeUsers.value = users.data
+      .filter((user) => user.id)
+      .map((user: CommitteeUser) => ({
+        label: user.name ?? '',
+        roleId: user.roleId ?? '',
+        value: user.id!,
+      }))
+  } else {
+    committeeUsers.value = []
+  }
+}
 
-  committeeUsers.value = users.data.map((user: User) => {
-    const newUsers: OptionItem = {
-      label: user.name,
-      value: user.id ?? '',
-    }
-    return newUsers
-  })
+export const getRolesData = async (): Promise<void> => {
+  const roles: ApiResponse<CommitteeRole[]> = await fetchRoles(-1, -1)
+  if (roles?.succeeded && roles.data) {
+    committeeRoles.value = roles.data.map((role: CommitteeRole) => ({
+      label: role.roleName,
+      value: role.id,
+    }))
+  } else {
+    committeeRoles.value = []
+  }
 }
 
 type LazyLoadEvent = {
@@ -35,62 +56,99 @@ type LazyLoadEvent = {
   sortOrder?: 0 | 1 | -1 | null
   multiSortMeta?: DataTableSortMeta[] | null
 }
-
 export function useCommittee(): {
   committee: Ref<Committee[]>
   columns: ColumnDef[]
   allRows: Ref<RowData[]>
   editingRows: Ref<RowData[]>
   committeeUsers: Ref<OptionItem[]>
+  committeeRoles: Ref<OptionItem[]>
   statusOptions: { label: string; value: string }[]
   pageNumber: Ref<number>
   pageSize: Ref<number>
   onLazyLoad: (event: LazyLoadEvent) => Promise<void>
-  createCommittee: (payload: Committee) => Promise<ApiResponse<Committee>>
+  addCommittee: (payload: Committee) => Promise<ApiResponse<Committee>>
   handleEdit: (
     newData: Committee,
     oldData: Committee,
   ) => Promise<{ success: boolean; committee: Committee } | null>
-  deleteUser: (commitee: Committee, event?: Event) => void
+  handleDelete: (id: string) => Promise<{ success: boolean; message: string }>
   isLoading: Ref<boolean>
   filters: Ref<{ global: { value: string | null; matchMode: string } }>
   clearFilter: () => void
   fetchInitialData: () => Promise<void>
   totalRecords: Ref<number>
+  onStatusToggle: (committee: Committee, newStatus: boolean) => Promise<void>
 } {
+  const authStore = useAuthStore()
   const toast = useToast()
   const committee = ref<Committee[]>([])
   const allRows = ref<RowData[]>([])
   const editingRows = ref<RowData[]>([])
-  const committeeUsers = ref<OptionItem[]>([])
-  const confirm = useConfirm()
   const pageSize = ref(10)
   const isLoading = ref<boolean>(false)
   const pageNumber = ref(1)
   const totalRecords = ref(0)
+  const error = ref<string | null>(null)
 
   const filters = ref({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
   })
 
-  const columns: ColumnDef[] = [
+  const columns = [
     { label: 'Committee Year', key: 'year', filterable: true },
+    { label: 'Start Date', key: 'startDate', filterable: true },
+    { label: 'End Date', key: 'endDate', filterable: true },
     { label: 'Core Members', key: 'coreMembers', filterable: true },
     { label: 'Executive Members', key: 'executiveMembers', filterable: true },
-    {
-      label: 'Status',
-      key: 'statusLabel',
-      filterable: true,
-      filterOption: true,
-      useTag: true,
-      useMultiSelect: false,
-    },
+    { label: 'Status', key: 'isActive', filterable: true, useToggle: true },
   ]
 
   const statusOptions = [
-    { label: 'Active', value: 'Active' },
-    { label: 'Inactive', value: 'Inactive' },
+    { label: 'Active', value: 'true' },
+    { label: 'Inactive', value: 'false' },
   ]
+
+  const onStatusToggle = async (committee: Committee, newStatus: boolean): Promise<void> => {
+    const originalStatus = committee.status
+    try {
+      const accessToken = authStore.accessToken
+      if (!accessToken) {
+        throw new Error('Authentication token not found. Please log in again.')
+      }
+
+      await committeeApi.put(`/committee/${committee.id}/toggleStatus`, {
+        status: newStatus,
+      })
+      committee.status = newStatus
+      toast.add({
+        severity: 'success',
+        summary: 'Success',
+        detail: 'Committee status updated successfully.',
+        life: 3000,
+      })
+      await fetchInitialData()
+    } catch (error) {
+      committee.status = originalStatus
+
+      if (axios.isAxiosError(error) && error.response && error.response.data?.errorValue) {
+        toast.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: error.response.data.errorValue,
+          life: 3000,
+        })
+      } else {
+        toast.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to update team status.',
+          life: 3000,
+        })
+      }
+      console.error('Error updating team status:', error)
+    }
+  }
 
   const clearFilter = (): void => {
     filters.value.global.value = null
@@ -116,8 +174,6 @@ export function useCommittee(): {
   const onLazyLoad = async (event: LazyLoadEvent): Promise<void> => {
     isLoading.value = true
     try {
-      await getUsersData()
-
       const payload: {
         pagination: { pageNumber: number; pageSize: number }
         multiSortedColumns: { active: string | undefined; direction: string }[]
@@ -130,14 +186,12 @@ export function useCommittee(): {
         multiSortedColumns: [],
         filterMap: {},
       }
-
       if (event.sortField) {
         payload.multiSortedColumns.push({
           active: event.sortField as string,
           direction: event.sortOrder === 1 ? 'asc' : 'desc',
         })
       }
-
       if (event.filters) {
         const filters = event.filters as DataTableFilterMeta
         Object.entries(filters).forEach(([field, filterMeta]) => {
@@ -173,16 +227,18 @@ export function useCommittee(): {
         payload.multiSortedColumns,
         payload.filterMap,
       )
-
       if (response?.succeeded) {
-        console.error(response, 'response')
         committee.value = response.data || []
-        allRows.value = (response.data || []).map((item) => ({
+        allRows.value = (response.data || []).map((item: Committee) => ({
           id: item.id,
           year: item.year,
-          coreMembers: (item.coreMembers || []).map((m: Members) => m.name).join(', '),
-          executiveMembers: (item.executiveMembers || []).map((m: Members) => m.name).join(', '),
-          statusLabel: item.status ? 'Active' : 'Inactive',
+          startDate: item.startDate,
+          endDate: item.endDate,
+          coreMembers: (item.coreMembers || []).map((m: CommitteeUser) => m.name).join(', '),
+          executiveMembers: (item.executiveMembers || [])
+            .map((m: CommitteeUser) => m.name)
+            .join(', '),
+          isActive: item.isActive ?? false,
         }))
         totalRecords.value = response.totalRecords ?? 0
         pageNumber.value = response.pageNumber ?? payload.pagination.pageNumber
@@ -218,161 +274,145 @@ export function useCommittee(): {
   }
 
   const fetchInitialData = async (): Promise<void> => {
-    await onLazyLoad({
-      first: 0,
-      rows: pageSize.value,
-      filters: undefined,
-      sortField: null,
-      sortOrder: null,
-    })
+    isLoading.value = true
+    try {
+      await Promise.all([getUsersData(), getRolesData()])
+
+      await onLazyLoad({
+        first: 0,
+        rows: pageSize.value,
+        filters: undefined,
+        sortField: null,
+        sortOrder: null,
+      })
+    } finally {
+      isLoading.value = false
+    }
   }
 
-  const createCommittee = (newCommittee: Committee): Promise<ApiResponse<Committee>> => {
-    return simulateApiCall(async () => {
-      newCommittee.id = (committeeData.data.length + 1).toString()
-      newCommittee.createdAt = new Date().toISOString()
-      committeeData.data.push(newCommittee)
+  const addCommittee = async (committeeItem: Committee): Promise<ApiResponse<Committee>> => {
+    try {
+      const response = await createCommittee(committeeItem)
+      committee.value.push(response.data)
+
+      toast.add({
+        severity: 'success',
+        summary: 'Success',
+        detail: 'Committee created successfully',
+      })
 
       return {
-        data: newCommittee,
+        data: response.data,
         message: 'Committee created successfully',
-        errors: null,
         succeeded: true,
+        errors: null,
         pageNumber: 1,
         pageSize: 1,
         totalPages: 1,
         totalRecords: 1,
       }
-    })
+    } catch (err: unknown) {
+      let message = 'Failed to create committee'
+
+      const axiosErr = err as AxiosError<{ errorValue?: string }>
+      if (axiosErr.response?.data?.errorValue) {
+        message = axiosErr.response.data.errorValue
+      }
+
+      toast.add({ severity: 'error', summary: 'Error', detail: message })
+      error.value = message
+
+      return {
+        data: null,
+        message,
+        succeeded: false,
+        errors: err,
+        pageNumber: 0,
+        pageSize: 0,
+        totalPages: 0,
+        totalRecords: 0,
+      }
+    }
   }
 
   const handleEdit = async (
-    newData: Committee,
-    oldData: Committee,
+    committeePayload: Committee,
   ): Promise<{ success: boolean; committee: Committee } | null> => {
     try {
-      const yearPattern = /^\d{4}-\d{4}$/
-      if (!yearPattern.test(newData.year)) {
-        toast.add({
-          severity: 'error',
-          summary: 'Validation Error',
-          detail: 'Year must be in the format YYYY-YYYY',
-          life: 3000,
-        })
-        return null
-      }
-      const [startYear, endYear] = newData.year.split('-').map(Number)
-      if (endYear !== startYear + 1) {
-        toast.add({
-          severity: 'error',
-          summary: 'Validation Error',
-          detail: 'Years must be consecutive',
-          life: 3000,
-        })
-        return null
-      }
-
-      if (JSON.stringify(newData) === JSON.stringify(oldData)) {
-        toast.add({
-          severity: 'info',
-          summary: 'No Changes',
-          detail: 'No modifications detected.',
-          life: 3000,
-        })
-        return { success: true, committee: oldData }
-      }
-
-      const response = await editCommittee(newData)
-
-      if (response && response.succeeded && response.data) {
-        const updatedCommittee = response.data
-        const committeeIndex = committee.value.findIndex((c) => c.id === oldData.id)
-
-        if (committeeIndex !== -1) {
-          committee.value[committeeIndex] = updatedCommittee
-        }
+      if (!committeePayload.id) throw new Error('Committee ID missing for edit')
+      const response: Committee = await editCommittee(committeePayload.id, committeePayload)
+      if (response && response.id) {
+        const index = committee.value.findIndex((c) => c.id === response.id)
+        if (index !== -1) committee.value[index] = response
 
         toast.add({
           severity: 'success',
           summary: 'Success',
-          detail: `Committee for year ${updatedCommittee.year} updated successfully.`,
+          detail: `Committee for year ${response.year} updated successfully.`,
           life: 3000,
         })
 
-        return { success: true, committee: updatedCommittee }
+        return { success: true, committee: response }
       } else {
         toast.add({
           severity: 'error',
           summary: 'Update Failed',
+          detail: 'Failed to update committee.',
           life: 3000,
         })
+        return { success: false, committee: committeePayload }
       }
     } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error occurred while updating.'
-      toast.add({
-        severity: 'error',
-        summary: 'Update Failed',
-        detail: errorMessage,
-        life: 3000,
-      })
+      const message = error instanceof Error ? error.message : 'Unknown error occurred'
+      toast.add({ severity: 'error', summary: 'Error', detail: message, life: 3000 })
+      return null
     }
-
-    return null
   }
 
-  const deleteUser = (committeeToDelete: Committee, event?: Event): void => {
-    if (!event?.currentTarget) {
-      console.error('ConfirmPopup requires a valid event target (event missing or invalid).')
-      return
-    }
-    confirm.require({
-      target: event.currentTarget as HTMLElement,
-      message: `Are you sure you want to delete the committee for year "${committeeToDelete.year}"?`,
-      header: 'Delete Confirmation',
-      icon: 'pi pi-info-circle',
-      rejectClass: 'p-button-secondary p-button-outlined',
-      acceptClass: 'p-button-danger',
-      acceptLabel: 'Delete',
-      rejectLabel: 'Cancel',
-      accept: async () => {
-        try {
-          const response = await deleteCommittee(committeeToDelete.id)
-          if (response.succeeded) {
-            committee.value = committee.value.filter((c) => c.id !== committeeToDelete.id)
-            allRows.value = allRows.value.filter((r) => r.id !== committeeToDelete.id)
+  const handleDelete = async (id: string): Promise<{ success: boolean; message: string }> => {
+    try {
+      if (!id) throw new Error('Committee ID missing for delete')
 
-            toast.add({
-              severity: 'success',
-              summary: 'Deleted',
-              detail: `Committee for year ${committeeToDelete.year} deleted successfully.`,
-              life: 3000,
-            })
-          }
-        } catch (err) {
-          const error = err as Error
-          toast.add({
-            severity: 'error',
-            summary: 'Delete Failed',
-            detail: error.message,
-            life: 3000,
-          })
-        }
-      },
-      reject: () => {},
-    })
+      const response = await deleteCommittee(id)
+      if (response.success) {
+        await fetchInitialData()
+        toast.add({
+          severity: 'success',
+          summary: 'Deleted',
+          detail: response.message || 'Committee deleted successfully.',
+          life: 3000,
+        })
+        return { success: true, message: response.message }
+      } else {
+        toast.add({
+          severity: 'error',
+          summary: 'Delete Failed',
+          detail: response.message || 'Failed to delete committee.',
+          life: 3000,
+        })
+        return { success: false, message: response.message || 'Delete failed' }
+      }
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Unknown error occurred during delete'
+      toast.add({ severity: 'error', summary: 'Error', detail: message, life: 3000 })
+
+      return { success: false, message }
+    }
   }
 
   return {
     committee,
     columns,
     committeeUsers,
+    committeeRoles,
     allRows,
     editingRows,
     statusOptions,
-    createCommittee,
+    addCommittee,
     handleEdit,
-    deleteUser,
+    handleDelete,
+    onStatusToggle,
     isLoading,
     filters,
     clearFilter,

@@ -17,14 +17,14 @@ export interface APIError {
 }
 
 export interface ApiResponse<T> {
-  data: T
+  data: T | null
   message: string
+  errors?: unknown
   succeeded: boolean
-  errors: string[] | null
-  pageNumber: number
-  pageSize: number
-  totalPages: number
-  totalRecords: number
+  pageNumber?: number
+  pageSize?: number
+  totalPages?: number
+  totalRecords?: number
 }
 
 export interface LoginResponse<T> {

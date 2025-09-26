@@ -6,102 +6,73 @@ import Button from 'primevue/button'
 import ConfirmPopup from 'primevue/confirmpopup'
 import Dialog from 'primevue/dialog'
 import Toast from 'primevue/toast'
-import { useToast } from 'primevue/usetoast'
-import { onMounted, ref } from 'vue'
-import { createCommittee } from '../services/committee.services'
+import ToggleSwitch from 'primevue/toggleswitch'
+import { ref } from 'vue'
 import CommitteeForm from './components/CommitteeForm.vue'
 import { useCommittee } from './composable/useCommitte'
 import { useRouter } from 'vue-router'
 import { useValidation } from '../roles/composables/useValidation'
 
 const {
-  committee,
   isLoading,
   columns,
   allRows,
   editingRows,
   statusOptions,
   fetchInitialData,
-  handleEdit,
-  deleteUser,
   totalRecords,
   pageSize,
   onLazyLoad,
+  onStatusToggle,
+  handleDelete,
 } = useCommittee()
+
 const { isSaveDisabled } = useValidation()
-const toast = useToast()
 const router = useRouter()
+
 const userFormDialogVisible = ref(false)
+const committeeToDelete = ref<Committee | null>(null)
+const deleteDialogVisible = ref(false)
+const formMode = ref<'create' | 'edit'>('create')
 const coreMemberOptions = ref<{ label: string; value: string }[]>([])
 const executiveMemberOptions = ref<{ label: string; value: string }[]>([])
 const selectedCommittee = ref<Committee | null>(null)
 
 const openCreateUserDialog = (): void => {
+  formMode.value = 'create'
+  selectedCommittee.value = null
   userFormDialogVisible.value = true
+}
+
+const handleEditCommittee = (row: Committee): void => {
+  formMode.value = 'edit'
+  selectedCommittee.value = JSON.parse(JSON.stringify(row))
+  userFormDialogVisible.value = true
+}
+
+const handleCommitteeFormSubmit = async (): Promise<void> => {
+  userFormDialogVisible.value = false
+  await fetchInitialData()
 }
 
 const handleCommitteeFormCancel = (): void => {
   userFormDialogVisible.value = false
 }
 
-const handleEditCommittee = (row: Committee): void => {
-  selectedCommittee.value = JSON.parse(JSON.stringify(row))
-  editingRows.value = [row]
-}
-const onSave = async (newData: RowData): Promise<void> => {
-  if (selectedCommittee.value) {
-    const result = await handleEdit(newData as Committee, selectedCommittee.value)
-    if (result && result.success) {
-      editingRows.value = []
-      selectedCommittee.value = null
-    }
-  }
-}
-const onCancel = (): void => {
-  if (selectedCommittee.value) {
-    const index = committee.value.findIndex((u) => u.id === selectedCommittee.value!.id)
-    if (index !== -1) {
-      committee.value[index] = selectedCommittee.value
-    }
-  }
-  editingRows.value = []
-  selectedCommittee.value = null
-}
-const handleDeleteConfirmation = (row: RowData, event?: Event): void => {
-  deleteUser(row as Committee, event)
-}
-const handleUserFormSubmit = async (payload: Committee): Promise<void> => {
-  try {
-    const result = await createCommittee(payload)
-    userFormDialogVisible.value = false
-    toast.add({
-      severity: 'success',
-      summary: 'Success',
-      detail: `Committee for year ${result.year} created successfully`,
-      life: 3000,
-    })
-  } catch (error: unknown) {
-    let errorMessage = 'An error occurred while creating the committee.'
-    if (error instanceof Error) {
-      errorMessage = error.message
-    }
-    toast.add({
-      severity: 'error',
-      summary: 'Creation Failed',
-      detail: errorMessage,
-      life: 4000,
-    })
-  } finally {
-    await fetchInitialData()
-  }
-}
 const handleViewCommittee = async (row: { id: string }): Promise<void> => {
   await router.push(`/admin/committe/${row.id}`)
 }
-
-onMounted(() => {
-  void fetchInitialData()
-})
+const handleDeleteConfirmation = (row: Committee): void => {
+  committeeToDelete.value = row
+  deleteDialogVisible.value = true
+}
+const onPerformDelete = async (): Promise<void> => {
+  if (committeeToDelete.value) {
+    await handleDelete(committeeToDelete.value.id)
+    deleteDialogVisible.value = false
+    committeeToDelete.value = null
+  }
+}
 </script>
 
 <template>
@@ -109,11 +80,10 @@ onMounted(() => {
     <div class="h-full bg-white">
       <ConfirmPopup class="mx-4" />
       <Toast />
-
       <Dialog
         class="m-4"
         v-model:visible="userFormDialogVisible"
-        header="Create Committee"
+        :header="formMode === 'create' ? 'Create Committee' : 'Edit Committee'"
         :style="{ width: '50rem' }"
         modal
         @hide="handleCommitteeFormCancel"
@@ -121,9 +91,25 @@ onMounted(() => {
         <CommitteeForm
           :coremembers="coreMemberOptions"
           :executivemembers="executiveMemberOptions"
-          @submit="handleUserFormSubmit"
           @cancel="handleCommitteeFormCancel"
+          @submit="handleCommitteeFormSubmit"
+          :committee="selectedCommittee"
         />
+      </Dialog>
+      <Dialog
+        v-model:visible="deleteDialogVisible"
+        header="Confirm Deletion"
+        :style="{ width: '30rem' }"
+        modal
+      >
+        <div class="flex items-center gap-4">
+          <i class="pi pi-exclamation-triangle text-red-600 text-3xl" />
+          <span>Are you sure you want to delete this user?</span>
+        </div>
+        <template #footer>
+          <Button label="Cancel" severity="secondary" @click="deleteDialogVisible = false" />
+          <Button label="Delete" severity="danger" @click="onPerformDelete" />
+        </template>
       </Dialog>
       <BaseTable
         :columns="columns"
@@ -133,8 +119,6 @@ onMounted(() => {
         :editableRow="editingRows[0] as RowData"
         :statusOptions="statusOptions"
         :loading="isLoading"
-        @save="onSave"
-        @cancel="onCancel"
         @lazy:load="onLazyLoad"
         :paginator="true"
         :saveDisabled="isSaveDisabled"
@@ -147,7 +131,12 @@ onMounted(() => {
             @click="openCreateUserDialog"
           />
         </template>
-
+        <template #body-isActive="{ row }">
+          <ToggleSwitch
+            :modelValue="row.isActive"
+            @update:modelValue="(newValue: boolean) => onStatusToggle(row, newValue)"
+          />
+        </template>
         <template #actions="{ row }">
           <button
             @click="handleEditCommittee(row)"
@@ -157,11 +146,12 @@ onMounted(() => {
           </button>
 
           <button
-            @click="handleDeleteConfirmation(row, $event)"
+            @click="handleDeleteConfirmation(row as Committee)"
             class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
           >
             <i class="pi pi-trash text-red-600 text-base"></i>
           </button>
+
           <button
             @click="handleViewCommittee(row)"
             class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"

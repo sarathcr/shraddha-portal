@@ -178,16 +178,16 @@ export const useTeams = (): {
         payload,
       )
 
-      if (response.data.succeeded) {
+      if (response.data?.succeeded && response.data.data) {
         teams.value = response.data.data
-        totalRecords.value = response.data.totalRecords
-        pageNumber.value = response.data.pageNumber
-        pageSize.value = response.data.pageSize
+        totalRecords.value = response.data.totalRecords ?? 0
+        pageNumber.value = response.data.pageNumber ?? 1
+        pageSize.value = response.data.pageSize ?? 10
       } else {
         toast.add({
           severity: 'error',
           summary: 'Error',
-          detail: response.data.message || 'Failed to load team data.',
+          detail: response.data?.message || 'Failed to load team data.',
           life: 3000,
         })
       }
