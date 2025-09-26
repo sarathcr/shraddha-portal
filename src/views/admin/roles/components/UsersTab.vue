@@ -101,11 +101,10 @@ const onPerformDelete = async (): Promise<void> => {
     userToDelete.value = null
   }
 }
-
 const columns = computed((): ColumnDef[] => [
   { label: 'Name', key: 'name', filterable: true, required: true },
   { label: 'Employee ID', key: 'employeeId', filterable: true, required: true },
-  { label: 'Date of Birth', key: 'dob', filterable: false, required: true, useDateFilter: true },
+  { label: 'Date of Birth', key: 'dob', filterable: true, required: true, useDateFilter: true },
   { label: 'Email', key: 'email', filterable: true, required: true },
   {
     label: 'Team',
