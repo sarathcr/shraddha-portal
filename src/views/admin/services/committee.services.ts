@@ -1,7 +1,7 @@
-import { committeeApi } from '@/constants'
+import { api, committeeApi } from '@/constants'
 import type { ApiResponse } from '@/types'
-import type { Committee } from '@/types/commitee'
-import axios, { AxiosError } from 'axios'
+import type { Committee, CommitteeRole, CommitteeUser } from '@/types/commitee'
+import axios, { AxiosError, type AxiosResponse } from 'axios'
 
 // Get committee list
 export const getCommittee = async (
@@ -42,51 +42,97 @@ export const getCommittee = async (
 }
 
 // Create new committee
-export const createCommittee = async (newCommittee: Committee): Promise<Committee> => {
-  try {
-    const response = await committeeApi.post<Committee>('/committee', newCommittee)
-    return response.data
-  } catch (err: unknown) {
-    if (axios.isAxiosError(err)) {
-      const axiosErr = err as AxiosError<{ message?: string }>
-      console.error(
-        'Failed to create committee:',
-        axiosErr.response?.data?.message ?? axiosErr.message,
-      )
-    } else {
-      console.error('Failed to create committee:', err)
-    }
-    throw err
-  }
+export const createCommittee = (newCommittee: Committee): Promise<AxiosResponse<Committee>> => {
+  return committeeApi.post<Committee>('/committee', newCommittee)
 }
 
-// Edit committee
+//Edit committee
 export const editCommittee = async (
+  id: string,
   updatedCommittee: Committee,
-): Promise<{ succeeded: boolean; data: Committee }> => {
+): Promise<Committee> => {
   try {
-    const response = await committeeApi.put<{ succeeded: boolean; data: Committee }>(
-      `/committee/${updatedCommittee.id}`,
-      updatedCommittee,
-    )
-    return response.data
+    const { data } = await committeeApi.put<Committee>(`/committee/${id}`, updatedCommittee)
+    return data
   } catch (err: unknown) {
-    console.error('Failed to edit committee:', err)
-    throw err
+    let message = 'Failed to update committee'
+    const axiosErr = err as AxiosError<{ errorValue?: string }>
+    if (axiosErr.response?.data?.errorValue) {
+      message = axiosErr.response.data.errorValue
+    }
+    throw new Error(message)
   }
 }
 
 // Delete committee
 export const deleteCommittee = async (
   id: string,
-): Promise<{ succeeded: boolean; message: string }> => {
+): Promise<{ success: boolean; message: string }> => {
   try {
-    const response = await committeeApi.delete<{ succeeded: boolean; message: string }>(
-      `/committee/${id}`,
+    const response = await committeeApi.delete(`/committee/${id}`)
+    const data = response.data
+    if (typeof data === 'boolean') {
+      return {
+        success: data,
+        message: data ? 'Committee deleted successfully.' : 'Delete failed',
+      }
+    }
+
+    return {
+      success: data?.succeeded ?? data?.success ?? true,
+      message: data?.message ?? 'Committee deleted successfully.',
+    }
+  } catch (err: unknown) {
+    console.error('Failed to delete committee:', err)
+    throw err
+  }
+}
+
+// Get Roles
+export const fetchRoles = async (
+  pageNumber = -1,
+  pageSize = -1,
+): Promise<ApiResponse<CommitteeRole[]>> => {
+  try {
+    const response = await api.post<ApiResponse<CommitteeRole[]>>(
+      `/authorization/Roles/pagination`,
+      {
+        pagination: {
+          pageNumber,
+          pageSize,
+        },
+      },
     )
     return response.data
   } catch (err: unknown) {
-    console.error('Failed to delete committee:', err)
+    console.error('Failed to fetch roles:', err)
+    throw err
+  }
+}
+
+// Get Users
+export const fetchUsers = async (
+  pageNumber = 1,
+  pageSize = 0,
+  filterMap?: Record<string, string>,
+): Promise<ApiResponse<CommitteeUser[]>> => {
+  try {
+    const payload = {
+      pagination: {
+        pageNumber,
+        pageSize,
+      },
+      filterMap: filterMap || {},
+    }
+
+    const response = await api.post<ApiResponse<CommitteeUser[]>>(
+      `/authorization/users/pagination`,
+      payload,
+    )
+
+    return response.data
+  } catch (err: unknown) {
+    console.error('Failed to fetch users:', err)
     throw err
   }
 }

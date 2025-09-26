@@ -148,20 +148,25 @@ export const useUsers = (): {
         payload,
       )
 
-      if (response.data.succeeded) {
+      if (response.data.succeeded && response.data.data) {
         users.value = response.data.data.map((user: User) => ({
           ...user,
           dob: user.dob ? formatDateForDisplay(user.dob) : null,
         }))
-
-        totalRecords.value = response.data.totalRecords
-        pageNumber.value = response.data.pageNumber
-        pageSize.value = response.data.pageSize
+        totalRecords.value = response.data.totalRecords ?? 0
+        pageNumber.value = response.data.pageNumber ?? 1
+        pageSize.value = response.data.pageSize ?? 20
       } else {
+        users.value = []
+
+        totalRecords.value = 0
+        pageNumber.value = 1
+        pageSize.value = 20
+
         toast.add({
           severity: 'error',
           summary: 'Error',
-          detail: response.data.message || 'Failed to load user data.',
+          detail: response.data?.message || 'Failed to load user data.',
           life: 3000,
         })
       }
@@ -189,30 +194,32 @@ export const useUsers = (): {
         }),
       ])
 
-      if (rolesResponse.data.succeeded) {
+      if (rolesResponse.data.succeeded && rolesResponse.data.data) {
         roles.value = rolesResponse.data.data.map((role: Role) => ({
           label: role.roleName,
           value: role.id,
         }))
       } else {
+        roles.value = []
         toast.add({
           severity: 'error',
           summary: 'Error',
-          detail: rolesResponse.data.message || 'Failed to load roles.',
+          detail: rolesResponse.data?.message || 'Failed to load roles.',
           life: 3000,
         })
       }
 
-      if (teamsResponse.data.succeeded) {
+      if (teamsResponse.data.succeeded && teamsResponse.data.data) {
         teams.value = teamsResponse.data.data.map((team: Team) => ({
           label: team.teamName ?? '',
           value: team.id,
         }))
       } else {
+        teams.value = []
         toast.add({
           severity: 'error',
           summary: 'Error',
-          detail: teamsResponse.data.message || 'Failed to load teams.',
+          detail: teamsResponse.data?.message || 'Failed to load teams.',
           life: 3000,
         })
       }

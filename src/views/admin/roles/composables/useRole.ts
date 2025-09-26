@@ -43,10 +43,10 @@ export const useRoles = (): {
         roleService.getPermissions(),
       ])
 
-      if (rolesRes.succeeded) roles.value = rolesRes.data
+      if (rolesRes.succeeded) roles.value = rolesRes.data ?? []
       else throw new Error(rolesRes.message || 'Failed to load roles')
 
-      if (permsRes.succeeded) permissions.value = permsRes.data
+      if (permsRes.succeeded) permissions.value = permsRes.data ?? []
       else throw new Error(permsRes.message || 'Failed to load permissions')
     } catch (err) {
       const error = err as APIError
@@ -68,9 +68,10 @@ export const useRoles = (): {
         toast.add({
           severity: 'success',
           summary: 'Role Created',
-          detail: `Role "${response.data.roleName}" added.`,
+          detail: `Role "${response.data?.roleName ?? ''}" added.`,
           life: 3000,
         })
+
         return true
       } else {
         throw new Error(response.message)
@@ -90,7 +91,8 @@ export const useRoles = (): {
   const editRole = async (updated: Role): Promise<boolean | null> => {
     try {
       const response = await roleService.editRole(updated.id, updated)
-      if (response.succeeded) {
+
+      if (response.succeeded && response.data) {
         const index = roles.value.findIndex((r) => r.id === updated.id)
         if (index !== -1) roles.value[index] = response.data
 

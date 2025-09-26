@@ -16,5 +16,5 @@ const createMockApiResponse = <T>(data: T, message: string): ApiResponse<T> => (
 
 export const getCommitteeDashboard = (): Promise<ApiResponse<CommitteeDashboard[]>> =>
   simulateApiCall(async () => {
-    return createMockApiResponse(committeeDashboards.data, 'CommitteeDetail list fetched')
+    return createMockApiResponse(committeeDashboards.data ?? [], 'CommitteeDetail list fetched')
   })
