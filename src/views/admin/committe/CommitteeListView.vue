@@ -7,7 +7,7 @@ import ConfirmPopup from 'primevue/confirmpopup'
 import Dialog from 'primevue/dialog'
 import Toast from 'primevue/toast'
 import ToggleSwitch from 'primevue/toggleswitch'
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import CommitteeForm from './components/CommitteeForm.vue'
 import { useCommittee } from './composable/useCommitte'
 import { useRouter } from 'vue-router'
@@ -73,9 +73,6 @@ const onPerformDelete = async (): Promise<void> => {
     committeeToDelete.value = null
   }
 }
-onMounted(() => {
-  void fetchInitialData()
-})
 </script>
 
 <template>
