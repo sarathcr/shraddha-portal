@@ -65,17 +65,26 @@ const onEdit = (row: User): void => {
 }
 
 const onSave = async (newData: RowData): Promise<void> => {
-  if (editableUser.value) {
-    newData.isActive = editableUser.value.isActive
-  }
+  if (!editableUser.value) return
+
+  newData.isActive = editableUser.value.isActive
   const userToSave = newData as User
-  await editUser(userToSave)
-  const index = users.value.findIndex((u) => u.id === userToSave.id)
-  if (index !== -1) users.value[index] = { ...userToSave }
-  editingRows.value = []
-  editableUser.value = null
-  originalUser.value = null
-  resetValidation()
+
+  const success = await editUser(userToSave)
+
+  if (success) {
+    const index = users.value.findIndex((u) => u.id === userToSave.id)
+    if (index !== -1) users.value[index] = { ...userToSave }
+
+    editingRows.value = []
+    editableUser.value = null
+    originalUser.value = null
+    resetValidation()
+  } else {
+    if (originalUser.value) {
+      editableUser.value = { ...originalUser.value } as User
+    }
+  }
 }
 
 const onCancel = (): void => {

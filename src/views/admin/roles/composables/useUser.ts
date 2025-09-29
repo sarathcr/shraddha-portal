@@ -33,7 +33,7 @@ export const useUsers = (): {
   fetchInitialData: () => Promise<void>
   onLazyLoad: (event: LazyLoadEvent) => Promise<void>
   createUser: (payload: User) => Promise<boolean>
-  editUser: (newData: User) => Promise<void>
+  editUser: (newData: User) => Promise<boolean>
   deleteUser: (user: User) => Promise<void>
   onStatusToggle: (user: User, newStatus: boolean) => Promise<void>
 } => {
@@ -283,11 +283,8 @@ export const useUsers = (): {
     }
   }
 
-  const editUser = async (newData: User): Promise<void> => {
+  const editUser = async (newData: User): Promise<boolean> => {
     try {
-      const accessToken = authStore.accessToken
-      if (!accessToken) throw new Error('Authentication token not found. Please log in again.')
-
       const formattedNewData = {
         ...newData,
         dob: newData.dob ? formatDateForAPI(new Date(newData.dob)) : null,
@@ -297,6 +294,7 @@ export const useUsers = (): {
       }
 
       await api.put<ApiResponse<User>>(`/authorization/users/${newData.id}`, formattedNewData)
+
       toast.add({
         severity: 'success',
         summary: 'Success',
@@ -304,20 +302,16 @@ export const useUsers = (): {
         life: 3000,
       })
 
-      await onLazyLoad({
-        first: (pageNumber.value - 1) * pageSize.value,
-        rows: pageSize.value,
-        filters: undefined,
-        sortField: null,
-        sortOrder: null,
-      })
+      return true
     } catch (error) {
       const detail =
         axios.isAxiosError(error) && error.response?.data?.errorValue
           ? error.response.data.errorValue
           : 'An unexpected error occurred. Please try again.'
+
       toast.add({ severity: 'error', summary: 'Error', detail, life: 3000 })
       console.error('Error editing user:', error)
+      return false
     }
   }
 
