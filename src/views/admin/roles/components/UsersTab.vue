@@ -58,24 +58,26 @@ const onEdit = (row: User): void => {
   originalUser.value = JSON.parse(JSON.stringify(row))
   editableUser.value = {
     ...row,
-    teamId: row.teamId != null ? String(row.teamId) : null,
-    roleId: row.roleId != null ? String(row.roleId) : null,
+    team: row.team,
+    role: row.role,
+    teamId: row.teamId ?? null,
+    roleId: row.roleId ?? null,
   }
+
   editingRows.value = [row]
 }
 
 const onSave = async (newData: RowData): Promise<void> => {
   if (!editableUser.value) return
-
-  newData.isActive = editableUser.value.isActive
-  const userToSave = newData as User
+  const userToSave = {
+    ...editableUser.value,
+    ...newData,
+  } as User
 
   const success = await editUser(userToSave)
 
   if (success) {
-    const index = users.value.findIndex((u) => u.id === userToSave.id)
-    if (index !== -1) users.value[index] = { ...userToSave }
-
+    await fetchInitialData()
     editingRows.value = []
     editableUser.value = null
     originalUser.value = null
@@ -117,7 +119,7 @@ const columns = computed((): ColumnDef[] => [
   { label: 'Email', key: 'email', filterable: true, required: true },
   {
     label: 'Team',
-    key: 'teamId',
+    key: 'team',
     filterable: true,
     useTag: true,
     filterOption: true,
@@ -126,7 +128,7 @@ const columns = computed((): ColumnDef[] => [
   },
   {
     label: 'Role',
-    key: 'roleId',
+    key: 'role',
     filterable: true,
     useTag: true,
     filterOption: true,

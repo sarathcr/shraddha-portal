@@ -301,7 +301,13 @@ export const useUsers = (): {
         detail: 'User updated successfully.',
         life: 3000,
       })
-
+      await onLazyLoad({
+        first: (pageNumber.value - 1) * pageSize.value,
+        rows: pageSize.value,
+        filters: undefined,
+        sortField: null,
+        sortOrder: null,
+      })
       return true
     } catch (error) {
       const detail =
