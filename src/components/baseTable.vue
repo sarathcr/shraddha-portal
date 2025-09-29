@@ -51,7 +51,11 @@ const sortField = ref<string | undefined>(undefined)
 const sortOrder = ref<1 | -1 | undefined>(undefined)
 
 const first = ref(0)
-const internalPageSize = ref(props.rowsPerPage || 5)
+const internalPageSize = ref(props.rowsPerPage ?? 10)
+const initialPageSize = ref(props.rowsPerPage ?? 10)
+interface FilterMetaWithConstraints {
+  constraints: { value: unknown; matchMode: string }[]
+}
 const dynamicRowsPerPageOptions = computed((): number[] => {
   const total = props.totalRecords || 0
   if (total === 0) {
@@ -64,18 +68,19 @@ const dynamicRowsPerPageOptions = computed((): number[] => {
     options.push(i)
   }
 
-  if (total % step !== 0 && !options.includes(total)) {
-    options.push(total)
-  }
-
-  return options
+  const finalMultipleOf5 = Math.ceil(total / 5) * 5
+  options.push(finalMultipleOf5)
+  return Array.from(options).sort((a, b) => a - b)
 })
+
 watch(
   dynamicRowsPerPageOptions,
   (options) => {
     if (!options.includes(internalPageSize.value)) {
-      internalPageSize.value = options.at(-1)!
+      const newPageSize = options.at(-1)!
+      internalPageSize.value = newPageSize
     }
+    first.value = 0
   },
   { immediate: true },
 )
@@ -139,10 +144,31 @@ const hasTableHeader = computed(() => !!slots['table-header'])
 const onLazyLoad = (
   event: DataTablePageEvent | DataTableSortEvent | DataTableFilterEvent,
 ): void => {
-  first.value = event.first
-  internalPageSize.value = event.rows
-  emit('lazy:load', event)
+  const isFilterClear = !Object.values(event.filters || {}).some((filterMeta) => {
+    const constraints = (filterMeta as FilterMetaWithConstraints)?.constraints
+    return (
+      constraints &&
+      constraints.some((c: { value: unknown }) => c.value !== null && c.value !== undefined)
+    )
+  })
+
+  const isPageEvent = 'page' in event
+
+  if (isFilterClear && !isPageEvent) {
+    internalPageSize.value = initialPageSize.value
+    first.value = 0
+  } else {
+    first.value = event.first ?? 0
+    internalPageSize.value = event.rows ?? 10
+  }
+
+  emit('lazy:load', {
+    ...event,
+    first: first.value,
+    rows: internalPageSize.value,
+  })
 }
+
 onMounted(() => {
   onLazyLoad({
     first: first.value,
@@ -186,7 +212,7 @@ onMounted(() => {
         :rowsPerPageOptions="dynamicRowsPerPageOptions"
       >
         <template #header v-if="hasTableHeader">
-          <div class="flex justify-between items-center sticky top-0 z-0">
+          <div class="flex justify-between items-center sticky top-0 z-20">
             <slot name="table-header" />
           </div>
         </template>
@@ -288,8 +314,7 @@ onMounted(() => {
                 <Tag
                   v-if="data[col.key]"
                   :value="
-                    col.options?.find((opt: any) => opt.value === data[col.key])?.label ||
-                    data[col.key]
+                    col.options?.find((opt) => opt.value === data[col.key])?.label || data[col.key]
                   "
                   class="mr-1"
                 />
@@ -297,14 +322,12 @@ onMounted(() => {
               <ToggleSwitch
                 v-else-if="col.useToggle"
                 :modelValue="Boolean(data[col.key])"
-                @update:modelValue="
-                  (newValue: boolean) => $emit('save', { ...data, [col.key]: newValue })
-                "
+                @update:modelValue="(newValue) => $emit('save', { ...data, [col.key]: newValue })"
               />
               <span v-else>
                 {{
                   col.options
-                    ? col.options.find((opt: any) => String(opt.value) === String(data[col.key]))
+                    ? col.options.find((opt) => String(opt.value) === String(data[col.key]))
                         ?.label || data[col.key]
                     : data[col.key]
                 }}
