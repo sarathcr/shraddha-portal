@@ -138,7 +138,7 @@ const columns = computed((): ColumnDef[] => [
   { label: 'Email', key: 'email', filterable: true, required: true },
   {
     label: 'Team',
-    key: 'team',
+    key: 'teamId',
     filterable: true,
     useTag: true,
     filterOption: true,
@@ -147,7 +147,7 @@ const columns = computed((): ColumnDef[] => [
   },
   {
     label: 'Role',
-    key: 'role',
+    key: 'roleId',
     filterable: true,
     useTag: true,
     filterOption: true,

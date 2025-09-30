@@ -97,16 +97,20 @@ export const useUsers = (): {
         multiSortedColumns: [],
         filterMap: {},
       }
-
+      const fieldKeyMap: Record<string, string> = {
+        roleId: 'roleId',
+        teamId: 'teamId',
+      }
       if (event.sortField) {
+        const backendKey = fieldKeyMap[event.sortField as string] || (event.sortField as string)
         payload.multiSortedColumns.push({
-          active: event.sortField as string,
+          active: backendKey,
           direction: event.sortOrder === 1 ? 'asc' : 'desc',
         })
       }
-
       if (event.filters) {
         Object.entries(event.filters).forEach(([field, filterMeta]) => {
+          const backendField = fieldKeyMap[field] || field
           const filter = filterMeta as {
             operator: string
             constraints: { value: unknown; matchMode: string }[]
@@ -122,11 +126,12 @@ export const useUsers = (): {
                   return `${operator} ${condition}`.trim()
                 })
                 .join(' ')
-              payload.filterMap[field] = filterString
+              payload.filterMap[backendField] = filterString
             }
           }
         })
       }
+
       function formatDateForDisplay(dob: string | null): string | null {
         if (!dob) return null
         const [year, month, day] = dob.split('-')
@@ -148,7 +153,6 @@ export const useUsers = (): {
         pageSize.value = response.data.pageSize ?? 20
       } else {
         users.value = []
-
         totalRecords.value = 0
         pageNumber.value = 1
         pageSize.value = 20
