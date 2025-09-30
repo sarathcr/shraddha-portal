@@ -256,7 +256,7 @@ onMounted(() => {
 
               <div v-else-if="col.filterOption">
                 <Select
-                  v-model="tempRow[`${col.key}Id`]"
+                  v-model="tempRow[col.key]"
                   :options="col.options"
                   optionLabel="label"
                   optionValue="value"
