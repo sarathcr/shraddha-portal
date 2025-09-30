@@ -97,8 +97,8 @@ export function useCommittee(): {
 
   const columns = [
     { label: 'Committee Year', key: 'year', filterable: true },
-    { label: 'Start Date', key: 'startDate', filterable: true },
-    { label: 'End Date', key: 'endDate', filterable: true },
+    { label: 'Start Date', key: 'startDate', filterable: true, useDateFilter: true },
+    { label: 'End Date', key: 'endDate', filterable: true, useDateFilter: true },
     { label: 'Core Members', key: 'coreMembers', filterable: true },
     { label: 'Executive Members', key: 'executiveMembers', filterable: true },
     { label: 'Status', key: 'isActive', filterable: true, useToggle: true },

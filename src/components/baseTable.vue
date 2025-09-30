@@ -349,9 +349,9 @@ onMounted(() => {
               <DatePicker
                 v-else-if="col.useDateFilter"
                 v-model="filterModel.value"
-                dateFormat="dd/mm/yy"
+                dateFormat="mm/dd/yy"
+                placeholder="mm/dd/yyyy"
                 showIcon
-                placeholder="Select Date"
                 class="w-full"
               />
               <MultiSelect
