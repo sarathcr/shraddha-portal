@@ -33,9 +33,9 @@ export const useUsers = (): {
   fetchInitialData: () => Promise<void>
   onLazyLoad: (event: LazyLoadEvent) => Promise<void>
   createUser: (payload: User) => Promise<boolean>
-  editUser: (newData: User) => Promise<void>
+  editUser: (newData: User) => Promise<boolean>
   deleteUser: (user: User) => Promise<void>
-  onStatusToggle: (user: User, newStatus: boolean) => Promise<void>
+  onStatusToggle: (user: User, newStatus: boolean) => Promise<boolean>
 } => {
   const toast = useToast()
   const authStore = useAuthStore()
@@ -54,18 +54,12 @@ export const useUsers = (): {
     { label: 'Inactive', value: 'false' },
   ]
 
-  const onStatusToggle = async (user: User, newStatus: boolean): Promise<void> => {
-    const originalStatus = user.isActive
+  const onStatusToggle = async (user: User, newStatus: boolean): Promise<boolean> => {
     try {
-      const accessToken = authStore.accessToken
-      if (!accessToken) throw new Error('Authentication token not found. Please log in again.')
-
       const response = await api.put<{ message: string }>(
         `/authorization/users/${user.id}/toggleStatus`,
         { isActive: newStatus },
       )
-
-      user.isActive = newStatus
 
       toast.add({
         severity: 'success',
@@ -73,22 +67,18 @@ export const useUsers = (): {
         detail: response.data.message || 'User status updated successfully.',
         life: 3000,
       })
-
-      await onLazyLoad({
-        first: (pageNumber.value - 1) * pageSize.value,
-        rows: pageSize.value,
-        filters: undefined,
-        sortField: null,
-        sortOrder: null,
-      })
+      return true
     } catch (error) {
-      user.isActive = originalStatus
-      const detail =
-        axios.isAxiosError(error) && error.response?.data?.errorValue
-          ? error.response.data.errorValue
-          : 'Failed to update user status.'
-      toast.add({ severity: 'error', summary: 'Error', detail, life: 3000 })
-      console.error('Error updating user status:', error)
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail:
+          axios.isAxiosError(error) && error.response?.data?.errorValue
+            ? error.response.data.errorValue
+            : 'Failed to update user status.',
+        life: 3000,
+      })
+      return false
     }
   }
 
@@ -107,16 +97,20 @@ export const useUsers = (): {
         multiSortedColumns: [],
         filterMap: {},
       }
-
+      const fieldKeyMap: Record<string, string> = {
+        roleId: 'roleId',
+        teamId: 'teamId',
+      }
       if (event.sortField) {
+        const backendKey = fieldKeyMap[event.sortField as string] || (event.sortField as string)
         payload.multiSortedColumns.push({
-          active: event.sortField as string,
+          active: backendKey,
           direction: event.sortOrder === 1 ? 'asc' : 'desc',
         })
       }
-
       if (event.filters) {
         Object.entries(event.filters).forEach(([field, filterMeta]) => {
+          const backendField = fieldKeyMap[field] || field
           const filter = filterMeta as {
             operator: string
             constraints: { value: unknown; matchMode: string }[]
@@ -132,11 +126,12 @@ export const useUsers = (): {
                   return `${operator} ${condition}`.trim()
                 })
                 .join(' ')
-              payload.filterMap[field] = filterString
+              payload.filterMap[backendField] = filterString
             }
           }
         })
       }
+
       function formatDateForDisplay(dob: string | null): string | null {
         if (!dob) return null
         const [year, month, day] = dob.split('-')
@@ -158,7 +153,6 @@ export const useUsers = (): {
         pageSize.value = response.data.pageSize ?? 20
       } else {
         users.value = []
-
         totalRecords.value = 0
         pageNumber.value = 1
         pageSize.value = 20
@@ -223,14 +217,6 @@ export const useUsers = (): {
           life: 3000,
         })
       }
-
-      await onLazyLoad({
-        first: 0,
-        rows: pageSize.value,
-        filters: undefined,
-        sortField: undefined,
-        sortOrder: undefined,
-      })
     } catch (error) {
       toast.add({
         severity: 'error',
@@ -283,11 +269,8 @@ export const useUsers = (): {
     }
   }
 
-  const editUser = async (newData: User): Promise<void> => {
+  const editUser = async (newData: User): Promise<boolean> => {
     try {
-      const accessToken = authStore.accessToken
-      if (!accessToken) throw new Error('Authentication token not found. Please log in again.')
-
       const formattedNewData = {
         ...newData,
         dob: newData.dob ? formatDateForAPI(new Date(newData.dob)) : null,
@@ -297,13 +280,13 @@ export const useUsers = (): {
       }
 
       await api.put<ApiResponse<User>>(`/authorization/users/${newData.id}`, formattedNewData)
+
       toast.add({
         severity: 'success',
         summary: 'Success',
         detail: 'User updated successfully.',
         life: 3000,
       })
-
       await onLazyLoad({
         first: (pageNumber.value - 1) * pageSize.value,
         rows: pageSize.value,
@@ -311,13 +294,16 @@ export const useUsers = (): {
         sortField: null,
         sortOrder: null,
       })
+      return true
     } catch (error) {
       const detail =
         axios.isAxiosError(error) && error.response?.data?.errorValue
           ? error.response.data.errorValue
           : 'An unexpected error occurred. Please try again.'
+
       toast.add({ severity: 'error', summary: 'Error', detail, life: 3000 })
       console.error('Error editing user:', error)
+      return false
     }
   }
 
