@@ -35,7 +35,7 @@ export const useUsers = (): {
   createUser: (payload: User) => Promise<boolean>
   editUser: (newData: User) => Promise<boolean>
   deleteUser: (user: User) => Promise<void>
-  onStatusToggle: (user: User, newStatus: boolean) => Promise<void>
+  onStatusToggle: (user: User, newStatus: boolean) => Promise<boolean>
 } => {
   const toast = useToast()
   const authStore = useAuthStore()
@@ -54,18 +54,12 @@ export const useUsers = (): {
     { label: 'Inactive', value: 'false' },
   ]
 
-  const onStatusToggle = async (user: User, newStatus: boolean): Promise<void> => {
-    const originalStatus = user.isActive
+  const onStatusToggle = async (user: User, newStatus: boolean): Promise<boolean> => {
     try {
-      const accessToken = authStore.accessToken
-      if (!accessToken) throw new Error('Authentication token not found. Please log in again.')
-
       const response = await api.put<{ message: string }>(
         `/authorization/users/${user.id}/toggleStatus`,
         { isActive: newStatus },
       )
-
-      user.isActive = newStatus
 
       toast.add({
         severity: 'success',
@@ -73,22 +67,18 @@ export const useUsers = (): {
         detail: response.data.message || 'User status updated successfully.',
         life: 3000,
       })
-
-      await onLazyLoad({
-        first: (pageNumber.value - 1) * pageSize.value,
-        rows: pageSize.value,
-        filters: undefined,
-        sortField: null,
-        sortOrder: null,
-      })
+      return true
     } catch (error) {
-      user.isActive = originalStatus
-      const detail =
-        axios.isAxiosError(error) && error.response?.data?.errorValue
-          ? error.response.data.errorValue
-          : 'Failed to update user status.'
-      toast.add({ severity: 'error', summary: 'Error', detail, life: 3000 })
-      console.error('Error updating user status:', error)
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail:
+          axios.isAxiosError(error) && error.response?.data?.errorValue
+            ? error.response.data.errorValue
+            : 'Failed to update user status.',
+        life: 3000,
+      })
+      return false
     }
   }
 

@@ -112,6 +112,25 @@ const onPerformDelete = async (): Promise<void> => {
     userToDelete.value = null
   }
 }
+
+const handleStatusClick = async (
+  user: User | null,
+  newValue: boolean,
+  event: Event,
+): Promise<void> => {
+  if (!user) return
+  event.preventDefault()
+
+  try {
+    const success = await onStatusToggle(user, newValue)
+    if (success) {
+      user.isActive = newValue
+    }
+  } catch (error) {
+    console.error('Status toggle failed:', error)
+  }
+}
+
 const columns = computed((): ColumnDef[] => [
   { label: 'Name', key: 'name', filterable: true, required: true },
   { label: 'Employee ID', key: 'employeeId', filterable: true, required: true },
@@ -200,18 +219,14 @@ onMounted(() => {
         <div v-if="editingRows.includes(row)" class="flex items-center gap-2">
           <ToggleSwitch
             :modelValue="editableUser?.isActive"
-            @update:modelValue="
-              (newValue: boolean) => {
-                if (editableUser) editableUser.isActive = newValue
-              }
-            "
+            @click.stop="(e: Event) => handleStatusClick(editableUser, !editableUser?.isActive, e)"
           />
         </div>
 
         <ToggleSwitch
           v-else
           :modelValue="row.isActive"
-          @update:modelValue="(newValue: boolean) => onStatusToggle(row, newValue)"
+          @click.stop="(e: Event) => handleStatusClick(row, !row.isActive, e)"
         />
       </template>
 
