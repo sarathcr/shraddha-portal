@@ -34,7 +34,7 @@ export const useTeams = (): {
 } => {
   const toast = useToast()
   const authStore = useAuthStore()
-
+  const lastLazyLoadEvent = ref<LazyLoadEvent | null>(null)
   const teams = ref<Team[]>([])
   const isLoading = ref<boolean>(false)
   const totalRecords = ref<number>(0)
@@ -58,6 +58,9 @@ export const useTeams = (): {
         detail: 'Team status updated successfully.',
         life: 3000,
       })
+      if (lastLazyLoadEvent.value) {
+        await onLazyLoad(lastLazyLoadEvent.value)
+      }
     } catch (error) {
       team.status = originalStatus
 
@@ -123,6 +126,7 @@ export const useTeams = (): {
 
   const onLazyLoad = async (event: LazyLoadEvent): Promise<void> => {
     isLoading.value = true
+    lastLazyLoadEvent.value = event
     try {
       const payload: {
         pagination: { pageNumber: number; pageSize: number }
@@ -214,13 +218,9 @@ export const useTeams = (): {
   }
 
   const fetchInitialData = async (): Promise<void> => {
-    await onLazyLoad({
-      first: 0,
-      rows: pageSize.value,
-      filters: undefined,
-      sortField: null,
-      sortOrder: null,
-    })
+    if (lastLazyLoadEvent.value) {
+      await onLazyLoad(lastLazyLoadEvent.value)
+    }
   }
 
   const createTeam = async (team: Omit<Team, 'id'>): Promise<boolean> => {
@@ -237,13 +237,10 @@ export const useTeams = (): {
         detail: 'Team created successfully.',
         life: 3000,
       })
-      await onLazyLoad({
-        first: (pageNumber.value - 1) * pageSize.value,
-        rows: pageSize.value,
-        filters: undefined,
-        sortField: null,
-        sortOrder: null,
-      })
+      if (lastLazyLoadEvent.value) {
+        await onLazyLoad(lastLazyLoadEvent.value)
+      }
+
       return true
     } catch (error) {
       if (axios.isAxiosError(error) && error.response && error.response.data?.errorValue) {
@@ -280,13 +277,9 @@ export const useTeams = (): {
         detail: 'Team updated successfully.',
         life: 3000,
       })
-      await onLazyLoad({
-        first: (pageNumber.value - 1) * pageSize.value,
-        rows: pageSize.value,
-        filters: undefined,
-        sortField: null,
-        sortOrder: null,
-      })
+      if (lastLazyLoadEvent.value) {
+        await onLazyLoad(lastLazyLoadEvent.value)
+      }
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
         const errorValue = error.response.data?.errorValue
@@ -330,13 +323,10 @@ export const useTeams = (): {
         detail: 'Team deleted successfully.',
         life: 3000,
       })
-      await onLazyLoad({
-        first: (pageNumber.value - 1) * pageSize.value,
-        rows: pageSize.value,
-        filters: undefined,
-        sortField: null,
-        sortOrder: null,
-      })
+      if (lastLazyLoadEvent.value) {
+        await onLazyLoad(lastLazyLoadEvent.value)
+      }
+
       return true
     } catch (error) {
       if (axios.isAxiosError(error) && error.response && error.response.data?.errorValue) {
