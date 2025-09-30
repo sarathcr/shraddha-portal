@@ -213,14 +213,6 @@ export const useUsers = (): {
           life: 3000,
         })
       }
-
-      await onLazyLoad({
-        first: 0,
-        rows: pageSize.value,
-        filters: undefined,
-        sortField: undefined,
-        sortOrder: undefined,
-      })
     } catch (error) {
       toast.add({
         severity: 'error',
