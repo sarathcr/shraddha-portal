@@ -54,6 +54,20 @@ export const useUsers = (): {
     { label: 'Inactive', value: 'false' },
   ]
 
+  const sortFieldMap: Record<string, string> = {
+    role: 'role',
+    team: 'team',
+    roleId: 'role',
+    teamId: 'team',
+  }
+
+  const filterFieldMap: Record<string, string> = {
+    role: 'roleId',
+    team: 'teamId',
+    roleId: 'roleId',
+    teamId: 'teamId',
+  }
+
   const onStatusToggle = async (user: User, newStatus: boolean): Promise<boolean> => {
     try {
       const response = await api.put<{ message: string }>(
@@ -87,7 +101,7 @@ export const useUsers = (): {
     try {
       const payload: {
         pagination: { pageNumber: number; pageSize: number }
-        multiSortedColumns: { active: string | undefined; direction: string }[]
+        multiSortedColumns: { active: string; direction: string }[]
         filterMap: Record<string, string>
       } = {
         pagination: {
@@ -97,12 +111,8 @@ export const useUsers = (): {
         multiSortedColumns: [],
         filterMap: {},
       }
-      const fieldKeyMap: Record<string, string> = {
-        roleId: 'roleId',
-        teamId: 'teamId',
-      }
       if (event.sortField) {
-        const backendKey = fieldKeyMap[event.sortField as string] || (event.sortField as string)
+        const backendKey = sortFieldMap[event.sortField as string] || (event.sortField as string)
         payload.multiSortedColumns.push({
           active: backendKey,
           direction: event.sortOrder === 1 ? 'asc' : 'desc',
@@ -110,7 +120,7 @@ export const useUsers = (): {
       }
       if (event.filters) {
         Object.entries(event.filters).forEach(([field, filterMeta]) => {
-          const backendField = fieldKeyMap[field] || field
+          const backendField = filterFieldMap[field] || field
           const filter = filterMeta as {
             operator: string
             constraints: { value: unknown; matchMode: string }[]
@@ -156,7 +166,6 @@ export const useUsers = (): {
         totalRecords.value = 0
         pageNumber.value = 1
         pageSize.value = 20
-
         toast.add({
           severity: 'error',
           summary: 'Error',
