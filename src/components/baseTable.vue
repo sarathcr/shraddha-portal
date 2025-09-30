@@ -77,10 +77,8 @@ watch(
   dynamicRowsPerPageOptions,
   (options) => {
     if (!options.includes(internalPageSize.value)) {
-      const newPageSize = options.at(-1)!
-      internalPageSize.value = newPageSize
+      internalPageSize.value = options.at(-1)!
     }
-    first.value = 0
   },
   { immediate: true },
 )
@@ -158,7 +156,8 @@ const onLazyLoad = (
     internalPageSize.value = initialPageSize.value
     first.value = 0
   } else {
-    first.value = event.first ?? 0
+    first.value = event.first ?? first.value
+    internalPageSize.value = event.rows ?? internalPageSize.value
     internalPageSize.value = event.rows ?? 10
   }
 
