@@ -167,6 +167,23 @@ const onLazyLoad = (
     rows: internalPageSize.value,
   })
 }
+const adjustFirstForTotalRecords = (): void => {
+  const total = props.totalRecords || 0
+  const pageSize = internalPageSize.value
+  const totalPages = Math.ceil(total / pageSize)
+  let currentPage = Math.floor(first.value / pageSize) + 1
+  if (currentPage > totalPages && totalPages > 0) {
+    currentPage = totalPages
+    first.value = (currentPage - 1) * pageSize
+  }
+  if (first.value < 0) first.value = 0
+}
+watch(
+  () => [props.rows, props.totalRecords],
+  () => {
+    adjustFirstForTotalRecords()
+  },
+)
 
 onMounted(() => {
   onLazyLoad({
