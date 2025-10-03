@@ -39,7 +39,7 @@ export const useTeams = (): {
   const isLoading = ref<boolean>(false)
   const totalRecords = ref<number>(0)
   const pageNumber = ref<number>(1)
-  const pageSize = ref<number>(20)
+  const pageSize = ref<number>(10)
   const editingRows = ref<Team[]>([])
 
   const onStatusToggle = async (team: Team, newStatus: boolean): Promise<void> => {
