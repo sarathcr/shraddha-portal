@@ -8,4 +8,5 @@ export const roleSchema = yup.object({
     .of(yup.string())
     .min(1, 'At least one permission must be selected')
     .required('Permissions are required'),
+  isActive: yup.boolean().required('Status is required'),
 })

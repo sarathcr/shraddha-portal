@@ -40,6 +40,7 @@ const emit = defineEmits<{
   (e: 'cancel'): void
   (e: 'lazy:load', event: DataTablePageEvent | DataTableSortEvent | DataTableFilterEvent): void
   (e: 'delete', row: RowData): void
+  (e: 'update:permissions', value: string[]): void
 }>()
 
 const tempRow = reactive<RowData>({})
@@ -153,6 +154,14 @@ onMounted(() => {
     filters: tableFilters.value,
   } as DataTablePageEvent)
 })
+const getOptionLabel = (
+  options: (string | { label: string; value: string })[] | undefined,
+  value: string | undefined,
+): string => {
+  if (!options || value === undefined) return value ?? ''
+  const opt = options.find((o) => (typeof o === 'object' ? o.value === value : o === value))
+  return opt && typeof opt === 'object' ? opt.label : value
+}
 </script>
 <template>
   <div class="space-y-4 h-full p-4 flex flex-col justify-between">
@@ -247,6 +256,7 @@ onMounted(() => {
               </div>
               <div v-else-if="col.useMultiSelect">
                 <MultiSelect
+                  :key="data.id"
                   v-model="tempRow[col.key]"
                   :options="col.options"
                   optionLabel="label"
@@ -285,14 +295,14 @@ onMounted(() => {
             <template v-else>
               <span v-if="col.useDateFilter">{{ formatDateForUI(data[col.key]) }}</span>
               <template v-else-if="col.useMultiSelect">
-                <Tag
-                  v-if="data[col.key]"
-                  :value="
-                    col.options?.find((opt: any) => opt.value === data[col.key])?.label ||
-                    data[col.key]
-                  "
-                  class="mr-1"
-                />
+                <div class="flex flex-wrap gap-1">
+                  <Tag
+                    v-for="item in data[col.key]"
+                    :key="item"
+                    :value="getOptionLabel(col.options || [], item)"
+                    class="mr-1"
+                  />
+                </div>
               </template>
               <ToggleSwitch
                 v-else-if="col.useToggle"
@@ -302,12 +312,7 @@ onMounted(() => {
                 "
               />
               <span v-else>
-                {{
-                  col.options
-                    ? col.options.find((opt: any) => String(opt.value) === String(data[col.key]))
-                        ?.label || data[col.key]
-                    : data[col.key]
-                }}
+                <span>{{ getOptionLabel(col.options, data[col.key]) }}</span>
               </span>
             </template>
           </template>
