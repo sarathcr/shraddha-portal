@@ -14,6 +14,7 @@ const {
   roles,
   editingRows,
   fetchInitialData,
+  statusOptions,
   isLoading,
   createRole,
   editRole,
@@ -191,6 +192,7 @@ onMounted(() => {
       :totalRecords="totalRecords"
       :rowsPerPage="pageSize"
       :editableRow="editingRows[0] as RowData"
+      :statusOptions="statusOptions"
       :loading="isLoading"
       @save="onSaveRole"
       @cancel="onCancelEdit"
