@@ -52,36 +52,28 @@ const sortOrder = ref<1 | -1 | undefined>(undefined)
 
 const first = ref(0)
 const internalPageSize = ref(props.rowsPerPage ?? 10)
-const initialPageSize = ref(props.rowsPerPage ?? 10)
-interface FilterMetaWithConstraints {
-  constraints: { value: unknown; matchMode: string }[]
-}
+
 const dynamicRowsPerPageOptions = computed((): number[] => {
   const total = props.totalRecords || 0
-  if (total === 0) {
-    return [5, 10, 20, 50]
+
+  const options = new Set<number>()
+
+  options.add(internalPageSize.value)
+
+  if (total > 0) {
+    const step = 5
+    for (let i = step; i <= total; i += step) {
+      options.add(i)
+    }
+
+    const finalMultipleOf5 = Math.ceil(total / 5) * 5
+    options.add(finalMultipleOf5)
+  } else {
+    ;[5, 10, 20].forEach((opt) => options.add(opt))
   }
 
-  const options: number[] = []
-  const step = 5
-  for (let i = step; i <= total; i += step) {
-    options.push(i)
-  }
-
-  const finalMultipleOf5 = Math.ceil(total / 5) * 5
-  options.push(finalMultipleOf5)
   return Array.from(options).sort((a, b) => a - b)
 })
-
-watch(
-  dynamicRowsPerPageOptions,
-  (options) => {
-    if (!options.includes(internalPageSize.value)) {
-      internalPageSize.value = options.at(-1)!
-    }
-  },
-  { immediate: true },
-)
 
 const initFilters = (): void => {
   const initialFilters: DataTableFilterMeta = {}
@@ -142,24 +134,17 @@ const hasTableHeader = computed(() => !!slots['table-header'])
 const onLazyLoad = (
   event: DataTablePageEvent | DataTableSortEvent | DataTableFilterEvent,
 ): void => {
-  const isFilterClear = !Object.values(event.filters || {}).some((filterMeta) => {
-    const constraints = (filterMeta as FilterMetaWithConstraints)?.constraints
-    return (
-      constraints &&
-      constraints.some((c: { value: unknown }) => c.value !== null && c.value !== undefined)
-    )
-  })
+  const isFilterEvent =
+    Object.prototype.hasOwnProperty.call(event, 'filters') &&
+    !Object.prototype.hasOwnProperty.call(event, 'page')
 
-  const isPageEvent = 'page' in event
-
-  if (isFilterClear && !isPageEvent) {
-    internalPageSize.value = initialPageSize.value
+  if (isFilterEvent) {
     first.value = 0
   } else {
-    first.value = event.first ?? first.value
-    internalPageSize.value = event.rows ?? internalPageSize.value
-    internalPageSize.value = event.rows ?? 10
+    first.value = event.first ?? 0
   }
+
+  internalPageSize.value = event.rows ?? internalPageSize.value
 
   emit('lazy:load', {
     ...event,
