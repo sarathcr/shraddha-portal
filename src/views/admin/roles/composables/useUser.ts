@@ -46,7 +46,7 @@ export const useUsers = (): {
   const isLoading = ref<boolean>(false)
   const totalRecords = ref<number>(0)
   const pageNumber = ref<number>(1)
-  const pageSize = ref<number>(20)
+  const pageSize = ref<number>(10)
   const editingRows = ref<User[]>([])
 
   const statusOptions = [
@@ -160,12 +160,12 @@ export const useUsers = (): {
         }))
         totalRecords.value = response.data.totalRecords ?? 0
         pageNumber.value = response.data.pageNumber ?? 1
-        pageSize.value = response.data.pageSize ?? 20
+        pageSize.value = response.data.pageSize ?? 0
       } else {
         users.value = []
         totalRecords.value = 0
         pageNumber.value = 1
-        pageSize.value = 20
+        pageSize.value = 10
         toast.add({
           severity: 'error',
           summary: 'Error',
@@ -190,10 +190,10 @@ export const useUsers = (): {
     try {
       const [rolesResponse, teamsResponse] = await Promise.all([
         api.post<ApiResponse<Role[]>>('/authorization/Roles/pagination', {
-          pagination: { pageNumber: 1, pageSize: 1000 },
+          pagination: { pageNumber: 1, pageSize: -1 },
         }),
         api.post<ApiResponse<Team[]>>('/authorization/Departments/pagination', {
-          pagination: { pageNumber: 1, pageSize: 1000 },
+          pagination: { pageNumber: 1, pageSize: -1 },
         }),
       ])
 
