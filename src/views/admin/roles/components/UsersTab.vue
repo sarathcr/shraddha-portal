@@ -58,24 +58,35 @@ const onEdit = (row: User): void => {
   originalUser.value = JSON.parse(JSON.stringify(row))
   editableUser.value = {
     ...row,
-    teamId: row.teamId != null ? String(row.teamId) : null,
-    roleId: row.roleId != null ? String(row.roleId) : null,
+    team: row.team,
+    role: row.role,
+    teamId: row.teamId ?? null,
+    roleId: row.roleId ?? null,
   }
+
   editingRows.value = [row]
 }
 
 const onSave = async (newData: RowData): Promise<void> => {
-  if (editableUser.value) {
-    newData.isActive = editableUser.value.isActive
+  if (!editableUser.value) return
+  const userToSave = {
+    ...editableUser.value,
+    ...newData,
+  } as User
+
+  const success = await editUser(userToSave)
+
+  if (success) {
+    await fetchInitialData()
+    editingRows.value = []
+    editableUser.value = null
+    originalUser.value = null
+    resetValidation()
+  } else {
+    if (originalUser.value) {
+      editableUser.value = { ...originalUser.value } as User
+    }
   }
-  const userToSave = newData as User
-  await editUser(userToSave)
-  const index = users.value.findIndex((u) => u.id === userToSave.id)
-  if (index !== -1) users.value[index] = { ...userToSave }
-  editingRows.value = []
-  editableUser.value = null
-  originalUser.value = null
-  resetValidation()
 }
 
 const onCancel = (): void => {
@@ -102,10 +113,28 @@ const onPerformDelete = async (): Promise<void> => {
   }
 }
 
+const handleStatusClick = async (
+  user: User | null,
+  newValue: boolean,
+  event: Event,
+): Promise<void> => {
+  if (!user) return
+  event.preventDefault()
+
+  try {
+    const success = await onStatusToggle(user, newValue)
+    if (success) {
+      user.isActive = newValue
+    }
+  } catch (error) {
+    console.error('Status toggle failed:', error)
+  }
+}
+
 const columns = computed((): ColumnDef[] => [
   { label: 'Name', key: 'name', filterable: true, required: true },
   { label: 'Employee ID', key: 'employeeId', filterable: true, required: true },
-  { label: 'Date of Birth', key: 'dob', filterable: false, required: true, useDateFilter: true },
+  { label: 'Date of Birth', key: 'dob', filterable: true, required: true, useDateFilter: true },
   { label: 'Email', key: 'email', filterable: true, required: true },
   {
     label: 'Team',
@@ -190,18 +219,14 @@ onMounted(() => {
         <div v-if="editingRows.includes(row)" class="flex items-center gap-2">
           <ToggleSwitch
             :modelValue="editableUser?.isActive"
-            @update:modelValue="
-              (newValue: boolean) => {
-                if (editableUser) editableUser.isActive = newValue
-              }
-            "
+            @click.stop="(e: Event) => handleStatusClick(editableUser, !editableUser?.isActive, e)"
           />
         </div>
 
         <ToggleSwitch
           v-else
           :modelValue="row.isActive"
-          @update:modelValue="(newValue: boolean) => onStatusToggle(row, newValue)"
+          @click.stop="(e: Event) => handleStatusClick(row, !row.isActive, e)"
         />
       </template>
 

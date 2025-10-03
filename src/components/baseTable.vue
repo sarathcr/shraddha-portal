@@ -52,34 +52,29 @@ const sortField = ref<string | undefined>(undefined)
 const sortOrder = ref<1 | -1 | undefined>(undefined)
 
 const first = ref(0)
-const internalPageSize = ref(props.rowsPerPage || 5)
+const internalPageSize = ref(props.rowsPerPage ?? 10)
+
 const dynamicRowsPerPageOptions = computed((): number[] => {
   const total = props.totalRecords || 0
-  if (total === 0) {
-    return [5, 10, 20, 50]
-  }
 
-  const options: number[] = []
-  const step = 5
-  for (let i = step; i <= total; i += step) {
-    options.push(i)
-  }
+  const options = new Set<number>()
 
-  if (total % step !== 0 && !options.includes(total)) {
-    options.push(total)
-  }
+  options.add(internalPageSize.value)
 
-  return options
-})
-watch(
-  dynamicRowsPerPageOptions,
-  (options) => {
-    if (!options.includes(internalPageSize.value)) {
-      internalPageSize.value = options.at(-1)!
+  if (total > 0) {
+    const step = 5
+    for (let i = step; i <= total; i += step) {
+      options.add(i)
     }
-  },
-  { immediate: true },
-)
+
+    const finalMultipleOf5 = Math.ceil(total / 5) * 5
+    options.add(finalMultipleOf5)
+  } else {
+    ;[5, 10, 20].forEach((opt) => options.add(opt))
+  }
+
+  return Array.from(options).sort((a, b) => a - b)
+})
 
 const initFilters = (): void => {
   const initialFilters: DataTableFilterMeta = {}
@@ -140,10 +135,42 @@ const hasTableHeader = computed(() => !!slots['table-header'])
 const onLazyLoad = (
   event: DataTablePageEvent | DataTableSortEvent | DataTableFilterEvent,
 ): void => {
-  first.value = event.first
-  internalPageSize.value = event.rows
-  emit('lazy:load', event)
+  const isFilterEvent =
+    Object.prototype.hasOwnProperty.call(event, 'filters') &&
+    !Object.prototype.hasOwnProperty.call(event, 'page')
+
+  if (isFilterEvent) {
+    first.value = 0
+  } else {
+    first.value = event.first ?? 0
+  }
+
+  internalPageSize.value = event.rows ?? internalPageSize.value
+
+  emit('lazy:load', {
+    ...event,
+    first: first.value,
+    rows: internalPageSize.value,
+  })
 }
+const adjustFirstForTotalRecords = (): void => {
+  const total = props.totalRecords || 0
+  const pageSize = internalPageSize.value
+  const totalPages = Math.ceil(total / pageSize)
+  let currentPage = Math.floor(first.value / pageSize) + 1
+  if (currentPage > totalPages && totalPages > 0) {
+    currentPage = totalPages
+    first.value = (currentPage - 1) * pageSize
+  }
+  if (first.value < 0) first.value = 0
+}
+watch(
+  () => [props.rows, props.totalRecords],
+  () => {
+    adjustFirstForTotalRecords()
+  },
+)
+
 onMounted(() => {
   onLazyLoad({
     first: first.value,
@@ -195,7 +222,7 @@ const getOptionLabel = (
         :rowsPerPageOptions="dynamicRowsPerPageOptions"
       >
         <template #header v-if="hasTableHeader">
-          <div class="flex justify-between items-center sticky top-0 z-0">
+          <div class="flex justify-between items-center sticky top-0 z-20">
             <slot name="table-header" />
           </div>
         </template>
@@ -307,9 +334,7 @@ const getOptionLabel = (
               <ToggleSwitch
                 v-else-if="col.useToggle"
                 :modelValue="Boolean(data[col.key])"
-                @update:modelValue="
-                  (newValue: boolean) => $emit('save', { ...data, [col.key]: newValue })
-                "
+                @update:modelValue="(newValue) => $emit('save', { ...data, [col.key]: newValue })"
               />
               <span v-else>
                 <span>{{ getOptionLabel(col.options, data[col.key]) }}</span>
@@ -331,9 +356,9 @@ const getOptionLabel = (
               <DatePicker
                 v-else-if="col.useDateFilter"
                 v-model="filterModel.value"
-                dateFormat="dd/mm/yy"
+                dateFormat="mm/dd/yy"
+                placeholder="mm/dd/yyyy"
                 showIcon
-                placeholder="Select Date"
                 class="w-full"
               />
               <MultiSelect
