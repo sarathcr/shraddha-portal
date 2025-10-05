@@ -34,4 +34,24 @@ export const committeeSchema = yup.object({
         return value >= minDate
       },
     ),
+
+  coreMembers: yup
+    .array()
+    .of(
+      yup.object({
+        userId: yup.string().required(),
+        roleId: yup.string().required(),
+      }),
+    )
+    .min(1, 'At least one Core Member is required'),
+
+  executiveMembers: yup
+    .array()
+    .of(
+      yup.object({
+        userId: yup.string().required(),
+        roleId: yup.string().required(),
+      }),
+    )
+    .min(1, 'At least one Executive Member is required'),
 })
