@@ -3,6 +3,9 @@ import * as yup from 'yup'
 const today = new Date()
 today.setHours(0, 0, 0, 0)
 
+// List of all required core roles
+const requiredCoreRoles = ['President', 'Secretary', 'Treasurer', 'Assistant Treasurer']
+
 export const committeeSchema = yup.object({
   year: yup
     .string()
@@ -11,7 +14,6 @@ export const committeeSchema = yup.object({
     .test('is-consecutive', 'Years must be consecutive (e.g. 2021-2022)', (value) => {
       if (!value) return false
       const [start, end] = value.split('-').map(Number)
-      if (isNaN(start) || isNaN(end)) return false
       return end === start + 1
     }),
 
@@ -43,7 +45,16 @@ export const committeeSchema = yup.object({
         roleId: yup.string().required(),
       }),
     )
-    .min(1, 'At least one Core Member is required'),
+    .test(
+      'all-core-roles-selected',
+      '*Please select all core members: President, Secretary, Treasurer, Assistant Treasurer',
+      function (members) {
+        if (!members) return false
+        const roleIdToName: Record<string, string> = this.options.context?.roleIdToName || {}
+        const selectedRoles = members.map((m) => roleIdToName[m.roleId]).filter(Boolean)
+        return requiredCoreRoles.every((role) => selectedRoles.includes(role))
+      },
+    ),
 
   executiveMembers: yup
     .array()

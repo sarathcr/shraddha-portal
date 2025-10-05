@@ -261,7 +261,6 @@ const onCancel = (): void => {
             optionValue="userId"
             placeholder="Select User"
             class="w-full"
-            :class="{ 'p-invalid': errors.coreMembers }"
           />
         </div>
       </div>
