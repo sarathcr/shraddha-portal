@@ -8,6 +8,7 @@ import type { ApiResponse } from '@/types/index'
 import type { DataTableFilterMeta, DataTableSortMeta } from 'primevue'
 import {
   createCommittee,
+  deleteCommittee,
   editCommittee,
   fetchRoles,
   fetchUsers,
@@ -71,6 +72,7 @@ export function useCommittee(): {
     newData: Committee,
     oldData: Committee,
   ) => Promise<{ success: boolean; committee: Committee } | null>
+  handleDelete: (id: string) => Promise<{ success: boolean; message: string }>
   isLoading: Ref<boolean>
   filters: Ref<{ global: { value: string | null; matchMode: string } }>
   clearFilter: () => void
@@ -95,16 +97,16 @@ export function useCommittee(): {
 
   const columns = [
     { label: 'Committee Year', key: 'year', filterable: true },
-    { label: 'Start Date', key: 'startDate', filterable: true },
-    { label: 'End Date', key: 'endDate', filterable: true },
+    { label: 'Start Date', key: 'startDate', filterable: true, useDateFilter: true },
+    { label: 'End Date', key: 'endDate', filterable: true, useDateFilter: true },
     { label: 'Core Members', key: 'coreMembers', filterable: true },
     { label: 'Executive Members', key: 'executiveMembers', filterable: true },
     { label: 'Status', key: 'isActive', filterable: true, useToggle: true },
   ]
 
   const statusOptions = [
-    { label: 'Active', value: 'Active' },
-    { label: 'Inactive', value: 'Inactive' },
+    { label: 'Active', value: 'true' },
+    { label: 'Inactive', value: 'false' },
   ]
 
   const onStatusToggle = async (committee: Committee, newStatus: boolean): Promise<void> => {
@@ -367,6 +369,38 @@ export function useCommittee(): {
     }
   }
 
+  const handleDelete = async (id: string): Promise<{ success: boolean; message: string }> => {
+    try {
+      if (!id) throw new Error('Committee ID missing for delete')
+
+      const response = await deleteCommittee(id)
+      if (response.success) {
+        await fetchInitialData()
+        toast.add({
+          severity: 'success',
+          summary: 'Deleted',
+          detail: response.message || 'Committee deleted successfully.',
+          life: 3000,
+        })
+        return { success: true, message: response.message }
+      } else {
+        toast.add({
+          severity: 'error',
+          summary: 'Delete Failed',
+          detail: response.message || 'Failed to delete committee.',
+          life: 3000,
+        })
+        return { success: false, message: response.message || 'Delete failed' }
+      }
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Unknown error occurred during delete'
+      toast.add({ severity: 'error', summary: 'Error', detail: message, life: 3000 })
+
+      return { success: false, message }
+    }
+  }
+
   return {
     committee,
     columns,
@@ -377,6 +411,7 @@ export function useCommittee(): {
     statusOptions,
     addCommittee,
     handleEdit,
+    handleDelete,
     onStatusToggle,
     isLoading,
     filters,

@@ -7,7 +7,7 @@ import ConfirmPopup from 'primevue/confirmpopup'
 import Dialog from 'primevue/dialog'
 import Toast from 'primevue/toast'
 import ToggleSwitch from 'primevue/toggleswitch'
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import CommitteeForm from './components/CommitteeForm.vue'
 import { useCommittee } from './composable/useCommitte'
 import { useRouter } from 'vue-router'
@@ -24,12 +24,15 @@ const {
   pageSize,
   onLazyLoad,
   onStatusToggle,
+  handleDelete,
 } = useCommittee()
 
 const { isSaveDisabled } = useValidation()
 const router = useRouter()
 
 const userFormDialogVisible = ref(false)
+const committeeToDelete = ref<Committee | null>(null)
+const deleteDialogVisible = ref(false)
 const formMode = ref<'create' | 'edit'>('create')
 const coreMemberOptions = ref<{ label: string; value: string }[]>([])
 const executiveMemberOptions = ref<{ label: string; value: string }[]>([])
@@ -59,10 +62,17 @@ const handleCommitteeFormCancel = (): void => {
 const handleViewCommittee = async (row: { id: string }): Promise<void> => {
   await router.push(`/admin/committe/${row.id}`)
 }
-
-onMounted(() => {
-  void fetchInitialData()
-})
+const handleDeleteConfirmation = (row: Committee): void => {
+  committeeToDelete.value = row
+  deleteDialogVisible.value = true
+}
+const onPerformDelete = async (): Promise<void> => {
+  if (committeeToDelete.value) {
+    await handleDelete(committeeToDelete.value.id)
+    deleteDialogVisible.value = false
+    committeeToDelete.value = null
+  }
+}
 </script>
 
 <template>
@@ -85,6 +95,21 @@ onMounted(() => {
           @submit="handleCommitteeFormSubmit"
           :committee="selectedCommittee"
         />
+      </Dialog>
+      <Dialog
+        v-model:visible="deleteDialogVisible"
+        header="Confirm Deletion"
+        :style="{ width: '30rem' }"
+        modal
+      >
+        <div class="flex items-center gap-4">
+          <i class="pi pi-exclamation-triangle text-red-600 text-3xl" />
+          <span>Are you sure you want to delete this user?</span>
+        </div>
+        <template #footer>
+          <Button label="Cancel" severity="secondary" @click="deleteDialogVisible = false" />
+          <Button label="Delete" severity="danger" @click="onPerformDelete" />
+        </template>
       </Dialog>
       <BaseTable
         :columns="columns"
@@ -120,7 +145,10 @@ onMounted(() => {
             <i class="pi pi-pencil text-slate-700 text-base"></i>
           </button>
 
-          <button class="p-2 rounded hover:bg-gray-200 transition cursor-pointer">
+          <button
+            @click="handleDeleteConfirmation(row as Committee)"
+            class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
+          >
             <i class="pi pi-trash text-red-600 text-base"></i>
           </button>
 

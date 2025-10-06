@@ -5,7 +5,7 @@ export const userSchema = yup.object({
     .string()
     .trim()
     .min(2, 'Name must be at least 2 characters')
-    .matches(/^[a-zA-Z0-9 ]+$/, 'Username can only contain letters, numbers, and spaces')
+    .matches(/^[a-zA-Z0-9 ]+$/, 'Username can only contain letters, numbers and spaces')
     .required('User name is required'),
   employeeId: yup.string().required('Employee ID is required'),
   dob: yup

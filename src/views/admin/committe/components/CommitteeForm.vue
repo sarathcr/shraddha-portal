@@ -19,6 +19,7 @@ import {
 } from '../composable/useCommitte'
 import { committeeSchema } from '../../schemas/committeeSchema'
 import { formatDateForAPI } from '@/utils/dateUtils'
+import { CommitteeRoles } from '@/constants/committeeRoles.enum'
 
 const emit = defineEmits<{
   (e: 'submit', payload: Committee): void
@@ -68,10 +69,8 @@ onMounted(async () => {
   coreRoles.value = committeeRoles.value
     .filter((r) => allowedRoles.includes(r.label) && r.label !== 'Executive Committee Member')
     .map((r) => ({ id: r.value, name: r.label }))
-
-  const exec = committeeRoles.value.find((r) => r.value === '6')
+  const exec = committeeRoles.value.find((r) => r.label === CommitteeRoles.ExecutiveMember)
   executiveRole.value = exec ? { id: exec.value, name: exec.label } : null
-
   coreRoles.value.forEach((role) => {
     const roleUsers = committeeUsers.value
       .filter((u) => u.roleId === role.id && u.value && u.label)
@@ -81,11 +80,11 @@ onMounted(async () => {
         roleId: u.roleId,
       }))
     usersByRole.value[role.id] = roleUsers
+
     if (roleUsers.length === 1) {
       selectedCoreMembers.value[role.id] = roleUsers[0].userId
     }
   })
-
   if (executiveRole.value) {
     const execUsers = committeeUsers.value
       .filter((u) => String(u.roleId) === String(executiveRole.value!.id))
@@ -95,6 +94,7 @@ onMounted(async () => {
         roleId: u.roleId,
       }))
     usersByRole.value[executiveRole.value.id] = execUsers
+
     if (execUsers.length === 1) {
       selectedExecutiveMember.value = [execUsers[0].userId]
     }

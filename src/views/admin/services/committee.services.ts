@@ -67,12 +67,21 @@ export const editCommittee = async (
 // Delete committee
 export const deleteCommittee = async (
   id: string,
-): Promise<{ succeeded: boolean; message: string }> => {
+): Promise<{ success: boolean; message: string }> => {
   try {
-    const response = await committeeApi.delete<{ succeeded: boolean; message: string }>(
-      `/committee/${id}`,
-    )
-    return response.data
+    const response = await committeeApi.delete(`/committee/${id}`)
+    const data = response.data
+    if (typeof data === 'boolean') {
+      return {
+        success: data,
+        message: data ? 'Committee deleted successfully.' : 'Delete failed',
+      }
+    }
+
+    return {
+      success: data?.succeeded ?? data?.success ?? true,
+      message: data?.message ?? 'Committee deleted successfully.',
+    }
   } catch (err: unknown) {
     console.error('Failed to delete committee:', err)
     throw err
