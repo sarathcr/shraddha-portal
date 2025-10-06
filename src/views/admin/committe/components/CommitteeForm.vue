@@ -264,7 +264,6 @@ const onCancel = (): void => {
           />
         </div>
       </div>
-      <small v-if="errors.coreMembers" class="text-red-500">{{ errors.coreMembers }}</small>
     </div>
 
     <div>

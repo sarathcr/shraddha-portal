@@ -2,10 +2,6 @@ import * as yup from 'yup'
 
 const today = new Date()
 today.setHours(0, 0, 0, 0)
-
-// List of all required core roles
-const requiredCoreRoles = ['President', 'Secretary', 'Treasurer', 'Assistant Treasurer']
-
 export const committeeSchema = yup.object({
   year: yup
     .string()
@@ -37,24 +33,12 @@ export const committeeSchema = yup.object({
       },
     ),
 
-  coreMembers: yup
-    .array()
-    .of(
-      yup.object({
-        userId: yup.string().required(),
-        roleId: yup.string().required(),
-      }),
-    )
-    .test(
-      'all-core-roles-selected',
-      '*Please select all core members: President, Secretary, Treasurer, Assistant Treasurer',
-      function (members) {
-        if (!members) return false
-        const roleIdToName: Record<string, string> = this.options.context?.roleIdToName || {}
-        const selectedRoles = members.map((m) => roleIdToName[m.roleId]).filter(Boolean)
-        return requiredCoreRoles.every((role) => selectedRoles.includes(role))
-      },
-    ),
+  coreMembers: yup.array().of(
+    yup.object({
+      userId: yup.string().required(),
+      roleId: yup.string().required(),
+    }),
+  ),
 
   executiveMembers: yup
     .array()

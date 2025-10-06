@@ -5,8 +5,6 @@ import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 
 export const setupInterceptors = (instance: AxiosInstance): void => {
-  const router = useRouter()
-
   // Request interceptor → attach token
   instance.interceptors.request.use(
     (config) => {
@@ -24,8 +22,8 @@ export const setupInterceptors = (instance: AxiosInstance): void => {
     (response) => response,
     async (error) => {
       const authStore = useAuthStore()
+      const router = useRouter()
       const originalRequest = error.config
-
       if (error.response?.status === 401 && authStore.refreshToken && !originalRequest._retry) {
         originalRequest._retry = true
         try {
@@ -41,11 +39,14 @@ export const setupInterceptors = (instance: AxiosInstance): void => {
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`
 
           return instance(originalRequest)
-        } catch (refreshError) {
-          console.error('Refresh token failed:', refreshError)
+        } catch {
+          console.error('Refresh token failed')
           authStore.clearTokens()
           void router.push('/login')
         }
+      } else if (error.response?.status === 401) {
+        authStore.clearTokens()
+        void router.push('/login')
       }
 
       return Promise.reject(error)

@@ -141,7 +141,6 @@ onMounted(() => {
       :style="{ width: '50rem' }"
       modal
       @hide="handleUserFormCancel"
-      class="mx-4"
     >
       <UserForm
         ref="userFormRef"
