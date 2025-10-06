@@ -5,6 +5,7 @@ export interface Role extends RowData {
   roleName: string
   description: string
   permissions: string[]
+  isActive: boolean
 }
 export interface PermissionOptions {
   label: string

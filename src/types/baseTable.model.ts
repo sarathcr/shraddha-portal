@@ -8,7 +8,7 @@ export interface ColumnDef {
   useMultiSelect?: boolean
   useDateFilter?: boolean
   filterOption?: boolean
-  options?: { label: string; value: string }[]
+  options?: Array<{ label: string; value: string }> | Array<string>
   placeholder?: string
   required?: boolean
   backendKey?: string

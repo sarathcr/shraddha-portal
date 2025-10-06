@@ -5,6 +5,7 @@ import Textarea from 'primevue/textarea'
 import Checkbox from 'primevue/checkbox'
 import Button from 'primevue/button'
 import FloatLabel from 'primevue/floatlabel'
+import ToggleSwitch from 'primevue/toggleswitch' // Import ToggleSwitch
 import { useForm, useField } from 'vee-validate'
 import { roleSchema } from '@/views/admin/schemas/roleSchema'
 import type { Role } from '@/types/role'
@@ -24,12 +25,14 @@ const { handleSubmit, errors, resetForm, setValues } = useForm<Role>({
     roleName: '',
     description: '',
     permissions: [],
+    isActive: false,
   },
 })
 
 const { value: roleName } = useField<string>('roleName')
 const { value: description } = useField<string>('description')
 const { value: permissions } = useField<string[]>('permissions')
+const { value: isActive } = useField<boolean>('isActive')
 
 defineExpose({
   resetForm,
@@ -89,7 +92,7 @@ watch(
       <p class="font-medium mb-2">Permissions</p>
       <div class="flex flex-wrap gap-4">
         <div
-          v-for="perm in ['read', 'write', 'update', 'delete']"
+          v-for="perm in ['read', 'create', 'update', 'delete']"
           :key="perm"
           class="flex items-center gap-2"
         >
@@ -98,6 +101,16 @@ watch(
         </div>
       </div>
       <small class="absolute left-3 pt-0.5 text-red-500">{{ errors.permissions }}</small>
+    </div>
+
+    <div class="relative mb-2.5">
+      <div>
+        <label for="isActive">Status</label>
+      </div>
+      <ToggleSwitch v-model="isActive" :class="{ 'p-invalid': errors.isActive }" />
+      <small v-if="errors.isActive" class="left-3 pt-0.5 text-red-500">
+        {{ errors.isActive }}
+      </small>
     </div>
 
     <div class="flex justify-end gap-2 mt-2">
