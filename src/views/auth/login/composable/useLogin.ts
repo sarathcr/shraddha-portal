@@ -4,7 +4,7 @@ import { UserLogin } from '../../services/login.service'
 import { useToast } from 'primevue/usetoast'
 import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
-import { setLoading, isLoading } from '@/stores/loader' // <- import isLoading
+import { setLoading, isLoading } from '@/stores/loader'
 
 interface UseLoginReturn {
   handleLogin: (credentials: LoginCredentials) => Promise<void>

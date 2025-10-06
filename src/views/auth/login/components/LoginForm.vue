@@ -48,33 +48,35 @@ export default defineComponent({
         Today is a new day. It's your day. You shape it.
       </p>
       <form @submit.prevent="onSubmit">
-        <div class="form-group mb-6">
-          <FloatLabel variant="on">
-            <InputText
-              class="w-full"
-              id="email"
-              inputmode="email"
-              v-model="email"
-              :class="{ 'p-invalid': errors.email }"
-            />
-            <label for="email">Username</label>
-          </FloatLabel>
-          <small v-if="errors.email" class="text-red-500">{{ errors.email }}</small>
-        </div>
+        <div class="flex flex-col gap-2">
+          <div class="form-group">
+            <FloatLabel variant="on">
+              <InputText
+                class="w-full"
+                id="email"
+                inputmode="email"
+                v-model="email"
+                :class="{ 'p-invalid': errors.email }"
+              />
+              <label for="email">Username</label>
+            </FloatLabel>
+            <small v-if="errors.email" class="text-red-500">{{ errors.email }}</small>
+          </div>
 
-        <div class="form-group mb-6">
-          <FloatLabel variant="on">
-            <Password
-              class="w-full"
-              input-class="w-full"
-              id="password"
-              v-model="password"
-              toggleMask
-              :class="{ 'p-invalid': errors.password }"
-            />
-            <label for="password">Password</label>
-          </FloatLabel>
-          <small v-if="errors.password" class="text-red-500">{{ errors.password }}</small>
+          <div class="form-group">
+            <FloatLabel variant="on">
+              <Password
+                class="w-full"
+                input-class="w-full"
+                id="password"
+                v-model="password"
+                toggleMask
+                :class="{ 'p-invalid': errors.password }"
+              />
+              <label for="password">Password</label>
+            </FloatLabel>
+            <small v-if="errors.password" class="text-red-500">{{ errors.password }}</small>
+          </div>
         </div>
 
         <a

@@ -22,7 +22,10 @@ export const userSchema = yup.object({
       }
       return age >= 18
     }),
-  email: yup.string().email('Invalid email').required('Email is required'),
+  email: yup
+    .string()
+    .required('Email is required')
+    .matches(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Invalid email format. Must include "@" and "."'),
   team: yup.number().required('Team is required'),
   role: yup.string().required('Role is required'),
 })

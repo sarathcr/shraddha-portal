@@ -3,8 +3,8 @@ import type { RowData } from './baseTable.model'
 export interface Committee extends RowData {
   id: string
   year: string
-  startDate?: string
-  endDate?: string
+  startDate?: string | null
+  endDate?: string | null
   coreMembers: CommitteeUser[]
   executiveMembers: CommitteeUser[]
   isActive: boolean

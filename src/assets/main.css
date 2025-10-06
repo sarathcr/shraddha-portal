@@ -24,3 +24,7 @@
   outline: none !important;
   outline-color: transparent !important;
 }
+
+.p-dialog.p-component {
+  margin: 0px 15px !important;
+}

@@ -2,7 +2,6 @@ import * as yup from 'yup'
 
 const today = new Date()
 today.setHours(0, 0, 0, 0)
-
 export const committeeSchema = yup.object({
   year: yup
     .string()
@@ -11,7 +10,6 @@ export const committeeSchema = yup.object({
     .test('is-consecutive', 'Years must be consecutive (e.g. 2021-2022)', (value) => {
       if (!value) return false
       const [start, end] = value.split('-').map(Number)
-      if (isNaN(start) || isNaN(end)) return false
       return end === start + 1
     }),
 
@@ -34,4 +32,21 @@ export const committeeSchema = yup.object({
         return value >= minDate
       },
     ),
+
+  coreMembers: yup.array().of(
+    yup.object({
+      userId: yup.string().required(),
+      roleId: yup.string().required(),
+    }),
+  ),
+
+  executiveMembers: yup
+    .array()
+    .of(
+      yup.object({
+        userId: yup.string().required(),
+        roleId: yup.string().required(),
+      }),
+    )
+    .min(1, 'At least one Executive Member is required'),
 })
