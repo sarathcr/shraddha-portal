@@ -54,20 +54,6 @@ export const useUsers = (): {
     { label: 'Inactive', value: 'false' },
   ]
 
-  const sortFieldMap: Record<string, string> = {
-    role: 'role',
-    team: 'team',
-    roleId: 'role',
-    teamId: 'team',
-  }
-
-  const filterFieldMap: Record<string, string> = {
-    role: 'roleId',
-    team: 'teamId',
-    roleId: 'roleId',
-    teamId: 'teamId',
-  }
-
   const onStatusToggle = async (user: User, newStatus: boolean): Promise<boolean> => {
     try {
       const response = await api.put<{ message: string }>(
@@ -112,31 +98,36 @@ export const useUsers = (): {
         filterMap: {},
       }
       if (event.sortField) {
-        const backendKey = sortFieldMap[event.sortField as string] || (event.sortField as string)
         payload.multiSortedColumns.push({
-          active: backendKey,
+          active: event.sortField as string,
           direction: event.sortOrder === 1 ? 'asc' : 'desc',
         })
       }
+
       if (event.filters) {
         Object.entries(event.filters).forEach(([field, filterMeta]) => {
-          const backendField = filterFieldMap[field] || field
           const filter = filterMeta as {
             operator: string
             constraints: { value: unknown; matchMode: string }[]
           }
+
           if (filter.constraints && filter.constraints.length > 0) {
             const validConstraints = filter.constraints.filter((c) => c.value != null)
             if (validConstraints.length > 0) {
-              const filterString = validConstraints
-                .map((constraint, index) => {
-                  const operator =
-                    index === 0 ? '' : filter.operator.toUpperCase() === 'OR' ? 'OR' : 'AND'
-                  const condition = mapMatchModeToOperator(constraint.matchMode, constraint.value)
-                  return `${operator} ${condition}`.trim()
-                })
-                .join(' ')
-              payload.filterMap[backendField] = filterString
+              if (field === 'role' || field === 'team') {
+                const value = validConstraints[0].value
+                payload.filterMap[field] = `=${value}`
+              } else {
+                const filterString = validConstraints
+                  .map((constraint, index) => {
+                    const operator =
+                      index === 0 ? '' : filter.operator.toUpperCase() === 'OR' ? 'OR' : 'AND'
+                    const condition = mapMatchModeToOperator(constraint.matchMode, constraint.value)
+                    return `${operator} ${condition}`.trim()
+                  })
+                  .join(' ')
+                payload.filterMap[field] = filterString
+              }
             }
           }
         })
@@ -284,10 +275,11 @@ export const useUsers = (): {
         ...newData,
         dob: newData.dob ? formatDateForAPI(new Date(newData.dob)) : null,
         id: newData.id,
-        teamId: newData.teamId ?? newData.TeamID,
-        roleId: newData.roleId ?? newData.RoleID,
+        team: newData.team,
+        role: newData.role,
+        teamId: newData.teamId,
+        roleId: newData.roleId,
       }
-
       await api.put<ApiResponse<User>>(`/authorization/users/${newData.id}`, formattedNewData)
 
       toast.add({

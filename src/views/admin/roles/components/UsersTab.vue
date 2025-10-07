@@ -62,8 +62,8 @@ const onEdit = (row: User): void => {
     role: row.role,
     teamId: row.teamId ?? null,
     roleId: row.roleId ?? null,
+    isActive: row.isActive ?? null,
   }
-
   editingRows.value = [row]
 }
 
@@ -73,7 +73,6 @@ const onSave = async (newData: RowData): Promise<void> => {
     ...editableUser.value,
     ...newData,
   } as User
-
   const success = await editUser(userToSave)
 
   if (success) {
@@ -138,21 +137,23 @@ const columns = computed((): ColumnDef[] => [
   { label: 'Email', key: 'email', filterable: true, required: true },
   {
     label: 'Team',
-    key: 'teamId',
+    key: 'team',
     filterable: true,
-    useTag: true,
     filterOption: true,
-    options: teams.value.map((t) => ({ label: t.label, value: String(t.value) })),
+    options: teams.value.map((t) => ({ label: t.label, value: t.label })),
     required: true,
+    showFilterMatchModes: false,
+    showFilterOperator: false,
   },
   {
     label: 'Role',
-    key: 'roleId',
+    key: 'role',
     filterable: true,
-    useTag: true,
     filterOption: true,
-    options: roles.value.map((r) => ({ label: r.label, value: String(r.value) })),
+    options: roles.value.map((r) => ({ label: r.label, value: r.label })),
     required: true,
+    showFilterMatchModes: false,
+    showFilterOperator: false,
   },
   { label: 'Status', key: 'isActive', filterable: true, useToggle: true },
 ])
@@ -215,17 +216,17 @@ onMounted(() => {
         <Button label="New User" icon="pi pi-plus" severity="help" @click="openCreateUserDialog" />
       </template>
       <template #body-isActive="{ row }">
-        <div v-if="editingRows.includes(row)" class="flex items-center gap-2">
-          <ToggleSwitch
-            :modelValue="editableUser?.isActive"
-            @click.stop="(e: Event) => handleStatusClick(editableUser, !editableUser?.isActive, e)"
-          />
-        </div>
-
         <ToggleSwitch
-          v-else
-          :modelValue="row.isActive"
-          @click.stop="(e: Event) => handleStatusClick(row, !row.isActive, e)"
+          :modelValue="editingRows.includes(row) ? editableUser?.isActive : row.isActive"
+          @click.stop="
+            (e: Event) => {
+              if (editingRows.includes(row)) {
+                if (editableUser) editableUser.isActive = !editableUser.isActive
+              } else {
+                handleStatusClick(row, !row.isActive, e)
+              }
+            }
+          "
         />
       </template>
 

@@ -13,6 +13,8 @@ export interface ColumnDef {
   required?: boolean
   backendKey?: string
   useToggle?: boolean
+  showFilterMatchModes?: boolean
+  showFilterOperator?: boolean
 }
 
 export interface RowData {
