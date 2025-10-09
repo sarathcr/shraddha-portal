@@ -7,7 +7,13 @@ export const userSchema = yup.object({
     .min(2, 'Name must be at least 2 characters')
     .matches(/^[a-zA-Z0-9 ]+$/, 'Username can only contain letters, numbers and spaces')
     .required('User name is required'),
-  employeeId: yup.string().required('Employee ID is required'),
+  employeeId: yup
+    .string()
+    .required('Employee ID is required')
+    .matches(
+      /^(IN|TR)\d{1,4}$/,
+      'Employee ID must start with "IN" or "TR" and be followed by 1 to 4 digits',
+    ),
   dob: yup
     .date()
     .required('Dob is required')
