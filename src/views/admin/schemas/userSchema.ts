@@ -11,8 +11,8 @@ export const userSchema = yup.object({
     .string()
     .required('Employee ID is required')
     .matches(
-      /^(IN|TR)\d+$/,
-      'Employee ID must start with IN or TR and be followed by numbers only',
+      /^(IN|TR)\d{1,4}$/,
+      'Employee ID must start with "IN" or "TR" and be followed by 1 to 4 digits',
     ),
   dob: yup
     .date()
