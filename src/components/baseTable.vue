@@ -237,6 +237,8 @@ const getOptionLabel = (
           :filterField="col.backendKey || col.key"
           style="min-width: 200px"
           class="!py-4"
+          :showFilterMatchModes="col.showFilterMatchModes !== false"
+          :showFilterOperator="col.showFilterOperator !== false"
         >
           <template #body="{ data, column }">
             <template v-if="slots[`body-${col.key}`]">
