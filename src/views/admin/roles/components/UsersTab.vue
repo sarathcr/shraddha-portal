@@ -137,7 +137,7 @@ const columns = computed((): ColumnDef[] => [
   { label: 'Email', key: 'email', filterable: true, required: true },
   {
     label: 'Team',
-    key: 'team',
+    key: 'teamId',
     filterable: true,
     filterOption: true,
     options: teams.value.map((t) => ({ label: t.label, value: t.label })),
@@ -147,10 +147,10 @@ const columns = computed((): ColumnDef[] => [
   },
   {
     label: 'Role',
-    key: 'role',
+    key: 'roleId',
     filterable: true,
     filterOption: true,
-    options: roles.value.map((r) => ({ label: r.label, value: r.label })),
+    options: roles.value.map((r) => ({ label: r.label, value: r.value })),
     required: true,
     showFilterMatchModes: false,
     showFilterOperator: false,
@@ -197,7 +197,6 @@ onMounted(() => {
         <Button label="Delete" severity="danger" @click="onPerformDelete" />
       </template>
     </Dialog>
-
     <BaseTable
       :columns="columns"
       :rows="users"
