@@ -143,6 +143,8 @@ const columns = [
     useMultiSelect: true,
     required: true,
     options: permissions,
+    showFilterMatchModes: false,
+    showFilterOperator: false,
   },
   {
     label: 'Status',
