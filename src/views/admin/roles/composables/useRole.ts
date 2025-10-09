@@ -154,10 +154,10 @@ export const useRoles = (): {
 
       // Map front-end filter keys to back-end keys
       const backendKeys: Record<string, string> = {
-        roleName: 'Name',
+        roleName: 'roleName',
         description: 'description',
         isActive: 'isActive',
-        permissions: 'permission',
+        permissions: 'permissions',
       }
 
       if (event.filters) {
