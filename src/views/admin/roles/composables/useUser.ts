@@ -9,6 +9,7 @@ import type { Role } from '@/types/role'
 import type { Team } from '@/types/team'
 import { api } from '@/constants'
 import { formatDateForAPI } from '@/utils/dateUtils'
+import { CommitteeRoles } from '@/constants/committeeRoles.enum'
 
 type LazyLoadEvent = {
   first: number
@@ -172,17 +173,22 @@ export const useUsers = (): {
       const [rolesResponse, teamsResponse] = await Promise.all([
         api.post<ApiResponse<Role[]>>('/authorization/Roles/pagination', {
           pagination: { pageNumber: 1, pageSize: -1 },
+          filterMap: { isActive: '= true' },
         }),
         api.post<ApiResponse<Team[]>>('/authorization/Departments/pagination', {
           pagination: { pageNumber: 1, pageSize: -1 },
+          filterMap: { isActive: '= true' },
         }),
       ])
-
       if (rolesResponse.data.succeeded && rolesResponse.data.data) {
-        roles.value = rolesResponse.data.data.map((role: Role) => ({
-          label: role.roleName,
-          value: role.id,
-        }))
+        roles.value = rolesResponse.data.data
+          .filter(
+            (role: Role) => !Object.values(CommitteeRoles).map(String).includes(role.roleName),
+          )
+          .map((role: Role) => ({
+            label: role.roleName,
+            value: role.id,
+          }))
       } else {
         roles.value = []
         toast.add({

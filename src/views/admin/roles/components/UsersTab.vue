@@ -9,6 +9,9 @@ import UserForm from './UserForm.vue'
 import { useValidation } from '@/views/admin/roles/composables/useValidation'
 import type { User } from '@/types/user'
 import type { RowData, ColumnDef } from '@/types/baseTable.model'
+import { userSchema } from '@/views/admin/schemas/userSchema'
+import * as yup from 'yup'
+import { useToast } from 'primevue'
 
 const {
   users,
@@ -34,6 +37,7 @@ const userToDelete = ref<User | null>(null)
 const editableUser = ref<User | null>(null)
 const originalUser = ref<User | null>(null)
 const userFormRef = ref<InstanceType<typeof UserForm> | null>(null)
+const toast = useToast()
 
 watch(userFormDialogVisible, (isVisible) => {
   if (isVisible) document.body.classList.add('no-scroll')
@@ -67,26 +71,47 @@ const onEdit = (row: User): void => {
 
 const onSave = async (newData: RowData): Promise<void> => {
   if (!editableUser.value) return
-
-  const userToSave: User = {
-    ...editableUser.value,
-    ...newData,
-    teamId: teams.value.find((t) => t.label === newData.team)?.value ?? editableUser.value.teamId,
-    roleId: roles.value.find((r) => r.label === newData.role)?.value ?? editableUser.value.roleId,
-    isActive: editableUser.value.isActive,
+  const dataToValidate = {
+    name: newData.name,
+    employeeId: newData.employeeId,
+    dob: newData.dob,
+    email: newData.email,
+    team: newData.team,
+    role: newData.role,
+    status: editableUser.value.isActive,
   }
 
-  const success = await editUser(userToSave)
+  try {
+    await userSchema.validate(dataToValidate, { abortEarly: false })
+    const userToSave: User = {
+      ...editableUser.value,
+      ...newData,
+      teamId: teams.value.find((t) => t.label === newData.team)?.value ?? editableUser.value.teamId,
+      roleId: roles.value.find((r) => r.label === newData.role)?.value ?? editableUser.value.roleId,
+      isActive: editableUser.value.isActive,
+    }
+    const success = await editUser(userToSave)
 
-  if (success) {
-    await fetchInitialData()
-    editingRows.value = []
-    editableUser.value = null
-    originalUser.value = null
-    resetValidation()
-  } else {
-    if (originalUser.value) {
-      editableUser.value = { ...originalUser.value } as User
+    if (success) {
+      await fetchInitialData()
+      editingRows.value = []
+      editableUser.value = null
+      originalUser.value = null
+      resetValidation()
+    } else {
+      if (originalUser.value) editableUser.value = { ...originalUser.value } as User
+    }
+  } catch (validationError) {
+    if (validationError instanceof yup.ValidationError) {
+      validationError.inner.forEach((err) => {
+        console.error(`Validation error for ${err.path}: ${err.message}`)
+        toast.add({
+          severity: 'error',
+          summary: 'Validation Error',
+          detail: `${err.path}: ${err.message}`,
+          life: 5000,
+        })
+      })
     }
   }
 }
