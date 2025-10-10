@@ -38,6 +38,7 @@ const editableUser = ref<User | null>(null)
 const originalUser = ref<User | null>(null)
 const userFormRef = ref<InstanceType<typeof UserForm> | null>(null)
 const toast = useToast()
+const baseTableRef = ref<InstanceType<typeof BaseTable> | null>(null)
 
 watch(userFormDialogVisible, (isVisible) => {
   if (isVisible) document.body.classList.add('no-scroll')
@@ -137,6 +138,12 @@ const onPerformDelete = async (): Promise<void> => {
     await deleteUser(userToDelete.value)
     deleteDialogVisible.value = false
     userToDelete.value = null
+
+    // Reset filters in BaseTable
+    baseTableRef.value?.resetFilters?.()
+
+    // Refresh data
+    await fetchInitialData()
   }
 }
 
@@ -188,13 +195,6 @@ const columns = computed((): ColumnDef[] => [
 
 onMounted(async () => {
   await fetchInitialData()
-  await onLazyLoad({
-    first: 0,
-    rows: pageSize.value,
-    filters: undefined,
-    sortField: null,
-    sortOrder: null,
-  })
 })
 </script>
 
@@ -235,6 +235,7 @@ onMounted(async () => {
 
     <BaseTable
       :columns="columns"
+      ref="baseTableRef"
       :rows="users"
       :totalRecords="totalRecords"
       :rowsPerPage="pageSize"
