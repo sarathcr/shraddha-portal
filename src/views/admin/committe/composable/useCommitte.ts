@@ -24,13 +24,6 @@ export const committeeRoles: Ref<OptionItem[]> = ref([])
 export const getUsersData = async (): Promise<void> => {
   const users: ApiResponse<CommitteeUser[]> = await fetchUsers(-1, -1, { isActive: '= true' })
   if (users?.succeeded && users.data) {
-    committeeUsers.value = users.data
-      .filter((user) => user.id)
-      .map((user: CommitteeUser) => ({
-        label: user.name ?? '',
-        roleId: user.roleId ?? '',
-        value: user.id!,
-      }))
   } else {
     committeeUsers.value = []
   }

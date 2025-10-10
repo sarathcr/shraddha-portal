@@ -58,8 +58,6 @@ const onEdit = (row: User): void => {
   originalUser.value = JSON.parse(JSON.stringify(row))
   editableUser.value = {
     ...row,
-    team: row.team,
-    role: row.role,
     teamId: row.teamId ?? null,
     roleId: row.roleId ?? null,
     isActive: row.isActive ?? null,
@@ -69,10 +67,15 @@ const onEdit = (row: User): void => {
 
 const onSave = async (newData: RowData): Promise<void> => {
   if (!editableUser.value) return
-  const userToSave = {
+
+  const userToSave: User = {
     ...editableUser.value,
     ...newData,
-  } as User
+    teamId: teams.value.find((t) => t.label === newData.team)?.value ?? editableUser.value.teamId,
+    roleId: roles.value.find((r) => r.label === newData.role)?.value ?? editableUser.value.roleId,
+    isActive: editableUser.value.isActive,
+  }
+
   const success = await editUser(userToSave)
 
   if (success) {
@@ -137,7 +140,7 @@ const columns = computed((): ColumnDef[] => [
   { label: 'Email', key: 'email', filterable: true, required: true },
   {
     label: 'Team',
-    key: 'teamId',
+    key: 'team',
     filterable: true,
     filterOption: true,
     options: teams.value.map((t) => ({ label: t.label, value: t.label })),
@@ -147,10 +150,10 @@ const columns = computed((): ColumnDef[] => [
   },
   {
     label: 'Role',
-    key: 'roleId',
+    key: 'role',
     filterable: true,
     filterOption: true,
-    options: roles.value.map((r) => ({ label: r.label, value: r.value })),
+    options: roles.value.map((r) => ({ label: r.label, value: r.label })),
     required: true,
     showFilterMatchModes: false,
     showFilterOperator: false,
@@ -158,8 +161,15 @@ const columns = computed((): ColumnDef[] => [
   { label: 'Status', key: 'isActive', filterable: true, useToggle: true },
 ])
 
-onMounted(() => {
-  void fetchInitialData()
+onMounted(async () => {
+  await fetchInitialData()
+  await onLazyLoad({
+    first: 0,
+    rows: pageSize.value,
+    filters: undefined,
+    sortField: null,
+    sortOrder: null,
+  })
 })
 </script>
 
@@ -197,6 +207,7 @@ onMounted(() => {
         <Button label="Delete" severity="danger" @click="onPerformDelete" />
       </template>
     </Dialog>
+
     <BaseTable
       :columns="columns"
       :rows="users"
@@ -214,18 +225,21 @@ onMounted(() => {
       <template #table-header>
         <Button label="New User" icon="pi pi-plus" severity="help" @click="openCreateUserDialog" />
       </template>
+
       <template #body-isActive="{ row }">
         <ToggleSwitch
-          :modelValue="editingRows.includes(row) ? editableUser?.isActive : row.isActive"
-          @click.stop="
-            (e: Event) => {
-              if (editingRows.includes(row)) {
-                if (editableUser) editableUser.isActive = !editableUser.isActive
-              } else {
-                handleStatusClick(row, !row.isActive, e)
-              }
+          v-if="editingRows.includes(row)"
+          :modelValue="editableUser?.isActive"
+          @update:modelValue="
+            (val: boolean) => {
+              if (editableUser) editableUser.isActive = val
             }
           "
+        />
+        <ToggleSwitch
+          v-else
+          :modelValue="row.isActive"
+          @click.stop="(e: Event) => handleStatusClick(row, !row.isActive, e)"
         />
       </template>
 

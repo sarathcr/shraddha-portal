@@ -20,7 +20,7 @@ export interface UserOptionItem {
   id?: string
   name?: string
   label: string
-  roleId: string
-  userId?: string
+  roleId: number
+  userId?: number
   value: string
 }
