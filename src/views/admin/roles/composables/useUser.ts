@@ -118,7 +118,13 @@ export const useUsers = (): {
               if (field === 'role') backendField = 'role'
               if (field === 'team') backendField = 'team'
 
-              payload.filterMap[backendField] = `=${validConstraints[0].value}`
+              const fieldValue = validConstraints[0].value as string
+              const likeFields = ['name', 'employeeId']
+              if (likeFields.includes(field)) {
+                payload.filterMap[backendField] = `like %${fieldValue}%`
+              } else {
+                payload.filterMap[backendField] = `=${fieldValue}`
+              }
             }
           }
         })
