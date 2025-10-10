@@ -32,6 +32,6 @@ export const userSchema = yup.object({
     .string()
     .required('Email is required')
     .matches(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Invalid email format. Must include "@" and "."'),
-  team: yup.number().required('Team is required'),
+  team: yup.string().required('Team is required'),
   role: yup.string().required('Role is required'),
 })

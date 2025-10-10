@@ -5,11 +5,11 @@ import type { ApiResponse } from '@/types/index'
 import { useAuthStore } from '@/stores/auth'
 import type { DataTableFilterMeta, DataTableSortMeta } from 'primevue/datatable'
 import axios from 'axios'
-import { mapMatchModeToOperator } from '@/utils/filterUtils'
 import type { Role } from '@/types/role'
 import type { Team } from '@/types/team'
 import { api } from '@/constants'
 import { formatDateForAPI } from '@/utils/dateUtils'
+import { CommitteeRoles } from '@/constants/committeeRoles.enum'
 
 type LazyLoadEvent = {
   first: number
@@ -53,20 +53,6 @@ export const useUsers = (): {
     { label: 'Active', value: 'true' },
     { label: 'Inactive', value: 'false' },
   ]
-
-  const sortFieldMap: Record<string, string> = {
-    role: 'role',
-    team: 'team',
-    roleId: 'role',
-    teamId: 'team',
-  }
-
-  const filterFieldMap: Record<string, string> = {
-    role: 'roleId',
-    team: 'teamId',
-    roleId: 'roleId',
-    teamId: 'teamId',
-  }
 
   const onStatusToggle = async (user: User, newStatus: boolean): Promise<boolean> => {
     try {
@@ -112,31 +98,33 @@ export const useUsers = (): {
         filterMap: {},
       }
       if (event.sortField) {
-        const backendKey = sortFieldMap[event.sortField as string] || (event.sortField as string)
         payload.multiSortedColumns.push({
-          active: backendKey,
+          active: event.sortField as string,
           direction: event.sortOrder === 1 ? 'asc' : 'desc',
         })
       }
+
       if (event.filters) {
         Object.entries(event.filters).forEach(([field, filterMeta]) => {
-          const backendField = filterFieldMap[field] || field
           const filter = filterMeta as {
             operator: string
             constraints: { value: unknown; matchMode: string }[]
           }
+
           if (filter.constraints && filter.constraints.length > 0) {
             const validConstraints = filter.constraints.filter((c) => c.value != null)
             if (validConstraints.length > 0) {
-              const filterString = validConstraints
-                .map((constraint, index) => {
-                  const operator =
-                    index === 0 ? '' : filter.operator.toUpperCase() === 'OR' ? 'OR' : 'AND'
-                  const condition = mapMatchModeToOperator(constraint.matchMode, constraint.value)
-                  return `${operator} ${condition}`.trim()
-                })
-                .join(' ')
-              payload.filterMap[backendField] = filterString
+              let backendField = field
+              if (field === 'role') backendField = 'role'
+              if (field === 'team') backendField = 'team'
+
+              const fieldValue = validConstraints[0].value as string
+              const likeFields = ['name', 'employeeId']
+              if (likeFields.includes(field)) {
+                payload.filterMap[backendField] = `like %${fieldValue}%`
+              } else {
+                payload.filterMap[backendField] = `=${fieldValue}`
+              }
             }
           }
         })
@@ -191,17 +179,22 @@ export const useUsers = (): {
       const [rolesResponse, teamsResponse] = await Promise.all([
         api.post<ApiResponse<Role[]>>('/authorization/Roles/pagination', {
           pagination: { pageNumber: 1, pageSize: -1 },
+          filterMap: { isActive: '= true' },
         }),
         api.post<ApiResponse<Team[]>>('/authorization/Departments/pagination', {
           pagination: { pageNumber: 1, pageSize: -1 },
+          filterMap: { isActive: '= true' },
         }),
       ])
-
       if (rolesResponse.data.succeeded && rolesResponse.data.data) {
-        roles.value = rolesResponse.data.data.map((role: Role) => ({
-          label: role.roleName,
-          value: role.id,
-        }))
+        roles.value = rolesResponse.data.data
+          .filter(
+            (role: Role) => !Object.values(CommitteeRoles).map(String).includes(role.roleName),
+          )
+          .map((role: Role) => ({
+            label: role.roleName,
+            value: role.id,
+          }))
       } else {
         roles.value = []
         toast.add({
@@ -215,7 +208,7 @@ export const useUsers = (): {
       if (teamsResponse.data.succeeded && teamsResponse.data.data) {
         teams.value = teamsResponse.data.data.map((team: Team) => ({
           label: team.teamName ?? '',
-          value: team.id,
+          value: String(team.id),
         }))
       } else {
         teams.value = []
@@ -284,10 +277,9 @@ export const useUsers = (): {
         ...newData,
         dob: newData.dob ? formatDateForAPI(new Date(newData.dob)) : null,
         id: newData.id,
-        teamId: newData.teamId ?? newData.TeamID,
-        roleId: newData.roleId ?? newData.RoleID,
+        teamId: newData.teamId,
+        roleId: newData.roleId,
       }
-
       await api.put<ApiResponse<User>>(`/authorization/users/${newData.id}`, formattedNewData)
 
       toast.add({
