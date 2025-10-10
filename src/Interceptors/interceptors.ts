@@ -1,37 +1,30 @@
 // api/interceptors.ts
-import type {
-  AxiosInstance,
-  AxiosError,
-  AxiosRequestConfig,
-  InternalAxiosRequestConfig,
-} from 'axios'
+import type { AxiosInstance } from 'axios'
 import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 
 export const setupInterceptors = (instance: AxiosInstance): void => {
+  // Request interceptor → attach token
   instance.interceptors.request.use(
-    (config: InternalAxiosRequestConfig) => {
+    (config) => {
       const authStore = useAuthStore()
       if (authStore.accessToken) {
-        if (config.headers && 'set' in config.headers && typeof config.headers.set === 'function') {
-          config.headers.set('Authorization', `Bearer ${authStore.accessToken}`)
-        }
+        config.headers.Authorization = `Bearer ${authStore.accessToken}`
       }
       return config
     },
     (error) => Promise.reject(error),
   )
 
-  // Response interceptor → handle token refresh & login redirect
+  // Response interceptor → refresh token
   instance.interceptors.response.use(
     (response) => response,
-    async (error: AxiosError) => {
+    async (error) => {
       const authStore = useAuthStore()
       const router = useRouter()
-      const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean }
-      const status = error.response?.status
-      if ((status === 401 || status === 400) && authStore.refreshToken && !originalRequest._retry) {
+      const originalRequest = error.config
+      if (error.response?.status === 401 && authStore.refreshToken && !originalRequest._retry) {
         originalRequest._retry = true
         try {
           const refreshResponse = await axios.post(
@@ -43,16 +36,15 @@ export const setupInterceptors = (instance: AxiosInstance): void => {
           const newRefreshToken = refreshResponse.data.refreshToken
 
           authStore.setTokens(newAccessToken, newRefreshToken)
-          originalRequest.headers = originalRequest.headers || {}
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`
 
           return instance(originalRequest)
-        } catch (refreshError) {
-          console.error('Refresh token failed', refreshError)
+        } catch {
+          console.error('Refresh token failed')
           authStore.clearTokens()
           void router.push('/login')
         }
-      } else if (status === 401 || status === 400) {
+      } else if (error.response?.status === 401) {
         authStore.clearTokens()
         void router.push('/login')
       }
