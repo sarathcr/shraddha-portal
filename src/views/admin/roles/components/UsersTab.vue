@@ -138,11 +138,7 @@ const onPerformDelete = async (): Promise<void> => {
     await deleteUser(userToDelete.value)
     deleteDialogVisible.value = false
     userToDelete.value = null
-
-    // Reset filters in BaseTable
     baseTableRef.value?.resetFilters?.()
-
-    // Refresh data
     await fetchInitialData()
   }
 }
