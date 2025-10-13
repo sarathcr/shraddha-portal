@@ -188,6 +188,7 @@ const onCancel = (): void => {
       <FloatLabel variant="on">
         <Select
           id="role"
+          filter
           v-model="role"
           :options="props.roles"
           optionLabel="label"

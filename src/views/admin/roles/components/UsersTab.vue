@@ -134,12 +134,13 @@ const handleDeleteConfirmation = (row: User): void => {
 
 const onPerformDelete = async (): Promise<void> => {
   if (userToDelete.value) {
-    await deleteUser(userToDelete.value)
-    deleteDialogVisible.value = false
-    userToDelete.value = null
+    const success = await deleteUser(userToDelete.value)
+    if (success) {
+      deleteDialogVisible.value = false
+      userToDelete.value = null
+    }
   }
 }
-
 const handleStatusClick = async (
   user: User | null,
   newValue: boolean,
@@ -188,13 +189,6 @@ const columns = computed((): ColumnDef[] => [
 
 onMounted(async () => {
   await fetchInitialData()
-  await onLazyLoad({
-    first: 0,
-    rows: pageSize.value,
-    filters: undefined,
-    sortField: null,
-    sortOrder: null,
-  })
 })
 </script>
 
