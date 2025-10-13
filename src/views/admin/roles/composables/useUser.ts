@@ -34,7 +34,7 @@ export const useUsers = (): {
   onLazyLoad: (event: LazyLoadEvent) => Promise<void>
   createUser: (payload: User) => Promise<boolean>
   editUser: (newData: User) => Promise<boolean>
-  deleteUser: (user: User) => Promise<void>
+  deleteUser: (user: User) => Promise<boolean>
   onStatusToggle: (user: User, newStatus: boolean) => Promise<boolean>
 } => {
   const toast = useToast()
@@ -48,6 +48,7 @@ export const useUsers = (): {
   const pageNumber = ref<number>(1)
   const pageSize = ref<number>(10)
   const editingRows = ref<User[]>([])
+  const lastLazyLoadEvent = ref<LazyLoadEvent | null>(null)
 
   const statusOptions = [
     { label: 'Active', value: 'true' },
@@ -84,6 +85,7 @@ export const useUsers = (): {
 
   const onLazyLoad = async (event: LazyLoadEvent): Promise<void> => {
     isLoading.value = true
+    lastLazyLoadEvent.value = event
     try {
       const payload: {
         pagination: { pageNumber: number; pageSize: number }
@@ -308,11 +310,12 @@ export const useUsers = (): {
     }
   }
 
-  const deleteUser = async (user: User): Promise<void> => {
+  const deleteUser = async (user: User): Promise<boolean> => {
     try {
       const accessToken = authStore.accessToken
-      if (!accessToken) throw new Error('Authentication token not found. Please log in again.')
-
+      if (!accessToken) {
+        throw new Error('Authentication token not found. Please log in again.')
+      }
       await api.delete(`/authorization/users/${user.id}`)
       toast.add({
         severity: 'success',
@@ -320,21 +323,29 @@ export const useUsers = (): {
         detail: 'User deleted successfully.',
         life: 3000,
       })
+      if (lastLazyLoadEvent.value) {
+        await onLazyLoad(lastLazyLoadEvent.value)
+      }
 
-      await onLazyLoad({
-        first: (pageNumber.value - 1) * pageSize.value,
-        rows: pageSize.value,
-        filters: undefined,
-        sortField: null,
-        sortOrder: null,
-      })
+      return true
     } catch (error) {
-      const detail =
-        axios.isAxiosError(error) && error.response?.data?.errorValue
-          ? error.response.data.errorValue
-          : 'Failed to delete user.'
-      toast.add({ severity: 'error', summary: 'Error', detail, life: 3000 })
+      if (axios.isAxiosError(error) && error.response && error.response.data?.errorValue) {
+        toast.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: error.response.data.errorValue,
+          life: 3000,
+        })
+      } else {
+        toast.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to delete user.',
+          life: 3000,
+        })
+      }
       console.error('Error deleting user:', error)
+      return false
     }
   }
 
