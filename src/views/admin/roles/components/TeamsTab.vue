@@ -133,6 +133,9 @@ const columns = [
     key: 'isActive',
     filterable: true,
     useToggle: true,
+    showFilterMatchModes: false,
+    showFilterOperator: false,
+    showAddButton: false,
   },
 ]
 </script>

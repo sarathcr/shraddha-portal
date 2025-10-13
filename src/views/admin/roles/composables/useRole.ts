@@ -3,10 +3,10 @@ import { useToast } from 'primevue/usetoast'
 import type { PermissionOptions, Role } from '@/types/role'
 import type { ApiResponse } from '@/types/index'
 import { useAuthStore } from '@/stores/auth'
-import { FilterMatchMode } from '@primevue/core/api'
 import type { DataTableFilterMeta, DataTableSortMeta } from 'primevue/datatable'
 import axios from 'axios'
 import { api } from '@/constants'
+import { mapMatchModeToOperator } from '@/utils/filterUtils'
 
 type LazyLoadEvent = {
   first: number
@@ -92,43 +92,6 @@ export const useRoles = (): {
     { label: 'Inactive', value: 'False' },
   ]
 
-  const mapMatchModeToOperator = (matchMode: string, value: unknown): string => {
-    switch (matchMode) {
-      case FilterMatchMode.CONTAINS:
-        return `like %${value}%`
-      case FilterMatchMode.NOT_CONTAINS:
-        return `not like %${value}%`
-      case FilterMatchMode.STARTS_WITH:
-        return `like ${value}%`
-      case FilterMatchMode.ENDS_WITH:
-        return `like %${value}`
-      case FilterMatchMode.EQUALS:
-        if (typeof value === 'boolean') {
-          return `= ${value}`
-        }
-        return `= ${value}`
-      case FilterMatchMode.NOT_EQUALS:
-        return `!= ${value}`
-      case FilterMatchMode.LESS_THAN:
-        return `< ${value}`
-      case FilterMatchMode.LESS_THAN_OR_EQUAL_TO:
-        return `<= ${value}`
-      case FilterMatchMode.GREATER_THAN:
-        return `> ${value}`
-      case FilterMatchMode.GREATER_THAN_OR_EQUAL_TO:
-        return `>= ${value}`
-      case FilterMatchMode.DATE_IS:
-        return `= ${value}`
-      case FilterMatchMode.DATE_IS_NOT:
-        return `!= ${value}`
-      case FilterMatchMode.DATE_BEFORE:
-        return `< ${value}`
-      case FilterMatchMode.DATE_AFTER:
-        return `> ${value}`
-      default:
-        return `= ${value}`
-    }
-  }
   const onLazyLoad = async (event: LazyLoadEvent): Promise<void> => {
     isLoading.value = true
     try {

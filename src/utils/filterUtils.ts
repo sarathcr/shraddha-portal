@@ -11,6 +11,9 @@ export const mapMatchModeToOperator = (matchMode: string, value: unknown): strin
     case FilterMatchMode.ENDS_WITH:
       return `like %${value}`
     case FilterMatchMode.EQUALS:
+      if (typeof value === 'boolean') {
+        return `= ${value}`
+      }
       return `= ${value}`
     case FilterMatchMode.NOT_EQUALS:
       return `!= ${value}`
