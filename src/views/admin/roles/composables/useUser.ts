@@ -10,6 +10,7 @@ import type { Team } from '@/types/team'
 import { api } from '@/constants'
 import { formatDateForAPI } from '@/utils/dateUtils'
 import { CommitteeRoles } from '@/constants/committeeRoles.enum'
+import { mapMatchModeToOperator } from '@/utils/filterUtils'
 
 type LazyLoadEvent = {
   first: number
@@ -33,7 +34,7 @@ export const useUsers = (): {
   fetchInitialData: () => Promise<void>
   onLazyLoad: (event: LazyLoadEvent) => Promise<void>
   createUser: (payload: User) => Promise<boolean>
-  editUser: (newData: User) => Promise<boolean>
+  editUser: (newData: User) => Promise<void>
   deleteUser: (user: User) => Promise<boolean>
   onStatusToggle: (user: User, newStatus: boolean) => Promise<boolean>
 } => {
@@ -86,6 +87,7 @@ export const useUsers = (): {
   const onLazyLoad = async (event: LazyLoadEvent): Promise<void> => {
     isLoading.value = true
     lastLazyLoadEvent.value = event
+
     try {
       const payload: {
         pagination: { pageNumber: number; pageSize: number }
@@ -105,7 +107,6 @@ export const useUsers = (): {
           direction: event.sortOrder === 1 ? 'asc' : 'desc',
         })
       }
-
       if (event.filters) {
         Object.entries(event.filters).forEach(([field, filterMeta]) => {
           const filter = filterMeta as {
@@ -115,29 +116,23 @@ export const useUsers = (): {
 
           if (filter.constraints && filter.constraints.length > 0) {
             const validConstraints = filter.constraints.filter((c) => c.value != null)
-            if (validConstraints.length > 0) {
-              let backendField = field
-              if (field === 'role') backendField = 'role'
-              if (field === 'team') backendField = 'team'
 
-              const fieldValue = validConstraints[0].value as string
-              const likeFields = ['name', 'employeeId']
-              if (likeFields.includes(field)) {
-                payload.filterMap[backendField] = `like %${fieldValue}%`
-              } else {
-                payload.filterMap[backendField] = `=${fieldValue}`
-              }
+            if (validConstraints.length > 0) {
+              const filterString = validConstraints
+                .map((constraint, index) => {
+                  const operator =
+                    index === 0 ? '' : filter.operator.toUpperCase() === 'OR' ? 'OR' : 'AND'
+
+                  const condition = mapMatchModeToOperator(constraint.matchMode, constraint.value)
+                  return `${operator} ${condition}`.trim()
+                })
+                .join(' ')
+
+              payload.filterMap[field] = filterString
             }
           }
         })
       }
-
-      function formatDateForDisplay(dob: string | null): string | null {
-        if (!dob) return null
-        const [year, month, day] = dob.split('-')
-        return `${day}-${month}-${year}`
-      }
-
       const response = await api.post<ApiResponse<User[]>>(
         '/authorization/users/pagination',
         payload,
@@ -173,6 +168,12 @@ export const useUsers = (): {
     } finally {
       isLoading.value = false
     }
+  }
+
+  function formatDateForDisplay(dob: string | null): string | null {
+    if (!dob) return null
+    const [year, month, day] = dob.split('-')
+    return `${day}-${month}-${year}`
   }
 
   const fetchInitialData = async (): Promise<void> => {
@@ -273,8 +274,12 @@ export const useUsers = (): {
     }
   }
 
-  const editUser = async (newData: User): Promise<boolean> => {
+  const editUser = async (newData: User): Promise<void> => {
     try {
+      const accessToken = authStore.accessToken
+      if (!accessToken) {
+        throw new Error('Authentication token not found. Please log in again.')
+      }
       const formattedNewData = {
         ...newData,
         dob: newData.dob ? formatDateForAPI(new Date(newData.dob)) : null,
@@ -283,30 +288,42 @@ export const useUsers = (): {
         roleId: newData.roleId,
       }
       await api.put<ApiResponse<User>>(`/authorization/users/${newData.id}`, formattedNewData)
-
       toast.add({
         severity: 'success',
         summary: 'Success',
         detail: 'User updated successfully.',
         life: 3000,
       })
-      await onLazyLoad({
-        first: (pageNumber.value - 1) * pageSize.value,
-        rows: pageSize.value,
-        filters: undefined,
-        sortField: null,
-        sortOrder: null,
-      })
-      return true
+      if (lastLazyLoadEvent.value) {
+        await onLazyLoad(lastLazyLoadEvent.value)
+      }
     } catch (error) {
-      const detail =
-        axios.isAxiosError(error) && error.response?.data?.errorValue
-          ? error.response.data.errorValue
-          : 'An unexpected error occurred. Please try again.'
+      if (axios.isAxiosError(error) && error.response) {
+        const errorValue = error.response.data?.errorValue
 
-      toast.add({ severity: 'error', summary: 'Error', detail, life: 3000 })
-      console.error('Error editing user:', error)
-      return false
+        if (errorValue) {
+          toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: errorValue,
+            life: 3000,
+          })
+        } else {
+          toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'An unexpected API error occurred.',
+            life: 3000,
+          })
+        }
+      } else {
+        toast.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'An unexpected error occurred. Please try again.',
+          life: 3000,
+        })
+      }
     }
   }
 

@@ -15,6 +15,7 @@ export interface ColumnDef {
   useToggle?: boolean
   showFilterMatchModes?: boolean
   showFilterOperator?: boolean
+  showAddButton?: boolean
 }
 
 export interface RowData {

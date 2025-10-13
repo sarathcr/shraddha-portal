@@ -12,6 +12,7 @@ import type { RowData, ColumnDef } from '@/types/baseTable.model'
 import { userSchema } from '@/views/admin/schemas/userSchema'
 import * as yup from 'yup'
 import { useToast } from 'primevue'
+import { isEqual } from 'lodash'
 
 const {
   users,
@@ -71,6 +72,38 @@ const onEdit = (row: User): void => {
 
 const onSave = async (newData: RowData): Promise<void> => {
   if (!editableUser.value) return
+  const originalDataToCompare = {
+    name: originalUser.value?.name,
+    employeeId: originalUser.value?.employeeId,
+    dob: originalUser.value?.dob,
+    email: originalUser.value?.email,
+    team: teams.value.find((t) => t.value === originalUser.value?.teamId)?.label ?? null,
+    role: roles.value.find((r) => r.value === originalUser.value?.roleId)?.label ?? null,
+    status: originalUser.value?.isActive,
+  }
+
+  const newDataToCompare = {
+    name: newData.name,
+    employeeId: newData.employeeId,
+    dob: newData.dob,
+    email: newData.email,
+    team: newData.team,
+    role: newData.role,
+    status: editableUser.value.isActive,
+  }
+  if (isEqual(originalDataToCompare, newDataToCompare)) {
+    toast.add({
+      severity: 'info',
+      summary: 'No Changes',
+      detail: 'No modifications were made.',
+      life: 3000,
+    })
+    editingRows.value = []
+    editableUser.value = null
+    originalUser.value = null
+    resetValidation()
+    return
+  }
   const dataToValidate = {
     name: newData.name,
     employeeId: newData.employeeId,
@@ -83,6 +116,7 @@ const onSave = async (newData: RowData): Promise<void> => {
 
   try {
     await userSchema.validate(dataToValidate, { abortEarly: false })
+
     const userToSave: User = {
       ...editableUser.value,
       ...newData,
@@ -90,17 +124,8 @@ const onSave = async (newData: RowData): Promise<void> => {
       roleId: roles.value.find((r) => r.label === newData.role)?.value ?? editableUser.value.roleId,
       isActive: editableUser.value.isActive,
     }
-    const success = await editUser(userToSave)
 
-    if (success) {
-      await fetchInitialData()
-      editingRows.value = []
-      editableUser.value = null
-      originalUser.value = null
-      resetValidation()
-    } else {
-      if (originalUser.value) editableUser.value = { ...originalUser.value } as User
-    }
+    await editUser(userToSave)
   } catch (validationError) {
     if (validationError instanceof yup.ValidationError) {
       validationError.inner.forEach((err) => {
@@ -173,6 +198,7 @@ const columns = computed((): ColumnDef[] => [
     required: true,
     showFilterMatchModes: false,
     showFilterOperator: false,
+    showAddButton: false,
   },
   {
     label: 'Role',
@@ -183,8 +209,17 @@ const columns = computed((): ColumnDef[] => [
     required: true,
     showFilterMatchModes: false,
     showFilterOperator: false,
+    showAddButton: false,
   },
-  { label: 'Status', key: 'isActive', filterable: true, useToggle: true },
+  {
+    label: 'Status',
+    key: 'isActive',
+    filterable: true,
+    useToggle: true,
+    showFilterMatchModes: false,
+    showFilterOperator: false,
+    showAddButton: false,
+  },
 ])
 
 onMounted(async () => {
