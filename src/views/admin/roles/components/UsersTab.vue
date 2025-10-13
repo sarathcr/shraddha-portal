@@ -125,17 +125,7 @@ const onSave = async (newData: RowData): Promise<void> => {
       isActive: editableUser.value.isActive,
     }
 
-    const success = await editUser(userToSave)
-
-    if (success) {
-      await fetchInitialData()
-      editingRows.value = []
-      editableUser.value = null
-      originalUser.value = null
-      resetValidation()
-    } else {
-      if (originalUser.value) editableUser.value = { ...originalUser.value } as User
-    }
+    await editUser(userToSave)
   } catch (validationError) {
     if (validationError instanceof yup.ValidationError) {
       validationError.inner.forEach((err) => {
@@ -208,6 +198,7 @@ const columns = computed((): ColumnDef[] => [
     required: true,
     showFilterMatchModes: false,
     showFilterOperator: false,
+    showAddButton: false,
   },
   {
     label: 'Role',
@@ -218,8 +209,17 @@ const columns = computed((): ColumnDef[] => [
     required: true,
     showFilterMatchModes: false,
     showFilterOperator: false,
+    showAddButton: false,
   },
-  { label: 'Status', key: 'isActive', filterable: true, useToggle: true },
+  {
+    label: 'Status',
+    key: 'isActive',
+    filterable: true,
+    useToggle: true,
+    showFilterMatchModes: false,
+    showFilterOperator: false,
+    showAddButton: false,
+  },
 ])
 
 onMounted(async () => {

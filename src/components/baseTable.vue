@@ -226,7 +226,6 @@ const getOptionLabel = (
             <slot name="table-header" />
           </div>
         </template>
-
         <Column
           v-for="col in columns"
           :key="col.key"
@@ -237,8 +236,9 @@ const getOptionLabel = (
           :filterField="col.backendKey || col.key"
           style="min-width: 200px"
           class="!py-4"
-          :showFilterMatchModes="col.showFilterMatchModes !== false"
-          :showFilterOperator="col.showFilterOperator !== false"
+          :showFilterMatchModes="col.showFilterMatchModes"
+          :showFilterOperator="col.showFilterOperator"
+          v-bind="col.showAddButton === false ? { showAddButton: false } : {}"
         >
           <template #body="{ data, column }">
             <template v-if="slots[`body-${col.key}`]">
