@@ -90,20 +90,6 @@ const initFilters = (): void => {
   tableFilters.value = initialFilters
 }
 
-const resetFilters = (): void => {
-  const initialFilters: DataTableFilterMeta = {}
-  props.columns.forEach((col) => {
-    if (col.filterable) {
-      const filterKey = col.backendKey || col.key
-      initialFilters[filterKey] = {
-        operator: FilterOperator.AND,
-        constraints: [{ value: null, matchMode: FilterMatchMode.CONTAINS }],
-      }
-    }
-  })
-  tableFilters.value = initialFilters
-}
-
 watch(
   () => props.columns,
   () => {
@@ -203,9 +189,6 @@ const getOptionLabel = (
   const opt = options.find((o) => (typeof o === 'object' ? o.value === value : o === value))
   return opt && typeof opt === 'object' ? opt.label : value
 }
-defineExpose({
-  resetFilters,
-})
 </script>
 <template>
   <div class="space-y-4 h-full p-4 flex flex-col justify-between">
