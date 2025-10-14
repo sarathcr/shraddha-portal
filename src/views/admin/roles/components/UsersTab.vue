@@ -30,6 +30,7 @@ const {
   onLazyLoad,
   onStatusToggle,
 } = useUsers()
+
 const { resetValidation, isSaveDisabled } = useValidation()
 
 const userFormDialogVisible = ref(false)
@@ -40,12 +41,16 @@ const originalUser = ref<User | null>(null)
 const userFormRef = ref<InstanceType<typeof UserForm> | null>(null)
 const toast = useToast()
 
+const createRoles = ref([] as typeof roles.value)
+
 watch(userFormDialogVisible, (isVisible) => {
   if (isVisible) document.body.classList.add('no-scroll')
   else document.body.classList.remove('no-scroll')
 })
 
 const openCreateUserDialog = (): void => {
+  createRoles.value = roles.value.filter((r) => !r.isCommitteeRole)
+
   userFormDialogVisible.value = true
   userFormRef.value?.resetForm()
 }
@@ -72,6 +77,7 @@ const onEdit = (row: User): void => {
 
 const onSave = async (newData: RowData): Promise<void> => {
   if (!editableUser.value) return
+
   const originalDataToCompare = {
     name: originalUser.value?.name,
     employeeId: originalUser.value?.employeeId,
@@ -91,6 +97,7 @@ const onSave = async (newData: RowData): Promise<void> => {
     role: newData.role,
     status: editableUser.value.isActive,
   }
+
   if (isEqual(originalDataToCompare, newDataToCompare)) {
     toast.add({
       severity: 'info',
@@ -104,6 +111,7 @@ const onSave = async (newData: RowData): Promise<void> => {
     resetValidation()
     return
   }
+
   const dataToValidate = {
     name: newData.name,
     employeeId: newData.employeeId,
@@ -166,6 +174,7 @@ const onPerformDelete = async (): Promise<void> => {
     }
   }
 }
+
 const handleStatusClick = async (
   user: User | null,
   newValue: boolean,
@@ -205,6 +214,7 @@ const columns = computed((): ColumnDef[] => [
     key: 'role',
     filterable: true,
     filterOption: true,
+    // Use full roles list for inline edit
     options: roles.value.map((r) => ({ label: r.label, value: r.label })),
     required: true,
     showFilterMatchModes: false,
@@ -229,6 +239,7 @@ onMounted(async () => {
 
 <template>
   <div class="space-y-4 h-full">
+    <!-- Create User Dialog -->
     <Dialog
       v-model:visible="userFormDialogVisible"
       header="Create User"
@@ -238,7 +249,7 @@ onMounted(async () => {
     >
       <UserForm
         ref="userFormRef"
-        :roles="roles"
+        :roles="createRoles"
         :teams="teams"
         :is-loading="isLoading"
         @submit="handleUserFormSubmit"
@@ -246,6 +257,7 @@ onMounted(async () => {
       />
     </Dialog>
 
+    <!-- Delete Confirmation Dialog -->
     <Dialog
       v-model:visible="deleteDialogVisible"
       header="Confirm Deletion"
@@ -262,6 +274,7 @@ onMounted(async () => {
       </template>
     </Dialog>
 
+    <!-- Users Table -->
     <BaseTable
       :columns="columns"
       :rows="users"
