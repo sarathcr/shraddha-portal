@@ -262,7 +262,7 @@ const getOptionLabel = (
                 @blur="col.required ? validateField(col.key, tempRow[col.key], col.label) : null"
               />
 
-              <p v-if="col.useDateFilter" class="text-red-500 text-xs absolute">
+              <p v-if="col.useDateFilter" class="text-red-500 text-xs absolute w-100">
                 {{ validationErrors[col.key] }}
               </p>
 
@@ -279,7 +279,7 @@ const getOptionLabel = (
                   "
                   @blur="col.required ? validateField(col.key, tempRow[col.key], col.label) : null"
                 />
-                <p v-if="validationErrors[col.key]" class="text-red-500 text-xs absolute">
+                <p v-if="validationErrors[col.key]" class="text-red-500 text-xs absolute w-100">
                   {{ validationErrors[col.key] }}
                 </p>
               </div>
@@ -299,7 +299,7 @@ const getOptionLabel = (
                   "
                   @blur="col.required ? validateField(col.key, tempRow[col.key], col.label) : null"
                 />
-                <p v-if="validationErrors[col.key]" class="text-red-500 text-xs absolute">
+                <p v-if="validationErrors[col.key]" class="text-red-500 text-xs absolute w-100">
                   {{ validationErrors[col.key] }}
                 </p>
               </div>
@@ -316,7 +316,7 @@ const getOptionLabel = (
                   class="w-full"
                   @blur="col.required ? validateField(col.key, tempRow[col.key], col.label) : null"
                 />
-                <p v-if="validationErrors[col.key]" class="text-red-500 text-xs absolute">
+                <p v-if="validationErrors[col.key]" class="text-red-500 text-xs absolute w-100">
                   {{ validationErrors[col.key] }}
                 </p>
               </div>
