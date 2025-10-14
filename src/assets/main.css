@@ -28,3 +28,10 @@
 .p-dialog.p-component {
   margin: 0px 15px !important;
 }
+
+.p-multiselect-display-chip .p-multiselect-label {
+  flex-wrap: wrap;
+}
+.p-datatable-filter-overlay-popover {
+  margin: 0px 15px;
+}
