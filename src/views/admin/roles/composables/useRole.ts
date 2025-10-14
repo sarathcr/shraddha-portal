@@ -2,7 +2,6 @@ import { ref, type Ref } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import type { PermissionOptions, Role } from '@/types/role'
 import type { ApiResponse } from '@/types/index'
-import { useAuthStore } from '@/stores/auth'
 import type { DataTableFilterMeta, DataTableSortMeta } from 'primevue/datatable'
 import axios from 'axios'
 import { api } from '@/constants'
@@ -34,7 +33,6 @@ export const useRoles = (): {
   onStatusToggle: (role: Role, newStatus: boolean) => Promise<void>
 } => {
   const toast = useToast()
-  const authStore = useAuthStore()
 
   const roles = ref<Role[]>([])
   const isLoading = ref<boolean>(false)
@@ -59,9 +57,6 @@ export const useRoles = (): {
   const onStatusToggle = async (role: Role, newStatus: boolean): Promise<void> => {
     const originalStatus = role.isActive
     try {
-      const accessToken = authStore.accessToken
-      if (!accessToken) throw new Error('Authentication token not found.')
-
       await api.put(`/authorization/Roles/${role.id}/status`, { status: newStatus })
       role.isActive = newStatus
       toast.add({
@@ -192,9 +187,6 @@ export const useRoles = (): {
 
   const createRole = async (role: Omit<Role, 'id'>): Promise<boolean> => {
     try {
-      const accessToken = authStore.accessToken
-      if (!accessToken) throw new Error('Authentication token not found.')
-
       await api.post<ApiResponse<Role>>('/authorization/Roles', role)
       toast.add({
         severity: 'success',
@@ -221,9 +213,6 @@ export const useRoles = (): {
 
   const editRole = async (role: Role): Promise<void> => {
     try {
-      const accessToken = authStore.accessToken
-      if (!accessToken) throw new Error('Authentication token not found.')
-
       await api.put<ApiResponse<Role>>(`/authorization/Roles/${role.id}`, role)
       toast.add({
         severity: 'success',
@@ -248,9 +237,6 @@ export const useRoles = (): {
 
   const deleteRole = async (role: Role): Promise<boolean> => {
     try {
-      const accessToken = authStore.accessToken
-      if (!accessToken) throw new Error('Authentication token not found.')
-
       await api.delete(`/authorization/Roles/${role.id}`)
       toast.add({
         severity: 'success',
