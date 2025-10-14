@@ -2,7 +2,6 @@ import { ref, type Ref } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import type { PermissionOptions, Role } from '@/types/role'
 import type { ApiResponse } from '@/types/index'
-import { useAuthStore } from '@/stores/auth'
 import type { DataTableFilterMeta, DataTableSortMeta } from 'primevue/datatable'
 import axios from 'axios'
 import { api } from '@/constants'
@@ -34,7 +33,6 @@ export const useRoles = (): {
   onStatusToggle: (role: Role, newStatus: boolean) => Promise<void>
 } => {
   const toast = useToast()
-  const authStore = useAuthStore()
 
   const roles = ref<Role[]>([])
   const isLoading = ref<boolean>(false)
@@ -49,14 +47,16 @@ export const useRoles = (): {
     { label: 'Delete', value: 'DELETE' },
   ])
 
+  const lastLazyLoadEvent = ref<LazyLoadEvent | null>(null)
+
+  const statusOptions = [
+    { label: 'Active', value: 'True' },
+    { label: 'Inactive', value: 'False' },
+  ]
+
   const onStatusToggle = async (role: Role, newStatus: boolean): Promise<void> => {
     const originalStatus = role.isActive
     try {
-      const accessToken = authStore.accessToken
-      if (!accessToken) {
-        throw new Error('Authentication token not found. Please log in again.')
-      }
-
       await api.put(`/authorization/Roles/${role.id}/status`, { status: newStatus })
       role.isActive = newStatus
       toast.add({
@@ -65,35 +65,26 @@ export const useRoles = (): {
         detail: 'Role status updated successfully.',
         life: 3000,
       })
+
+      if (lastLazyLoadEvent.value) await onLazyLoad(lastLazyLoadEvent.value)
     } catch (error) {
       role.isActive = originalStatus
-
-      if (axios.isAxiosError(error) && error.response && error.response.data?.errorValue) {
-        toast.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: error.response.data.errorValue,
-          life: 3000,
-        })
-      } else {
-        toast.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'Failed to update role status.',
-          life: 3000,
-        })
-      }
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail:
+          axios.isAxiosError(error) && error.response?.data?.errorValue
+            ? error.response.data.errorValue
+            : 'Failed to update role status.',
+        life: 3000,
+      })
       console.error('Error updating role status:', error)
     }
   }
 
-  const statusOptions = [
-    { label: 'Active', value: 'True' },
-    { label: 'Inactive', value: 'False' },
-  ]
-
   const onLazyLoad = async (event: LazyLoadEvent): Promise<void> => {
     isLoading.value = true
+    lastLazyLoadEvent.value = event
     try {
       const payload: {
         pagination: { pageNumber: number; pageSize: number }
@@ -115,7 +106,6 @@ export const useRoles = (): {
         })
       }
 
-      // Map front-end filter keys to back-end keys
       const backendKeys: Record<string, string> = {
         roleName: 'roleName',
         description: 'description',
@@ -124,32 +114,25 @@ export const useRoles = (): {
       }
 
       if (event.filters) {
-        const filters = event.filters as DataTableFilterMeta
-        Object.entries(filters).forEach(([field, filterMeta]) => {
+        Object.entries(event.filters).forEach(([field, filterMeta]) => {
           const filter = filterMeta as {
             operator: string
             constraints: { value: unknown; matchMode: string }[]
           }
-
-          if (filter.constraints && filter.constraints.length > 0) {
-            const validConstraints = filter.constraints.filter(
-              (c) => c.value !== null && c.value !== undefined,
-            )
-
-            if (validConstraints.length > 0) {
-              const filterString = validConstraints
-                .map((constraint, index) => {
-                  const operator =
-                    index === 0 ? '' : filter.operator.toUpperCase() === 'OR' ? 'OR' : 'AND'
-                  const condition = mapMatchModeToOperator(constraint.matchMode, constraint.value)
-                  return `${operator} ${condition}`.trim()
-                })
-                .join(' ')
-
-              // **CRITICAL FIX**: Use the mapping object to get the correct backend key
-              const backendField = backendKeys[field] || field
-              payload.filterMap[backendField] = filterString
-            }
+          const validConstraints = filter.constraints?.filter(
+            (c) => c.value !== null && c.value !== undefined,
+          )
+          if (validConstraints && validConstraints.length) {
+            const filterString = validConstraints
+              .map((constraint, index) => {
+                const operator =
+                  index === 0 ? '' : filter.operator.toUpperCase() === 'OR' ? 'OR' : 'AND'
+                const condition = mapMatchModeToOperator(constraint.matchMode, constraint.value)
+                return `${operator} ${condition}`.trim()
+              })
+              .join(' ')
+            const backendField = backendKeys[field] || field
+            payload.filterMap[backendField] = filterString
           }
         })
       }
@@ -173,21 +156,15 @@ export const useRoles = (): {
         })
       }
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response && error.response.data?.errorValue) {
-        toast.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: error.response.data.errorValue,
-          life: 3000,
-        })
-      } else {
-        toast.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'An error occurred while fetching roles.',
-          life: 3000,
-        })
-      }
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail:
+          axios.isAxiosError(error) && error.response?.data?.errorValue
+            ? error.response.data.errorValue
+            : 'An error occurred while fetching roles.',
+        life: 3000,
+      })
       console.error('API call failed:', error)
     } finally {
       isLoading.value = false
@@ -195,37 +172,21 @@ export const useRoles = (): {
   }
 
   const fetchInitialData = async (): Promise<void> => {
-    isLoading.value = true
-    try {
-      await Promise.all([
-        onLazyLoad({
-          first: 0,
-          rows: pageSize.value,
-          filters: undefined,
-          sortField: null,
-          sortOrder: null,
-        }),
-      ])
-    } catch (error) {
-      console.error('Error fetching initial data:', error)
-      toast.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'Failed to fetch initial data.',
-        life: 3000,
+    if (lastLazyLoadEvent.value) {
+      await onLazyLoad(lastLazyLoadEvent.value)
+    } else {
+      await onLazyLoad({
+        first: 0,
+        rows: pageSize.value,
+        filters: undefined,
+        sortField: null,
+        sortOrder: null,
       })
-    } finally {
-      isLoading.value = false
     }
   }
 
   const createRole = async (role: Omit<Role, 'id'>): Promise<boolean> => {
     try {
-      const accessToken = authStore.accessToken
-      if (!accessToken) {
-        throw new Error('Authentication token not found. Please log in again.')
-      }
-
       await api.post<ApiResponse<Role>>('/authorization/Roles', role)
       toast.add({
         severity: 'success',
@@ -233,30 +194,18 @@ export const useRoles = (): {
         detail: 'Role created successfully.',
         life: 3000,
       })
-      await onLazyLoad({
-        first: (pageNumber.value - 1) * pageSize.value,
-        rows: pageSize.value,
-        filters: undefined,
-        sortField: null,
-        sortOrder: null,
-      })
+      if (lastLazyLoadEvent.value) await onLazyLoad(lastLazyLoadEvent.value)
       return true
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response && error.response.data?.errorValue) {
-        toast.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: error.response.data.errorValue,
-          life: 3000,
-        })
-      } else {
-        toast.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'Failed to create role.',
-          life: 3000,
-        })
-      }
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail:
+          axios.isAxiosError(error) && error.response?.data?.errorValue
+            ? error.response.data.errorValue
+            : 'Failed to create role.',
+        life: 3000,
+      })
       console.error('Error creating role:', error)
       return false
     }
@@ -264,11 +213,6 @@ export const useRoles = (): {
 
   const editRole = async (role: Role): Promise<void> => {
     try {
-      const accessToken = authStore.accessToken
-      if (!accessToken) {
-        throw new Error('Authentication token not found. Please log in again.')
-      }
-
       await api.put<ApiResponse<Role>>(`/authorization/Roles/${role.id}`, role)
       toast.add({
         severity: 'success',
@@ -276,49 +220,23 @@ export const useRoles = (): {
         detail: 'Role updated successfully.',
         life: 3000,
       })
-      await onLazyLoad({
-        first: (pageNumber.value - 1) * pageSize.value,
-        rows: pageSize.value,
-        filters: undefined,
-        sortField: null,
-        sortOrder: null,
-      })
+      if (lastLazyLoadEvent.value) await onLazyLoad(lastLazyLoadEvent.value)
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response) {
-        const errorValue = error.response.data?.errorValue
-
-        if (errorValue) {
-          toast.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: errorValue,
-            life: 3000,
-          })
-        } else {
-          toast.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'An unexpected API error occurred.',
-            life: 3000,
-          })
-        }
-      } else {
-        toast.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'An unexpected error occurred. Please try again.',
-          life: 3000,
-        })
-      }
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail:
+          axios.isAxiosError(error) && error.response?.data?.errorValue
+            ? error.response.data.errorValue
+            : 'Failed to edit role.',
+        life: 3000,
+      })
+      console.error('Error editing role:', error)
     }
   }
 
   const deleteRole = async (role: Role): Promise<boolean> => {
     try {
-      const accessToken = authStore.accessToken
-      if (!accessToken) {
-        throw new Error('Authentication token not found. Please log in again.')
-      }
       await api.delete(`/authorization/Roles/${role.id}`)
       toast.add({
         severity: 'success',
@@ -326,30 +244,18 @@ export const useRoles = (): {
         detail: 'Role deleted successfully.',
         life: 3000,
       })
-      await onLazyLoad({
-        first: (pageNumber.value - 1) * pageSize.value,
-        rows: pageSize.value,
-        filters: undefined,
-        sortField: null,
-        sortOrder: null,
-      })
+      if (lastLazyLoadEvent.value) await onLazyLoad(lastLazyLoadEvent.value)
       return true
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response && error.response.data?.errorValue) {
-        toast.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: error.response.data.errorValue,
-          life: 3000,
-        })
-      } else {
-        toast.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'Failed to delete role.',
-          life: 3000,
-        })
-      }
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail:
+          axios.isAxiosError(error) && error.response?.data?.errorValue
+            ? error.response.data.errorValue
+            : 'Failed to delete role.',
+        life: 3000,
+      })
       console.error('Error deleting role:', error)
       return false
     }

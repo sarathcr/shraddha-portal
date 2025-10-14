@@ -3,7 +3,7 @@ import { useToast } from 'primevue/usetoast'
 import { FilterMatchMode } from '@primevue/core/api'
 import type { Committee, CommitteeRole, CommitteeUser } from '@/types/commitee'
 import type { ColumnDef, RowData } from '@/types/baseTable.model'
-import type { OptionItem, UserOptionItem } from '@/types/user'
+import type { OptionItem } from '@/types/user'
 import type { ApiResponse } from '@/types/index'
 import type { DataTableFilterMeta, DataTableSortMeta } from 'primevue'
 import {
@@ -18,12 +18,13 @@ import axios, { AxiosError } from 'axios'
 import { useAuthStore } from '@/stores/auth'
 import { committeeApi } from '@/constants'
 
-export const committeeUsers: Ref<UserOptionItem[]> = ref([])
+export const committeeUsers: Ref<CommitteeUser[]> = ref([])
 export const committeeRoles: Ref<OptionItem[]> = ref([])
 
 export const getUsersData = async (): Promise<void> => {
   const users: ApiResponse<CommitteeUser[]> = await fetchUsers(-1, -1, { isActive: '= true' })
   if (users?.succeeded && users.data) {
+    committeeUsers.value = users.data
   } else {
     committeeUsers.value = []
   }
@@ -54,7 +55,7 @@ export function useCommittee(): {
   columns: ColumnDef[]
   allRows: Ref<RowData[]>
   editingRows: Ref<RowData[]>
-  committeeUsers: Ref<OptionItem[]>
+  committeeUsers: Ref<CommitteeUser[]>
   committeeRoles: Ref<OptionItem[]>
   statusOptions: { label: string; value: string }[]
   pageNumber: Ref<number>

@@ -10,7 +10,13 @@ import ToggleSwitch from 'primevue/toggleswitch'
 import DatePicker from 'primevue/datepicker'
 
 import type { Committee, CommitteeStringMembers, CommitteeUser } from '@/types/commitee'
-import { committeeRoles, getRolesData, getUsersData, useCommittee } from '../composable/useCommitte'
+import {
+  committeeRoles,
+  committeeUsers,
+  getRolesData,
+  getUsersData,
+  useCommittee,
+} from '../composable/useCommitte'
 import { committeeSchema } from '../../schemas/committeeSchema'
 import { formatDateForAPI } from '@/utils/dateUtils'
 import { CommitteeRoles } from '@/constants/committeeRoles.enum'
@@ -56,9 +62,18 @@ const selectedCoreMembers = ref<Record<string, string>>({})
 const selectedExecutiveMember = ref<string[]>([])
 
 const { addCommittee, handleEdit } = useCommittee()
+const userOptions = ref<{ label: string; value: string }[]>([])
 
 onMounted(async () => {
   await Promise.all([getRolesData(), getUsersData()])
+  userOptions.value = committeeUsers.value
+    .filter(
+      (user): user is CommitteeUser & { name: string; id: string } => !!user.name && !!user.id,
+    )
+    .map((user) => ({
+      label: user.name,
+      value: user.id,
+    }))
   const allowedRoles = ['President', 'Secretary', 'Treasurer', 'Assistant Treasurer']
   coreRoles.value = committeeRoles.value
     .filter((r) => allowedRoles.includes(r.label) && r.label !== 'Executive Committee Member')
@@ -221,10 +236,11 @@ const onCancel = (): void => {
         </div>
         <div class="w-1/2">
           <Dropdown
+            filter
             v-model="selectedCoreMembers[role.id]"
-            :options="usersByRole[role.id] || []"
-            optionLabel="fullName"
-            optionValue="userId"
+            :options="userOptions"
+            optionLabel="label"
+            optionValue="value"
             placeholder="Select User"
             class="w-full"
           />
@@ -248,9 +264,9 @@ const onCancel = (): void => {
         <div class="w-1/2">
           <MultiSelect
             v-model="selectedExecutiveMember"
-            :options="usersByRole[executiveRole.id] || []"
-            optionLabel="fullName"
-            optionValue="userId"
+            :options="userOptions"
+            optionLabel="label"
+            optionValue="value"
             placeholder="Select Users"
             class="w-full"
             display="chip"

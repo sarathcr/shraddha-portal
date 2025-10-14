@@ -21,6 +21,7 @@ import { useSlots } from 'vue'
 import Select from 'primevue/select'
 import BaseTableSkeleton from './Skelton/BaseTableSkeleton.vue'
 import { useValidation } from '@/views/admin/roles/composables/useValidation'
+import { CommitteeRoles } from '@/constants/committeeRoles.enum'
 
 const props = defineProps<{
   columns: ColumnDef[]
@@ -265,24 +266,40 @@ const getOptionLabel = (
               <p v-if="col.useDateFilter" class="text-red-500 text-xs absolute">
                 {{ validationErrors[col.key] }}
               </p>
-
               <div v-else-if="col.filterOption">
-                <Select
-                  v-model="tempRow[col.key]"
-                  :options="col.options"
-                  optionLabel="label"
-                  optionValue="value"
-                  :placeholder="col.placeholder || `Select ${col.label}`"
-                  class="w-full"
-                  @change="
-                    col.required ? validateField(col.key, tempRow[col.key], col.label) : null
+                <div
+                  v-tooltip.bottom="
+                    col.key === 'role' &&
+                    Object.values(CommitteeRoles).includes(tempRow[col.key] as CommitteeRoles)
+                      ? 'This user is under the current active committe'
+                      : ''
                   "
-                  @blur="col.required ? validateField(col.key, tempRow[col.key], col.label) : null"
-                />
+                >
+                  <Select
+                    v-model="tempRow[col.key]"
+                    :options="col.options"
+                    optionLabel="label"
+                    optionValue="value"
+                    :placeholder="col.placeholder || `Select ${col.label}`"
+                    class="w-full"
+                    :disabled="
+                      col.key === 'role' &&
+                      Object.values(CommitteeRoles).includes(tempRow[col.key] as CommitteeRoles)
+                    "
+                    @change="
+                      col.required ? validateField(col.key, tempRow[col.key], col.label) : null
+                    "
+                    @blur="
+                      col.required ? validateField(col.key, tempRow[col.key], col.label) : null
+                    "
+                  />
+                </div>
+
                 <p v-if="validationErrors[col.key]" class="text-red-500 text-xs absolute">
                   {{ validationErrors[col.key] }}
                 </p>
               </div>
+
               <div v-else-if="col.useMultiSelect">
                 <MultiSelect
                   :key="data.id"

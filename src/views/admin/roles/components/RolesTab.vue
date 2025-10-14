@@ -139,7 +139,6 @@ const columns = [
     label: 'Permissions',
     key: 'permissions',
     filterable: true,
-    filterOption: true,
     useTag: true,
     useMultiSelect: true,
     required: true,

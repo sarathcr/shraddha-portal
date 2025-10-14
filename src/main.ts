@@ -10,6 +10,7 @@ import { myPreset } from './theme-preset'
 
 import ToastService from 'primevue/toastservice'
 import ConfirmationService from 'primevue/confirmationservice'
+import Tooltip from 'primevue/tooltip'
 const app = createApp(App)
 app.use(PrimeVue, {
   theme: {
@@ -22,6 +23,7 @@ app.use(PrimeVue, {
 
 const pinia = createPinia()
 pinia.use(piniaPluginPersistedstate)
+app.directive('tooltip', Tooltip)
 app.use(pinia)
 
 app.use(router)
