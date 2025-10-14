@@ -2,7 +2,6 @@ import { ref, type Ref } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import type { User, OptionItem } from '@/types/user'
 import type { ApiResponse } from '@/types/index'
-import { useAuthStore } from '@/stores/auth'
 import type { DataTableFilterMeta, DataTableSortMeta } from 'primevue/datatable'
 import axios from 'axios'
 import type { Role } from '@/types/role'
@@ -39,8 +38,6 @@ export const useUsers = (): {
   onStatusToggle: (user: User, newStatus: boolean) => Promise<boolean>
 } => {
   const toast = useToast()
-  const authStore = useAuthStore()
-
   const users = ref<User[]>([])
   const roles = ref<OptionItem[]>([])
   const teams = ref<OptionItem[]>([])
@@ -189,23 +186,15 @@ export const useUsers = (): {
           filterMap: { isActive: '= true' },
         }),
       ])
+
       if (rolesResponse.data.succeeded && rolesResponse.data.data) {
-        roles.value = rolesResponse.data.data
-          .filter(
-            (role: Role) => !Object.values(CommitteeRoles).map(String).includes(role.roleName),
-          )
-          .map((role: Role) => ({
-            label: role.roleName,
-            value: role.id,
-          }))
+        roles.value = rolesResponse.data.data.map((role: Role) => ({
+          label: role.roleName,
+          value: role.id,
+          isCommitteeRole: Object.values(CommitteeRoles).includes(role.roleName as CommitteeRoles),
+        }))
       } else {
         roles.value = []
-        toast.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: rolesResponse.data?.message || 'Failed to load roles.',
-          life: 3000,
-        })
       }
 
       if (teamsResponse.data.succeeded && teamsResponse.data.data) {
@@ -215,21 +204,9 @@ export const useUsers = (): {
         }))
       } else {
         teams.value = []
-        toast.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: teamsResponse.data?.message || 'Failed to load teams.',
-          life: 3000,
-        })
       }
     } catch (error) {
-      toast.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'An error occurred while fetching initial data.',
-        life: 3000,
-      })
-      console.error('Initial data fetch failed:', error)
+      console.error(error)
     } finally {
       isLoading.value = false
     }
@@ -237,9 +214,6 @@ export const useUsers = (): {
 
   const createUser = async (payload: User): Promise<boolean> => {
     try {
-      const accessToken = authStore.accessToken
-      if (!accessToken) throw new Error('Authentication token not found. Please log in again.')
-
       const formattedPayload = {
         ...payload,
         dob: payload.dob ? formatDateForAPI(new Date(payload.dob)) : null,
@@ -276,10 +250,6 @@ export const useUsers = (): {
 
   const editUser = async (newData: User): Promise<void> => {
     try {
-      const accessToken = authStore.accessToken
-      if (!accessToken) {
-        throw new Error('Authentication token not found. Please log in again.')
-      }
       const formattedNewData = {
         ...newData,
         dob: newData.dob ? formatDateForAPI(new Date(newData.dob)) : null,
@@ -329,10 +299,6 @@ export const useUsers = (): {
 
   const deleteUser = async (user: User): Promise<boolean> => {
     try {
-      const accessToken = authStore.accessToken
-      if (!accessToken) {
-        throw new Error('Authentication token not found. Please log in again.')
-      }
       await api.delete(`/authorization/users/${user.id}`)
       toast.add({
         severity: 'success',
