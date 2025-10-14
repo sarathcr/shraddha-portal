@@ -1,6 +1,6 @@
 import { ref, computed, type Ref, type ComputedRef } from 'vue'
-
 import * as yup from 'yup'
+
 interface ValidationComposable {
   validationErrors: Ref<Record<string, string>>
   validateField: (field: string, value: unknown, label: string) => void
@@ -10,10 +10,31 @@ interface ValidationComposable {
 
 export const useValidation = (): ValidationComposable => {
   const validationErrors = ref<Record<string, string>>({})
-  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-  const validateField = async (field: string, value: unknown, label: string) => {
+
+  const validateField = (field: string, value: unknown, label: string): void => {
     try {
-      if (field === 'dob') {
+      const isEmpty =
+        value === null ||
+        value === undefined ||
+        (typeof value === 'string' && !value.trim()) ||
+        (Array.isArray(value) && value.length === 0)
+
+      if (isEmpty) {
+        validationErrors.value[field] = `${label} is required`
+        return
+      }
+
+      // Email validation
+      if (field === 'email' && typeof value === 'string') {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+        if (!emailRegex.test(value)) {
+          validationErrors.value[field] = `Please enter a valid ${label}`
+          return
+        }
+      }
+
+      // Date of Birth validation (>=18 years)
+      if (field === 'dob' && value instanceof Date) {
         const dobSchema = yup
           .date()
           .required(`${label} is required`)
@@ -29,7 +50,7 @@ export const useValidation = (): ValidationComposable => {
             return age >= 18
           })
 
-        await dobSchema.validate(value)
+        dobSchema.validateSync(value)
       }
 
       delete validationErrors.value[field]
