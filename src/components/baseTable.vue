@@ -271,7 +271,7 @@ const getOptionLabel = (
                   v-tooltip.bottom="
                     col.key === 'role' &&
                     Object.values(CommitteeRoles).includes(tempRow[col.key] as CommitteeRoles)
-                      ? 'This user under the current active committe'
+                      ? 'This is user under the current active committe'
                       : ''
                   "
                 >
