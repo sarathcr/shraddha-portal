@@ -265,11 +265,11 @@ const getOptionLabel = (
               <p v-if="col.useDateFilter" class="text-red-500 text-xs absolute">
                 {{ validationErrors[col.key] }}
               </p>
-
               <div v-else-if="col.filterOption">
                 <Select
                   v-model="tempRow[col.key]"
                   :options="col.options"
+                  :optionDisabled="(opt) => col.key === 'role' && opt.value !== tempRow[col.key]"
                   optionLabel="label"
                   optionValue="value"
                   :placeholder="col.placeholder || `Select ${col.label}`"
@@ -283,6 +283,7 @@ const getOptionLabel = (
                   {{ validationErrors[col.key] }}
                 </p>
               </div>
+
               <div v-else-if="col.useMultiSelect">
                 <MultiSelect
                   :key="data.id"

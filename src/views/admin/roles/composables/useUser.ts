@@ -189,23 +189,15 @@ export const useUsers = (): {
           filterMap: { isActive: '= true' },
         }),
       ])
+
       if (rolesResponse.data.succeeded && rolesResponse.data.data) {
-        roles.value = rolesResponse.data.data
-          .filter(
-            (role: Role) => !Object.values(CommitteeRoles).map(String).includes(role.roleName),
-          )
-          .map((role: Role) => ({
-            label: role.roleName,
-            value: role.id,
-          }))
+        roles.value = rolesResponse.data.data.map((role: Role) => ({
+          label: role.roleName,
+          value: role.id,
+          isCommitteeRole: Object.values(CommitteeRoles).includes(role.roleName as CommitteeRoles),
+        }))
       } else {
         roles.value = []
-        toast.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: rolesResponse.data?.message || 'Failed to load roles.',
-          life: 3000,
-        })
       }
 
       if (teamsResponse.data.succeeded && teamsResponse.data.data) {
@@ -215,21 +207,9 @@ export const useUsers = (): {
         }))
       } else {
         teams.value = []
-        toast.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: teamsResponse.data?.message || 'Failed to load teams.',
-          life: 3000,
-        })
       }
     } catch (error) {
-      toast.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'An error occurred while fetching initial data.',
-        life: 3000,
-      })
-      console.error('Initial data fetch failed:', error)
+      console.error(error)
     } finally {
       isLoading.value = false
     }
