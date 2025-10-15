@@ -266,6 +266,12 @@ const getOptionLabel = (
                       col.key === 'role' &&
                       Object.values(CommitteeRoles).includes(tempRow[col.key] as CommitteeRoles)
                     "
+                    :optionDisabled="
+                      (opt) =>
+                        col.key === 'role' &&
+                        Object.values(CommitteeRoles).includes(opt.value as CommitteeRoles) &&
+                        opt.value !== tempRow[col.key]
+                    "
                   />
                 </div>
               </div>
