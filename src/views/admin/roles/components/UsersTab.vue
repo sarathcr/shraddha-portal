@@ -13,6 +13,7 @@ import { userSchema } from '@/views/admin/schemas/userSchema'
 import * as yup from 'yup'
 import { useToast } from 'primevue'
 import { isEqual } from 'lodash'
+import { CommitteeRoles } from '@/constants/committeeRoles.enum'
 
 const {
   users,
@@ -231,6 +232,11 @@ const columns = computed((): ColumnDef[] => [
     showAddButton: false,
   },
 ])
+const isStatusDisabled = (row: User): boolean => {
+  if (!row) return false
+  const roleLabel = roles.value.find((r) => r.label === row.role)?.label
+  return roleLabel ? Object.values(CommitteeRoles).includes(roleLabel as CommitteeRoles) : false
+}
 
 onMounted(async () => {
   await fetchInitialData()
@@ -289,20 +295,28 @@ onMounted(async () => {
       </template>
 
       <template #body-isActive="{ row }">
-        <ToggleSwitch
-          v-if="editingRows.includes(row)"
-          :modelValue="editableUser?.isActive"
-          @update:modelValue="
-            (val: boolean) => {
-              if (editableUser) editableUser.isActive = val
-            }
+        <div
+          v-tooltip.bottom="
+            isStatusDisabled(row) ? 'This user is under the current active committee' : ''
           "
-        />
-        <ToggleSwitch
-          v-else
-          :modelValue="row.isActive"
-          @click.stop="(e: Event) => handleStatusClick(row, !row.isActive, e)"
-        />
+        >
+          <ToggleSwitch
+            v-if="editingRows.includes(row)"
+            :modelValue="editableUser?.isActive"
+            @update:modelValue="
+              (val: boolean) => {
+                if (editableUser) editableUser.isActive = val
+              }
+            "
+            :disabled="isStatusDisabled(row)"
+          />
+          <ToggleSwitch
+            v-else
+            :modelValue="row.isActive"
+            @click.stop="(e: Event) => handleStatusClick(row, !row.isActive, e)"
+            :disabled="isStatusDisabled(row)"
+          />
+        </div>
       </template>
 
       <template #actions="{ row }">
