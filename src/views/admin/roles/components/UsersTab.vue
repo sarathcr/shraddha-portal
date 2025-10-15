@@ -142,7 +142,7 @@ const onSave = async (newData: RowData): Promise<void> => {
         toast.add({
           severity: 'error',
           summary: 'Validation Error',
-          detail: `${err.path}: ${err.message}`,
+          detail: `${err.message}`,
           life: 5000,
         })
       })
