@@ -183,14 +183,12 @@ const onCancel = (): void => {
 
 <template>
   <form @submit.prevent="onSubmit" class="flex flex-col gap-4 pt-2 commiteeForm">
-    <div class="relative mb-2.5">
+    <div class="mb-2">
       <FloatLabel variant="on">
         <InputText id="year" v-model="year" :class="{ 'p-invalid': errors.year }" class="w-full" />
         <label for="year">Committee Year</label>
       </FloatLabel>
-      <small v-if="errors.year" class="absolute left-3 pt-0.5 text-red-500">{{
-        errors.year
-      }}</small>
+      <small v-if="errors.year" class="text-red-500">{{ errors.year }}</small>
     </div>
 
     <div class="flex gap-3 w-full">
@@ -279,7 +277,7 @@ const onCancel = (): void => {
       }}</small>
     </div>
 
-    <div class="relative mb-2.5">
+    <div class="mb-2">
       <h4 class="font-semibold mb-2">Status</h4>
       <ToggleSwitch v-model="isActive" />
     </div>

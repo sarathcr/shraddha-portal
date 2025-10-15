@@ -59,7 +59,7 @@ watch(
 </script>
 <template>
   <form @submit.prevent="onSubmit" class="flex flex-col gap-4 pt-2">
-    <div class="relative mb-2.5">
+    <div class="mb-2">
       <FloatLabel variant="on">
         <InputText
           id="roleName"
@@ -69,10 +69,10 @@ watch(
         />
         <label for="roleName">Role Name</label>
       </FloatLabel>
-      <small class="absolute left-3 pt-0.5 text-red-500">{{ errors.roleName }}</small>
+      <small class="text-red-500">{{ errors.roleName }}</small>
     </div>
 
-    <div class="relative mb-2.5">
+    <div class="mb-2">
       <FloatLabel variant="on">
         <Textarea
           id="description"
@@ -83,12 +83,10 @@ watch(
         />
         <label for="description">Role Description</label>
       </FloatLabel>
-      <small class="absolute left-3 pt-0.5 text-red-500 leading-none">{{
-        errors.description
-      }}</small>
+      <small class="text-red-500 leading-none">{{ errors.description }}</small>
     </div>
 
-    <div class="relative mb-2.5">
+    <div class="mb-2">
       <p class="font-medium mb-2">Permissions</p>
       <div class="flex flex-wrap gap-4">
         <div
@@ -100,10 +98,10 @@ watch(
           <label :for="perm" class="cursor-pointer capitalize">{{ perm }}</label>
         </div>
       </div>
-      <small class="absolute left-3 pt-0.5 text-red-500">{{ errors.permissions }}</small>
+      <small class="text-red-500">{{ errors.permissions }}</small>
     </div>
 
-    <div class="relative mb-2.5">
+    <div class="mb-2">
       <div>
         <label for="isActive">Status</label>
       </div>
