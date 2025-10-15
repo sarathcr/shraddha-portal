@@ -239,7 +239,6 @@ onMounted(async () => {
 
 <template>
   <div class="space-y-4 h-full">
-    <!-- Create User Dialog -->
     <Dialog
       v-model:visible="userFormDialogVisible"
       header="Create User"
@@ -256,8 +255,6 @@ onMounted(async () => {
         @cancel="handleUserFormCancel"
       />
     </Dialog>
-
-    <!-- Delete Confirmation Dialog -->
     <Dialog
       v-model:visible="deleteDialogVisible"
       header="Confirm Deletion"
@@ -273,8 +270,6 @@ onMounted(async () => {
         <Button label="Delete" severity="danger" @click="onPerformDelete" />
       </template>
     </Dialog>
-
-    <!-- Users Table -->
     <BaseTable
       :columns="columns"
       :rows="users"

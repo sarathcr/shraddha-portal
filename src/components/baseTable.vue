@@ -289,7 +289,8 @@ const getOptionLabel = (
                     :optionDisabled="
                       (opt) =>
                         col.key === 'role' &&
-                        Object.values(CommitteeRoles).includes(opt.label as CommitteeRoles)
+                        Object.values(CommitteeRoles).includes(opt.value as CommitteeRoles) &&
+                        opt.value !== tempRow[col.key]
                     "
                     @change="
                       col.required ? validateField(col.key, tempRow[col.key], col.label) : null
