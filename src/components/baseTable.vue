@@ -20,6 +20,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useSlots } from 'vue'
 import Select from 'primevue/select'
 import BaseTableSkeleton from './Skelton/BaseTableSkeleton.vue'
+import { CommitteeRoles } from '@/constants/committeeRoles.enum'
 
 const props = defineProps<{
   columns: ColumnDef[]
@@ -244,16 +245,31 @@ const getOptionLabel = (
                 showIcon
                 class="w-full"
               />
+
               <div v-else-if="col.filterOption">
-                <Select
-                  v-model="tempRow[col.key]"
-                  :options="col.options"
-                  optionLabel="label"
-                  optionValue="value"
-                  :placeholder="col.placeholder || `Select ${col.label}`"
-                  class="w-full"
-                />
+                <div
+                  v-tooltip.bottom="
+                    col.key === 'role' &&
+                    Object.values(CommitteeRoles).includes(tempRow[col.key] as CommitteeRoles)
+                      ? 'This user is under the current active committe'
+                      : ''
+                  "
+                >
+                  <Select
+                    v-model="tempRow[col.key]"
+                    :options="col.options"
+                    optionLabel="label"
+                    optionValue="value"
+                    :placeholder="col.placeholder || `Select ${col.label}`"
+                    class="w-full"
+                    :disabled="
+                      col.key === 'role' &&
+                      Object.values(CommitteeRoles).includes(tempRow[col.key] as CommitteeRoles)
+                    "
+                  />
+                </div>
               </div>
+
               <div v-else-if="col.useMultiSelect">
                 <MultiSelect
                   :key="data.id"
