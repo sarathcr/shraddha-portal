@@ -102,7 +102,7 @@ const onCancel = (): void => {
 
 <template>
   <form @submit.prevent="onSubmit" class="flex flex-col gap-4 pt-2">
-    <div class="relative mb-2.5">
+    <div class="mb-2">
       <FloatLabel variant="on"
         ><InputText
           id="username"
@@ -113,9 +113,9 @@ const onCancel = (): void => {
         <label for="username">User Name</label></FloatLabel
       >
 
-      <small class="absolute left-3 pt-0.5 text-red-500">{{ errors.name }}</small>
+      <small class="text-red-500">{{ errors.name }}</small>
     </div>
-    <div class="relative mb-2.5">
+    <div class="mb-2">
       <FloatLabel variant="on">
         <DatePicker
           v-model="dob"
@@ -134,10 +134,10 @@ const onCancel = (): void => {
         <label for="dob">Date of birth</label></FloatLabel
       >
 
-      <small class="absolute left-3 pt-0.5 text-red-500">{{ errors.dob }}</small>
+      <small class="text-red-500">{{ errors.dob }}</small>
     </div>
 
-    <div class="relative mb-2.5">
+    <div class="mb-2">
       <FloatLabel variant="on"
         ><InputText
           id="employeeId"
@@ -148,10 +148,10 @@ const onCancel = (): void => {
         <label for="employeeId">Employee ID</label></FloatLabel
       >
 
-      <small class="absolute left-3 pt-0.5 text-red-500">{{ errors.employeeId }}</small>
+      <small class="text-red-500">{{ errors.employeeId }}</small>
     </div>
 
-    <div class="relative mb-2.5">
+    <div class="mb-2">
       <FloatLabel variant="on"
         ><InputText
           id="email"
@@ -163,10 +163,10 @@ const onCancel = (): void => {
         <label for="email">Email</label></FloatLabel
       >
 
-      <small class="absolute left-3 pt-0.5 text-red-500">{{ errors.email }}</small>
+      <small class="text-red-500">{{ errors.email }}</small>
     </div>
 
-    <div class="relative mb-2.5">
+    <div class="mb-2">
       <FloatLabel variant="on">
         <Select
           id="team"
@@ -181,10 +181,10 @@ const onCancel = (): void => {
         <label for="team" class="font-semibold mb-2">Team</label>
       </FloatLabel>
 
-      <small class="absolute left-3 pt-0.5 text-red-500">{{ errors.team }}</small>
+      <small class="text-red-500">{{ errors.team }}</small>
     </div>
 
-    <div class="relative mb-2.5">
+    <div class="mb-2">
       <FloatLabel variant="on">
         <Select
           id="role"
@@ -198,15 +198,15 @@ const onCancel = (): void => {
         /><label for="role">Role</label>
       </FloatLabel>
 
-      <small class="absolute left-3 pt-0.5 text-red-500">{{ errors.role }}</small>
+      <small class="text-red-500">{{ errors.role }}</small>
     </div>
 
-    <div class="relative mb-2.5">
+    <div class="mb-2">
       <div>
         <label for="status">Status</label>
       </div>
       <ToggleSwitch v-model="status" :class="{ 'p-invalid': errors.status }" />
-      <small v-if="errors.status" class="left-3 pt-0.5 text-red-500">
+      <small v-if="errors.status" class="text-red-500">
         {{ errors.status }}
       </small>
     </div>
