@@ -9,7 +9,9 @@ import type { Team } from '@/types/team'
 import type { RowData } from '@/types/baseTable.model'
 import { useValidation } from '@/views/admin/roles/composables/useValidation'
 import ToggleSwitch from 'primevue/toggleswitch'
-
+import { useToast } from 'primevue'
+import * as yup from 'yup'
+import { teamSchema } from '@/views/admin/schemas/teamSchema'
 const {
   teams,
   editingRows,
@@ -24,13 +26,13 @@ const {
   onStatusToggle,
 } = useTeams()
 
-const { validationErrors, validateField, resetValidation, isSaveDisabled } = useValidation()
+const { resetValidation, isSaveDisabled } = useValidation()
 
 const teamFormDialogVisible = ref(false)
 const deleteDialogVisible = ref(false)
 const teamToDelete = ref<Team | null>(null)
 const editableTeam = ref<Team | null>(null)
-
+const toast = useToast()
 watch(
   [teamFormDialogVisible, deleteDialogVisible],
   ([isTeamFormVisible, isDeleteDialogVisible]) => {
@@ -68,22 +70,29 @@ const onEditTeam = (row: RowData): void => {
 }
 
 const onSaveTeam = async (newData: RowData): Promise<void> => {
-  columns.forEach((col) => {
-    if (col.required) {
-      validateField(col.key, newData[col.key], col.label)
+  try {
+    await teamSchema.validate(newData, { abortEarly: false })
+
+    if (editableTeam.value) {
+      newData.status = editableTeam.value.status
     }
-  })
 
-  if (Object.keys(validationErrors.value).length > 0) return
-
-  if (editableTeam.value) {
-    newData.status = editableTeam.value.status
+    await editTeam(newData as Team)
+    editingRows.value = []
+    resetValidation()
+    editableTeam.value = null
+  } catch (validationError) {
+    if (validationError instanceof yup.ValidationError) {
+      validationError.inner.forEach((err) => {
+        toast.add({
+          severity: 'error',
+          summary: 'Validation Error',
+          detail: `${err.message}`,
+          life: 5000,
+        })
+      })
+    }
   }
-
-  await editTeam(newData as Team)
-  editingRows.value = []
-  resetValidation()
-  editableTeam.value = null
 }
 
 const onCancelEdit = (): void => {

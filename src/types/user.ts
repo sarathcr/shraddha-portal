@@ -12,6 +12,7 @@ export interface User extends RowData {
 }
 
 export interface OptionItem {
+  isCommitteeRole?: boolean
   label: string
   value: string
 }

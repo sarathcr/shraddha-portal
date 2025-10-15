@@ -61,7 +61,7 @@ watch(
 
 <template>
   <form @submit.prevent="onSubmit" class="flex flex-col gap-4 pt-2">
-    <div class="relative mb-2.5">
+    <div class="mb-2">
       <FloatLabel variant="on">
         <InputText
           id="teamName"
@@ -71,10 +71,10 @@ watch(
         />
         <label for="teamName">Team Name</label>
       </FloatLabel>
-      <small class="absolute left-3 pt-0.5 text-red-500">{{ errors.teamName }}</small>
+      <small class="text-red-500">{{ errors.teamName }}</small>
     </div>
 
-    <div class="relative mb-2.5">
+    <div class="mb-2">
       <FloatLabel variant="on">
         <Textarea
           id="description"
@@ -85,17 +85,17 @@ watch(
         />
         <label for="description">Team Description</label>
       </FloatLabel>
-      <small class="absolute left-3 pt-0.5 text-red-500 leading-none">
+      <small class="text-red-500 leading-none">
         {{ errors.description }}
       </small>
     </div>
 
-    <div class="relative mb-2.5">
+    <div class="mb-2">
       <div>
         <label for="isActive">Status</label>
       </div>
       <ToggleSwitch v-model="isActive" :class="{ 'p-invalid': errors.isActive }" />
-      <small v-if="errors.isActive" class="left-3 pt-0.5 text-red-500">
+      <small v-if="errors.isActive" class="text-red-500">
         {{ errors.isActive }}
       </small>
     </div>

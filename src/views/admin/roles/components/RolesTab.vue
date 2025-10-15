@@ -9,7 +9,9 @@ import type { PermissionOptions, Role } from '@/types/role'
 import type { RowData } from '@/types/baseTable.model'
 import { useValidation } from '@/views/admin/roles/composables/useValidation'
 import ToggleSwitch from 'primevue/toggleswitch'
-
+import { roleSchema } from '@/views/admin/schemas/roleSchema'
+import * as yup from 'yup'
+import { useToast } from 'primevue/usetoast'
 const {
   roles,
   editingRows,
@@ -25,7 +27,7 @@ const {
   onLazyLoad,
 } = useRoles()
 
-const { validationErrors, validateField, resetValidation, isSaveDisabled } = useValidation()
+const { resetValidation, isSaveDisabled } = useValidation()
 
 const roleFormDialogVisible = ref(false)
 const roleFormRef = ref<InstanceType<typeof RoleForm> | null>(null)
@@ -33,7 +35,7 @@ const originalRole = ref<Role | null>(null)
 const editableRole = ref<Role | null>(null)
 const deleteDialogVisible = ref(false)
 const roleToDelete = ref<Role | null>(null)
-
+const toast = useToast()
 const permissions: PermissionOptions[] = [
   { label: 'Read', value: 'READ' },
   { label: 'Create', value: 'CREATE' },
@@ -75,23 +77,29 @@ const onEditRole = (row: RowData): void => {
 }
 
 const onSaveRole = async (newData: RowData): Promise<void> => {
-  columns.forEach((col) => {
-    if (col.required) {
-      validateField(col.key, newData[col.key], col.label)
+  try {
+    await roleSchema.validate(newData, { abortEarly: false })
+
+    if (editableRole.value) {
+      newData.isActive = editableRole.value.isActive
     }
-  })
 
-  if (Object.keys(validationErrors.value).length > 0) return
-
-  if (editableRole.value) {
-    newData.isActive = editableRole.value.isActive
-    // The permissions are already updated in newData.
+    await editRole(newData as Role)
+    editingRows.value = []
+    resetValidation()
+    editableRole.value = null
+  } catch (validationError) {
+    if (validationError instanceof yup.ValidationError) {
+      validationError.inner.forEach((err) => {
+        toast.add({
+          severity: 'error',
+          summary: 'Validation Error',
+          detail: `${err.message}`,
+          life: 5000,
+        })
+      })
+    }
   }
-
-  await editRole(newData as Role)
-  editingRows.value = []
-  resetValidation()
-  editableRole.value = null
 }
 
 const onCancelEdit = (): void => {

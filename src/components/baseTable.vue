@@ -20,7 +20,6 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useSlots } from 'vue'
 import Select from 'primevue/select'
 import BaseTableSkeleton from './Skelton/BaseTableSkeleton.vue'
-import { useValidation } from '@/views/admin/roles/composables/useValidation'
 import { CommitteeRoles } from '@/constants/committeeRoles.enum'
 
 const props = defineProps<{
@@ -45,8 +44,6 @@ const emit = defineEmits<{
 }>()
 
 const tempRow = reactive<RowData>({})
-const { validationErrors, validateField, isSaveDisabled } = useValidation()
-
 const tableFilters = ref<DataTableFilterMeta>({})
 
 const sortField = ref<string | undefined>(undefined)
@@ -57,7 +54,6 @@ const internalPageSize = ref(props.rowsPerPage ?? 10)
 
 const dynamicRowsPerPageOptions = computed((): number[] => {
   const total = props.totalRecords || 0
-
   const options = new Set<number>()
 
   options.add(internalPageSize.value)
@@ -67,13 +63,11 @@ const dynamicRowsPerPageOptions = computed((): number[] => {
     for (let i = step; i <= total; i += step) {
       options.add(i)
     }
-
     const finalMultipleOf5 = Math.ceil(total / 5) * 5
     options.add(finalMultipleOf5)
   } else {
     ;[5, 10, 20].forEach((opt) => options.add(opt))
   }
-
   return Array.from(options).sort((a, b) => a - b)
 })
 
@@ -110,16 +104,6 @@ watch(
     }
   },
   { immediate: true },
-)
-
-watch(
-  tempRow,
-  (newRow) => {
-    props.columns.forEach((col) => {
-      if (col.required) validateField(col.key, newRow[col.key], col.label)
-    })
-  },
-  { deep: true },
 )
 
 const saveEdit = (): void => {
@@ -260,12 +244,8 @@ const getOptionLabel = (
                 dateFormat="yy/mm/dd"
                 showIcon
                 class="w-full"
-                @blur="col.required ? validateField(col.key, tempRow[col.key], col.label) : null"
               />
 
-              <p v-if="col.useDateFilter" class="text-red-500 text-xs absolute">
-                {{ validationErrors[col.key] }}
-              </p>
               <div v-else-if="col.filterOption">
                 <div
                   v-tooltip.bottom="
@@ -286,18 +266,14 @@ const getOptionLabel = (
                       col.key === 'role' &&
                       Object.values(CommitteeRoles).includes(tempRow[col.key] as CommitteeRoles)
                     "
-                    @change="
-                      col.required ? validateField(col.key, tempRow[col.key], col.label) : null
-                    "
-                    @blur="
-                      col.required ? validateField(col.key, tempRow[col.key], col.label) : null
+                    :optionDisabled="
+                      (opt) =>
+                        col.key === 'role' &&
+                        Object.values(CommitteeRoles).includes(opt.value as CommitteeRoles) &&
+                        opt.value !== tempRow[col.key]
                     "
                   />
                 </div>
-
-                <p v-if="validationErrors[col.key]" class="text-red-500 text-xs absolute">
-                  {{ validationErrors[col.key] }}
-                </p>
               </div>
 
               <div v-else-if="col.useMultiSelect">
@@ -311,14 +287,7 @@ const getOptionLabel = (
                   display="chip"
                   filter
                   class="w-full"
-                  @change="
-                    col.required ? validateField(col.key, tempRow[col.key], col.label) : null
-                  "
-                  @blur="col.required ? validateField(col.key, tempRow[col.key], col.label) : null"
                 />
-                <p v-if="validationErrors[col.key]" class="text-red-500 text-xs absolute">
-                  {{ validationErrors[col.key] }}
-                </p>
               </div>
               <div v-else>
                 <ToggleSwitch
@@ -331,11 +300,7 @@ const getOptionLabel = (
                   v-model="tempRow[col.key] as string"
                   :type="col.key === 'email' ? 'email' : 'text'"
                   class="w-full"
-                  @blur="col.required ? validateField(col.key, tempRow[col.key], col.label) : null"
                 />
-                <p v-if="validationErrors[col.key]" class="text-red-500 text-xs absolute">
-                  {{ validationErrors[col.key] }}
-                </p>
               </div>
             </template>
             <template v-else>
@@ -412,13 +377,7 @@ const getOptionLabel = (
         <Column header="Actions" style="min-width: 150px">
           <template #body="{ data }">
             <div v-if="editableRow === data" class="flex gap-2">
-              <Button
-                icon="pi pi-check"
-                severity="success"
-                size="small"
-                :disabled="isSaveDisabled"
-                @click="saveEdit()"
-              />
+              <Button icon="pi pi-check" severity="success" size="small" @click="saveEdit()" />
 
               <Button icon="pi pi-times" severity="danger" size="small" @click="cancelEdit" />
             </div>

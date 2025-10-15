@@ -13,6 +13,7 @@ import { userSchema } from '@/views/admin/schemas/userSchema'
 import * as yup from 'yup'
 import { useToast } from 'primevue'
 import { isEqual } from 'lodash'
+import { CommitteeRoles } from '@/constants/committeeRoles.enum'
 
 const {
   users,
@@ -30,6 +31,7 @@ const {
   onLazyLoad,
   onStatusToggle,
 } = useUsers()
+
 const { resetValidation, isSaveDisabled } = useValidation()
 
 const userFormDialogVisible = ref(false)
@@ -40,12 +42,16 @@ const originalUser = ref<User | null>(null)
 const userFormRef = ref<InstanceType<typeof UserForm> | null>(null)
 const toast = useToast()
 
+const createRoles = ref([] as typeof roles.value)
+
 watch(userFormDialogVisible, (isVisible) => {
   if (isVisible) document.body.classList.add('no-scroll')
   else document.body.classList.remove('no-scroll')
 })
 
 const openCreateUserDialog = (): void => {
+  createRoles.value = roles.value.filter((r) => !r.isCommitteeRole)
+
   userFormDialogVisible.value = true
   userFormRef.value?.resetForm()
 }
@@ -72,6 +78,7 @@ const onEdit = (row: User): void => {
 
 const onSave = async (newData: RowData): Promise<void> => {
   if (!editableUser.value) return
+
   const originalDataToCompare = {
     name: originalUser.value?.name,
     employeeId: originalUser.value?.employeeId,
@@ -91,6 +98,7 @@ const onSave = async (newData: RowData): Promise<void> => {
     role: newData.role,
     status: editableUser.value.isActive,
   }
+
   if (isEqual(originalDataToCompare, newDataToCompare)) {
     toast.add({
       severity: 'info',
@@ -104,6 +112,7 @@ const onSave = async (newData: RowData): Promise<void> => {
     resetValidation()
     return
   }
+
   const dataToValidate = {
     name: newData.name,
     employeeId: newData.employeeId,
@@ -133,7 +142,7 @@ const onSave = async (newData: RowData): Promise<void> => {
         toast.add({
           severity: 'error',
           summary: 'Validation Error',
-          detail: `${err.path}: ${err.message}`,
+          detail: `${err.message}`,
           life: 5000,
         })
       })
@@ -166,6 +175,7 @@ const onPerformDelete = async (): Promise<void> => {
     }
   }
 }
+
 const handleStatusClick = async (
   user: User | null,
   newValue: boolean,
@@ -205,6 +215,7 @@ const columns = computed((): ColumnDef[] => [
     key: 'role',
     filterable: true,
     filterOption: true,
+    // Use full roles list for inline edit
     options: roles.value.map((r) => ({ label: r.label, value: r.label })),
     required: true,
     showFilterMatchModes: false,
@@ -221,6 +232,11 @@ const columns = computed((): ColumnDef[] => [
     showAddButton: false,
   },
 ])
+const isStatusDisabled = (row: User): boolean => {
+  if (!row) return false
+  const roleLabel = roles.value.find((r) => r.label === row.role)?.label
+  return roleLabel ? Object.values(CommitteeRoles).includes(roleLabel as CommitteeRoles) : false
+}
 
 onMounted(async () => {
   await fetchInitialData()
@@ -238,14 +254,13 @@ onMounted(async () => {
     >
       <UserForm
         ref="userFormRef"
-        :roles="roles"
+        :roles="createRoles"
         :teams="teams"
         :is-loading="isLoading"
         @submit="handleUserFormSubmit"
         @cancel="handleUserFormCancel"
       />
     </Dialog>
-
     <Dialog
       v-model:visible="deleteDialogVisible"
       header="Confirm Deletion"
@@ -261,7 +276,6 @@ onMounted(async () => {
         <Button label="Delete" severity="danger" @click="onPerformDelete" />
       </template>
     </Dialog>
-
     <BaseTable
       :columns="columns"
       :rows="users"
@@ -281,20 +295,28 @@ onMounted(async () => {
       </template>
 
       <template #body-isActive="{ row }">
-        <ToggleSwitch
-          v-if="editingRows.includes(row)"
-          :modelValue="editableUser?.isActive"
-          @update:modelValue="
-            (val: boolean) => {
-              if (editableUser) editableUser.isActive = val
-            }
+        <div
+          v-tooltip.bottom="
+            isStatusDisabled(row) ? 'This user is under the current active committee' : ''
           "
-        />
-        <ToggleSwitch
-          v-else
-          :modelValue="row.isActive"
-          @click.stop="(e: Event) => handleStatusClick(row, !row.isActive, e)"
-        />
+        >
+          <ToggleSwitch
+            v-if="editingRows.includes(row)"
+            :modelValue="editableUser?.isActive"
+            @update:modelValue="
+              (val: boolean) => {
+                if (editableUser) editableUser.isActive = val
+              }
+            "
+            :disabled="isStatusDisabled(row)"
+          />
+          <ToggleSwitch
+            v-else
+            :modelValue="row.isActive"
+            @click.stop="(e: Event) => handleStatusClick(row, !row.isActive, e)"
+            :disabled="isStatusDisabled(row)"
+          />
+        </div>
       </template>
 
       <template #actions="{ row }">
