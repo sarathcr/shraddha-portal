@@ -21,12 +21,14 @@ import { committeeApi } from '@/constants'
 export const committeeUsers: Ref<CommitteeUser[]> = ref([])
 export const committeeRoles: Ref<OptionItem[]> = ref([])
 
-export const getUsersData = async (): Promise<void> => {
+export const getUsersData = async (): Promise<CommitteeUser[]> => {
   const users: ApiResponse<CommitteeUser[]> = await fetchUsers(-1, -1, { isActive: '= true' })
   if (users?.succeeded && users.data) {
     committeeUsers.value = users.data
+    return users.data
   } else {
     committeeUsers.value = []
+    return []
   }
 }
 

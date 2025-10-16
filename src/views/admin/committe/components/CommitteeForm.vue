@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch, computed } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useForm, useField } from 'vee-validate'
 import FloatLabel from 'primevue/floatlabel'
 import Select from 'primevue/select'
@@ -10,15 +10,9 @@ import ToggleSwitch from 'primevue/toggleswitch'
 import DatePicker from 'primevue/datepicker'
 
 import type { Committee, CommitteeStringMembers, CommitteeUser } from '@/types/commitee'
-import {
-  committeeRoles,
-  committeeUsers,
-  getRolesData,
-  getUsersData,
-  useCommittee,
-} from '../composable/useCommitte'
+import { committeeRoles, getRolesData, getUsersData, useCommittee } from '../composable/useCommitte'
 import { committeeSchema } from '../../schemas/committeeSchema'
-import { formatDateForAPI } from '@/utils/dateUtils'
+import { formatDateForAPI, parseDDMMYYYY } from '@/utils/dateUtils'
 import { CommitteeRoles } from '@/constants/committeeRoles.enum'
 
 const emit = defineEmits<{
@@ -41,7 +35,7 @@ interface CommitteeForm {
   executiveMembers: CommitteeUser[]
 }
 
-const { handleSubmit, errors, resetForm } = useForm<CommitteeForm>({
+const { handleSubmit, errors } = useForm<CommitteeForm>({
   validationSchema: committeeSchema,
   validateOnMount: false,
 })
@@ -49,6 +43,7 @@ const { handleSubmit, errors, resetForm } = useForm<CommitteeForm>({
 const { value: year } = useField<string>('year')
 const { value: startDate, errorMessage: startDateError } = useField<Date | null>('startDate')
 const { value: endDate, errorMessage: endDateError } = useField<Date | null>('endDate')
+
 const { value: isActive } = useField<boolean>('isActive')
 const { value: coreMembers } = useField<CommitteeUser[]>('coreMembers')
 const { value: executiveMembers } = useField<CommitteeUser[]>('executiveMembers')
@@ -56,29 +51,33 @@ isActive.value = false
 
 const coreRoles = ref<{ id: string; name: string }[]>([])
 const executiveRole = ref<{ id: string; name: string } | null>(null)
-const usersByRole = ref<Record<string, { userId: string; fullName: string; roleId: string }[]>>({})
 
 const selectedCoreMembers = ref<Record<string, string>>({})
 const selectedExecutiveMember = ref<string[]>([])
 
-const { addCommittee, handleEdit } = useCommittee()
+const { addCommittee } = useCommittee()
 const userOptions = ref<{ label: string; value: string }[]>([])
 const isStatusDisabled = ref(true)
 
 onMounted(async () => {
-  await Promise.all([getRolesData(), getUsersData()])
-  userOptions.value = committeeUsers.value
+  const [, users] = await Promise.all([getRolesData(), getUsersData()])
+  userOptions.value = users
     .filter(
-      (user): user is CommitteeUser & { name: string; id: string } => !!user.userName && !!user.id,
+      (user): user is CommitteeUser & { name: string; roleId: string } =>
+        !!user.name && !!user.roleId,
     )
     .map((user) => ({
       label: user.name,
-      value: user.id,
+      value: user.roleId,
     }))
   const allowedRoles = ['President', 'Secretary', 'Treasurer', 'Assistant Treasurer']
-  coreRoles.value = committeeRoles.value
-    .filter((r) => allowedRoles.includes(r.label) && r.label !== 'Executive Committee Member')
-    .map((r) => ({ id: r.value, name: r.label }))
+  coreRoles.value = allowedRoles
+    .map((roleName) => {
+      const role = committeeRoles.value.find((r) => r.label === roleName)
+      return role ? { id: role.value, name: role.label } : null
+    })
+    .filter((r): r is { id: string; name: string } => r !== null)
+
   const exec = committeeRoles.value.find((r) => r.label === CommitteeRoles.ExecutiveMember)
   executiveRole.value = exec ? { id: exec.value, name: exec.label } : null
 })
@@ -97,10 +96,51 @@ watch(selectedExecutiveMember, (val) => {
     roleId: executiveRole.value?.id ?? '',
   }))
 })
+
 watch(
   () => props.committee,
   (newVal) => {
     isStatusDisabled.value = !newVal
+  },
+  { immediate: true },
+)
+
+watch(
+  () => props.committee,
+  (newCommittee) => {
+    if (!newCommittee) {
+      year.value = ''
+      startDate.value = null
+      endDate.value = null
+      isActive.value = false
+      selectedCoreMembers.value = {}
+      selectedExecutiveMember.value = []
+      return
+    }
+
+    year.value = newCommittee.year
+    startDate.value = parseDDMMYYYY(newCommittee.startDate ?? undefined)
+    endDate.value = parseDDMMYYYY(newCommittee.endDate ?? undefined)
+    isActive.value = newCommittee.isActive ?? false
+    selectedCoreMembers.value = {}
+    const committeeData = newCommittee as unknown as CommitteeStringMembers
+    if (committeeData.coreMembers) {
+      const coreNames = committeeData.coreMembers.split(',').map((n) => n.trim())
+      coreRoles.value.forEach((role, index) => {
+        const userName = coreNames[index]
+        const matchUser = userOptions.value.find((u) => u.label === userName)
+        if (matchUser) {
+          selectedCoreMembers.value[role.id] = matchUser.value
+        }
+      })
+    }
+    selectedExecutiveMember.value = []
+    if (committeeData.executiveMembers) {
+      const execNames = committeeData.executiveMembers.split(',').map((n) => n.trim())
+      selectedExecutiveMember.value = userOptions.value
+        .filter((u) => execNames.includes(u.label))
+        .map((u) => u.value)
+    }
   },
   { immediate: true },
 )
@@ -116,75 +156,16 @@ const onSubmit = handleSubmit(async (values) => {
     executiveMembers: values.executiveMembers,
   }
   if (props.committee?.id) {
-    const result = await handleEdit(apiPayload, props.committee)
-    if (result?.success) emit('submit', result.committee)
+    // const result = await handleEdit(apiPayload)
+    // if (result?.success) emit('submit', result.committee)
   } else {
     const response = await addCommittee(apiPayload)
     if (response.succeeded && response.data) emit('submit', response.data)
   }
 })
 
-const initializeForm = (): void => {
-  if (!props.committee) return
-
-  year.value = props.committee.year
-  startDate.value = props.committee.startDate ? new Date(props.committee.startDate) : null
-  endDate.value = props.committee.endDate ? new Date(props.committee.endDate) : null
-  isActive.value = props.committee.isActive ?? false
-
-  selectedCoreMembers.value = {}
-  const committeeData = props.committee as unknown as CommitteeStringMembers
-
-  if (committeeData.coreMembers) {
-    const coreNames = committeeData.coreMembers.split(',').map((n) => n.trim())
-    coreRoles.value.forEach((role) => {
-      const roleUsers = usersByRole.value[role.id] || []
-      const match = roleUsers.find((u) => coreNames.includes(u.fullName))
-      if (match) selectedCoreMembers.value[role.id] = match.userId
-    })
-  }
-
-  selectedExecutiveMember.value = []
-  if (committeeData.executiveMembers) {
-    const execNames = committeeData.executiveMembers.split(',').map((n) => n.trim())
-    const execRoleId = executiveRole.value?.id
-    if (execRoleId) {
-      const execUsers = usersByRole.value[execRoleId] || []
-      selectedExecutiveMember.value = execUsers
-        .filter((u) => execNames.includes(u.fullName))
-        .map((u) => u.userId)
-    }
-  }
-}
-
-const isDataReady = computed(
-  () => executiveRole.value !== null && Object.keys(usersByRole.value).length > 0,
-)
-
-watch(
-  [(): Committee | null | undefined => props.committee, isDataReady],
-  ([committee, ready]): void => {
-    if (committee && ready) {
-      initializeForm()
-    }
-  },
-  { immediate: true },
-)
-
-resetForm({
-  values: {
-    year: year.value,
-    startDate: startDate.value ?? null,
-    endDate: endDate.value ?? null,
-    isActive: isActive.value,
-    coreMembers: [],
-    executiveMembers: [],
-  },
-})
-
 const onCancel = (): void => {
   emit('cancel')
-  resetForm()
 }
 </script>
 

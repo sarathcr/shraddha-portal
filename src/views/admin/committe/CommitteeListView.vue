@@ -33,6 +33,9 @@ const router = useRouter()
 const userFormDialogVisible = ref(false)
 const committeeToDelete = ref<Committee | null>(null)
 const deleteDialogVisible = ref(false)
+const confirmDisableDialog = ref(false)
+const committeeToDisable = ref<Committee | null>(null)
+
 const formMode = ref<'create' | 'edit'>('create')
 const coreMemberOptions = ref<{ label: string; value: string }[]>([])
 const executiveMemberOptions = ref<{ label: string; value: string }[]>([])
@@ -62,10 +65,12 @@ const handleCommitteeFormCancel = (): void => {
 const handleViewCommittee = async (row: { id: string }): Promise<void> => {
   await router.push(`/admin/committe/${row.id}`)
 }
+
 const handleDeleteConfirmation = (row: Committee): void => {
   committeeToDelete.value = row
   deleteDialogVisible.value = true
 }
+
 const onPerformDelete = async (): Promise<void> => {
   if (committeeToDelete.value) {
     await handleDelete(committeeToDelete.value.id)
@@ -73,6 +78,7 @@ const onPerformDelete = async (): Promise<void> => {
     committeeToDelete.value = null
   }
 }
+
 const handleStatusClick = async (
   committee: Committee | null,
   newValue: boolean,
@@ -80,7 +86,11 @@ const handleStatusClick = async (
 ): Promise<void> => {
   if (!committee) return
   event.preventDefault()
-
+  if (committee.isActive && !newValue) {
+    committeeToDisable.value = committee
+    confirmDisableDialog.value = true
+    return
+  }
   try {
     const success = await onStatusToggle(committee, newValue)
     if (success) {
@@ -89,6 +99,17 @@ const handleStatusClick = async (
   } catch (error) {
     console.error('Status toggle failed:', error)
   }
+}
+
+const confirmDisable = async (): Promise<void> => {
+  if (committeeToDisable.value) {
+    const success = await onStatusToggle(committeeToDisable.value, false)
+    if (success) {
+      await fetchInitialData()
+    }
+  }
+  confirmDisableDialog.value = false
+  committeeToDisable.value = null
 }
 </script>
 
@@ -121,11 +142,26 @@ const handleStatusClick = async (
       >
         <div class="flex items-center gap-4">
           <i class="pi pi-exclamation-triangle text-red-600 text-3xl" />
-          <span>Are you sure you want to delete this user?</span>
+          <span>Are you sure you want to delete this committee?</span>
         </div>
         <template #footer>
           <Button label="Cancel" severity="secondary" @click="deleteDialogVisible = false" />
           <Button label="Delete" severity="danger" @click="onPerformDelete" />
+        </template>
+      </Dialog>
+      <Dialog
+        v-model:visible="confirmDisableDialog"
+        header="Disable Active Committee"
+        :style="{ width: '25rem' }"
+        modal
+      >
+        <div class="space-y-3 flex gap-6 items-center">
+          <i class="pi pi-exclamation-triangle text-yellow-500"></i>
+          <p>Are you sure you want to disable the currently active committee?</p>
+        </div>
+        <template #footer>
+          <Button label="Cancel" severity="secondary" @click="confirmDisableDialog = false" />
+          <Button label="OK" severity="danger" @click="confirmDisable" />
         </template>
       </Dialog>
       <BaseTable
@@ -148,12 +184,14 @@ const handleStatusClick = async (
             @click="openCreateUserDialog"
           />
         </template>
+
         <template #body-isActive="{ row }">
           <ToggleSwitch
             :modelValue="row.isActive"
-            @click.stop="(e: Event, newValue: boolean) => handleStatusClick(row, !row.isActive, e)"
+            @click.stop="(e: Event) => handleStatusClick(row, !row.isActive, e)"
           />
         </template>
+
         <template #actions="{ row }">
           <button
             @click="handleEditCommittee(row)"
