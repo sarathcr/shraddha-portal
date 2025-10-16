@@ -39,3 +39,6 @@
 .p-datatable-filter-overlay-popover {
   margin: 0px 15px;
 }
+.p-select-label {
+  white-space: break-spaces !important;
+}
