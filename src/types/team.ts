@@ -3,5 +3,5 @@ export interface Team extends RowData {
   id: string
   teamName: string
   description: string
-  status: boolean
+  isActive: boolean
 }
