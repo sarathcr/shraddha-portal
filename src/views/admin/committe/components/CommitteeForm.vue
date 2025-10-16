@@ -2,7 +2,7 @@
 import { ref, onMounted, watch, computed } from 'vue'
 import { useForm, useField } from 'vee-validate'
 import FloatLabel from 'primevue/floatlabel'
-import Dropdown from 'primevue/dropdown'
+import Select from 'primevue/select'
 import MultiSelect from 'primevue/multiselect'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
@@ -232,7 +232,7 @@ const onCancel = (): void => {
       <h4 class="font-semibold mb-2">Core Members</h4>
       <div v-for="role in coreRoles" :key="role.id" class="flex gap-3 mb-2">
         <div class="w-1/2">
-          <Dropdown
+          <Select
             :modelValue="role.id"
             :options="[role]"
             optionLabel="name"
@@ -242,7 +242,7 @@ const onCancel = (): void => {
           />
         </div>
         <div class="w-1/2">
-          <Dropdown
+          <Select
             filter
             v-model="selectedCoreMembers[role.id]"
             :options="userOptions"
@@ -259,7 +259,7 @@ const onCancel = (): void => {
       <h4 class="font-semibold mb-2">Executive Members</h4>
       <div v-if="executiveRole" class="flex gap-3 mb-2">
         <div class="w-1/2">
-          <Dropdown
+          <Select
             :modelValue="executiveRole.id"
             :options="[executiveRole]"
             optionLabel="name"

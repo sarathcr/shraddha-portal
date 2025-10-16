@@ -153,13 +153,6 @@ const handleStatusClick = async (
             :modelValue="row.isActive"
             @click.stop="(e: Event, newValue: boolean) => handleStatusClick(row, !row.isActive, e)"
           />
-          <!-- @update:modelValue="(newValue: boolean) => onStatusToggle(row, newValue)" -->
-          <!-- <ToggleSwitch
-            v-else
-            :modelValue="row.isActive"
-            @click.stop="(e: Event) => handleStatusClick(row, !row.isActive, e)"
-            :disabled="isStatusDisabled(row)"
-          /> -->
         </template>
         <template #actions="{ row }">
           <button
