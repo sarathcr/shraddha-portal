@@ -12,6 +12,8 @@ import ToggleSwitch from 'primevue/toggleswitch'
 import { roleSchema } from '@/views/admin/schemas/roleSchema'
 import * as yup from 'yup'
 import { useToast } from 'primevue/usetoast'
+import { isEqual } from 'lodash'
+
 const {
   roles,
   editingRows,
@@ -77,6 +79,40 @@ const onEditRole = (row: RowData): void => {
 }
 
 const onSaveRole = async (newData: RowData): Promise<void> => {
+  if (!editableRole.value || !originalRole.value) return
+
+  const originalDataToCompare = {
+    roleName: originalRole.value.roleName,
+    description: originalRole.value.description,
+    permissions: (originalRole.value.permissions ?? [])
+      .map((p: string | { value: string }) => (typeof p === 'string' ? p : p.value))
+      .sort(),
+    isActive: originalRole.value.isActive,
+  }
+
+  const newDataToCompare = {
+    roleName: newData.roleName,
+    description: newData.description,
+    permissions: ((newData.permissions as PermissionOptions[]) ?? [])
+      .map((p) => (typeof p === 'string' ? p : p.value))
+      .sort(),
+    isActive: editableRole.value.isActive,
+  }
+
+  if (isEqual(originalDataToCompare, newDataToCompare)) {
+    toast.add({
+      severity: 'info',
+      summary: 'No Changes',
+      detail: 'No modifications were made.',
+      life: 3000,
+    })
+    editingRows.value = []
+    editableRole.value = null
+    originalRole.value = null
+    resetValidation()
+    return
+  }
+
   try {
     await roleSchema.validate(newData, { abortEarly: false })
 
@@ -86,8 +122,9 @@ const onSaveRole = async (newData: RowData): Promise<void> => {
 
     await editRole(newData as Role)
     editingRows.value = []
-    resetValidation()
     editableRole.value = null
+    originalRole.value = null
+    resetValidation()
   } catch (validationError) {
     if (validationError instanceof yup.ValidationError) {
       validationError.inner.forEach((err) => {
@@ -111,8 +148,8 @@ const onCancelEdit = (): void => {
   }
   editingRows.value = []
   originalRole.value = null
-  resetValidation()
   editableRole.value = null
+  resetValidation()
 }
 
 const handleDeleteConfirmation = (row: RowData): void => {

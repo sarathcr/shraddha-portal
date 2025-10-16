@@ -20,7 +20,11 @@
 .p-dialog-close-button:focus-visible,
 .p-dialog-close-button:focus,
 .p-dialog-close-button:active,
-.p-dialog-close-button:focus-within {
+.p-dialog-close-button:focus-within,
+.p-toast-close-button:focus-visible,
+.p-toast-close-button:focus,
+.p-toast-close-button:active,
+.p-toast-close-button:focus-within {
   outline: none !important;
   outline-color: transparent !important;
 }
@@ -34,4 +38,7 @@
 }
 .p-datatable-filter-overlay-popover {
   margin: 0px 15px;
+}
+.p-select-label {
+  white-space: break-spaces !important;
 }

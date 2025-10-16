@@ -12,6 +12,8 @@ import ToggleSwitch from 'primevue/toggleswitch'
 import { useToast } from 'primevue'
 import * as yup from 'yup'
 import { teamSchema } from '@/views/admin/schemas/teamSchema'
+import { isEqual } from 'lodash'
+
 const {
   teams,
   editingRows,
@@ -32,6 +34,7 @@ const teamFormDialogVisible = ref(false)
 const deleteDialogVisible = ref(false)
 const teamToDelete = ref<Team | null>(null)
 const editableTeam = ref<Team | null>(null)
+const originalTeam = ref<Team | null>(null)
 const toast = useToast()
 watch(
   [teamFormDialogVisible, deleteDialogVisible],
@@ -45,7 +48,6 @@ watch(
 )
 
 const teamFormRef = ref<InstanceType<typeof TeamForm> | null>(null)
-const originalTeam = ref<Team | null>(null)
 
 const onAddNewTeam = (): void => {
   teamFormDialogVisible.value = true
@@ -70,17 +72,46 @@ const onEditTeam = (row: RowData): void => {
 }
 
 const onSaveTeam = async (newData: RowData): Promise<void> => {
+  if (!editableTeam.value || !originalTeam.value) return
+
+  const originalDataToCompare = {
+    teamName: originalTeam.value.teamName,
+    description: originalTeam.value.description,
+    isActive: originalTeam.value.isActive,
+  }
+
+  const newDataToCompare = {
+    teamName: newData.teamName,
+    description: newData.description,
+    isActive: editableTeam.value.isActive,
+  }
+
+  if (isEqual(originalDataToCompare, newDataToCompare)) {
+    toast.add({
+      severity: 'info',
+      summary: 'No Changes',
+      detail: 'No modifications were made.',
+      life: 3000,
+    })
+    editingRows.value = []
+    editableTeam.value = null
+    originalTeam.value = null
+    resetValidation()
+    return
+  }
+
   try {
     await teamSchema.validate(newData, { abortEarly: false })
 
     if (editableTeam.value) {
-      newData.status = editableTeam.value.status
+      newData.isActive = editableTeam.value.isActive
     }
 
     await editTeam(newData as Team)
     editingRows.value = []
     resetValidation()
     editableTeam.value = null
+    originalTeam.value = null
   } catch (validationError) {
     if (validationError instanceof yup.ValidationError) {
       validationError.inner.forEach((err) => {
@@ -200,20 +231,20 @@ const columns = [
       <template #table-header>
         <Button label="Add New Team" icon="pi pi-plus" severity="help" @click="onAddNewTeam" />
       </template>
-      <template #body-status="{ row }">
+      <template #body-isActive="{ row }">
         <ToggleSwitch
           v-if="editingRows.includes(row)"
-          :modelValue="editableTeam?.status"
+          :modelValue="editableTeam?.isActive"
           @update:modelValue="
             (newValue: boolean) => {
-              if (editableTeam) editableTeam.status = newValue
+              if (editableTeam) editableTeam.isActive = newValue
             }
           "
         />
         <ToggleSwitch
           v-else
-          :modelValue="row.status"
-          @update:modelValue="(newValue: boolean) => onStatusToggle(row, newValue)"
+          :modelValue="(row as Team).isActive"
+          @update:modelValue="(newValue: boolean) => onStatusToggle(row as Team, newValue)"
         />
       </template>
 

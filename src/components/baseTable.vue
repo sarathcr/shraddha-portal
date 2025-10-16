@@ -248,12 +248,14 @@ const getOptionLabel = (
 
               <div v-else-if="col.filterOption">
                 <div
-                  v-tooltip.bottom="
+                  tabindex="-1"
+                  v-tooltip.focus.top="
                     col.key === 'role' &&
                     Object.values(CommitteeRoles).includes(tempRow[col.key] as CommitteeRoles)
-                      ? 'This user is under the current active committe'
+                      ? 'This user is under the current active committee'
                       : ''
                   "
+                  class="w-full"
                 >
                   <Select
                     v-model="tempRow[col.key]"
