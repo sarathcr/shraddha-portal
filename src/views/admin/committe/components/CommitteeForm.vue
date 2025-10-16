@@ -63,12 +63,13 @@ const selectedExecutiveMember = ref<string[]>([])
 
 const { addCommittee, handleEdit } = useCommittee()
 const userOptions = ref<{ label: string; value: string }[]>([])
+const isStatusDisabled = ref(true)
 
 onMounted(async () => {
   await Promise.all([getRolesData(), getUsersData()])
   userOptions.value = committeeUsers.value
     .filter(
-      (user): user is CommitteeUser & { name: string; id: string } => !!user.name && !!user.id,
+      (user): user is CommitteeUser & { name: string; id: string } => !!user.userName && !!user.id,
     )
     .map((user) => ({
       label: user.name,
@@ -96,6 +97,13 @@ watch(selectedExecutiveMember, (val) => {
     roleId: executiveRole.value?.id ?? '',
   }))
 })
+watch(
+  () => props.committee,
+  (newVal) => {
+    isStatusDisabled.value = !newVal
+  },
+  { immediate: true },
+)
 
 const onSubmit = handleSubmit(async (values) => {
   const apiPayload = {
@@ -107,7 +115,6 @@ const onSubmit = handleSubmit(async (values) => {
     coreMembers: values.coreMembers,
     executiveMembers: values.executiveMembers,
   }
-
   if (props.committee?.id) {
     const result = await handleEdit(apiPayload, props.committee)
     if (result?.success) emit('submit', result.committee)
@@ -196,6 +203,7 @@ const onCancel = (): void => {
         <FloatLabel variant="on" class="w-full">
           <DatePicker
             v-model="startDate"
+            showIcon
             :inputClass="{ 'p-invalid': startDateError }"
             class="w-full"
             dateFormat="dd-mm-yy"
@@ -209,6 +217,7 @@ const onCancel = (): void => {
         <FloatLabel variant="on" class="w-full">
           <DatePicker
             v-model="endDate"
+            showIcon
             :inputClass="{ 'p-invalid': endDateError }"
             class="w-full"
             dateFormat="dd-mm-yy"
@@ -266,6 +275,7 @@ const onCancel = (): void => {
             optionLabel="label"
             optionValue="value"
             placeholder="Select Users"
+            filter
             class="w-full"
             display="chip"
             :inputClass="{ 'p-invalid': errors.executiveMembers }"
@@ -279,7 +289,7 @@ const onCancel = (): void => {
 
     <div class="mb-2">
       <h4 class="font-semibold mb-2">Status</h4>
-      <ToggleSwitch v-model="isActive" />
+      <ToggleSwitch v-model="isActive" :disabled="isStatusDisabled" />
     </div>
 
     <div class="flex justify-end gap-2 mt-2">

@@ -72,7 +72,7 @@ export function useCommittee(): {
   clearFilter: () => void
   fetchInitialData: () => Promise<void>
   totalRecords: Ref<number>
-  onStatusToggle: (committee: Committee, newStatus: boolean) => Promise<void>
+  onStatusToggle: (committee: Committee, newStatus: boolean) => Promise<boolean>
 } {
   const authStore = useAuthStore()
   const toast = useToast()
@@ -103,29 +103,42 @@ export function useCommittee(): {
     { label: 'Inactive', value: 'false' },
   ]
 
-  const onStatusToggle = async (committee: Committee, newStatus: boolean): Promise<void> => {
-    const originalStatus = committee.status
+  const onStatusToggle = async (committeeItem: Committee, newStatus: boolean): Promise<boolean> => {
+    if (newStatus) {
+      const anyOtherActive = committee.value.some((c) => c.isActive && c.id !== committeeItem.id)
+      if (anyOtherActive) {
+        toast.add({
+          severity: 'warn',
+          summary: 'Warning',
+          detail:
+            'Another committee is already active. Only one committee can be active at a time.',
+          life: 4000,
+        })
+        return false
+      }
+    }
+
     try {
       const accessToken = authStore.accessToken
-      if (!accessToken) {
-        throw new Error('Authentication token not found. Please log in again.')
-      }
+      if (!accessToken) throw new Error('Authentication token not found.')
 
-      await committeeApi.put(`/committee/${committee.id}/toggleStatus`, {
+      const response = await committeeApi.put(`/committee/${committeeItem.id}/toggleStatus`, {
         status: newStatus,
       })
-      committee.status = newStatus
-      toast.add({
-        severity: 'success',
-        summary: 'Success',
-        detail: 'Committee status updated successfully.',
-        life: 3000,
-      })
-      await fetchInitialData()
-    } catch (error) {
-      committee.status = originalStatus
 
-      if (axios.isAxiosError(error) && error.response && error.response.data?.errorValue) {
+      if (response && response.status === 200) {
+        toast.add({
+          severity: 'success',
+          summary: 'Success',
+          detail: 'Committee status updated successfully.',
+          life: 3000,
+        })
+        return true
+      } else {
+        return false
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.data?.errorValue) {
         toast.add({
           severity: 'error',
           summary: 'Error',
@@ -136,11 +149,12 @@ export function useCommittee(): {
         toast.add({
           severity: 'error',
           summary: 'Error',
-          detail: 'Failed to update team status.',
+          detail: 'Failed to update committee status.',
           life: 3000,
         })
       }
-      console.error('Error updating team status:', error)
+      console.error('Error updating committee status:', error)
+      return false
     }
   }
 
@@ -226,11 +240,11 @@ export function useCommittee(): {
         allRows.value = (response.data || []).map((item: Committee) => ({
           id: item.id,
           year: item.year,
-          startDate: item.startDate,
-          endDate: item.endDate,
-          coreMembers: (item.coreMembers || []).map((m: CommitteeUser) => m.name).join(', '),
+          startDate: item.startDate ?? null,
+          endDate: item.endDate ?? null,
+          coreMembers: (item.coreMembers || []).map((m: CommitteeUser) => m.userName).join(', '),
           executiveMembers: (item.executiveMembers || [])
-            .map((m: CommitteeUser) => m.name)
+            .map((m: CommitteeUser) => m.userName)
             .join(', '),
           isActive: item.isActive ?? false,
         }))

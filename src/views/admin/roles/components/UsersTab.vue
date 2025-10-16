@@ -133,7 +133,6 @@ const onSave = async (newData: RowData): Promise<void> => {
       roleId: roles.value.find((r) => r.label === newData.role)?.value ?? editableUser.value.roleId,
       isActive: editableUser.value.isActive,
     }
-
     await editUser(userToSave)
   } catch (validationError) {
     if (validationError instanceof yup.ValidationError) {
@@ -215,7 +214,6 @@ const columns = computed((): ColumnDef[] => [
     key: 'role',
     filterable: true,
     filterOption: true,
-    // Use full roles list for inline edit
     options: roles.value.map((r) => ({ label: r.label, value: r.label })),
     required: true,
     showFilterMatchModes: false,

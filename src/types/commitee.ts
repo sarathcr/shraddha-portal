@@ -101,6 +101,6 @@ export interface CommitteeUser {
   id?: string
   roleId?: string
   userId?: string
-  name?: string
+  userName?: string
   value?: string
 }

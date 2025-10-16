@@ -73,6 +73,23 @@ const onPerformDelete = async (): Promise<void> => {
     committeeToDelete.value = null
   }
 }
+const handleStatusClick = async (
+  committee: Committee | null,
+  newValue: boolean,
+  event: Event,
+): Promise<void> => {
+  if (!committee) return
+  event.preventDefault()
+
+  try {
+    const success = await onStatusToggle(committee, newValue)
+    if (success) {
+      committee.isActive = newValue
+    }
+  } catch (error) {
+    console.error('Status toggle failed:', error)
+  }
+}
 </script>
 
 <template>
@@ -134,8 +151,15 @@ const onPerformDelete = async (): Promise<void> => {
         <template #body-isActive="{ row }">
           <ToggleSwitch
             :modelValue="row.isActive"
-            @update:modelValue="(newValue: boolean) => onStatusToggle(row, newValue)"
+            @click.stop="(e: Event, newValue: boolean) => handleStatusClick(row, !row.isActive, e)"
           />
+          <!-- @update:modelValue="(newValue: boolean) => onStatusToggle(row, newValue)" -->
+          <!-- <ToggleSwitch
+            v-else
+            :modelValue="row.isActive"
+            @click.stop="(e: Event) => handleStatusClick(row, !row.isActive, e)"
+            :disabled="isStatusDisabled(row)"
+          /> -->
         </template>
         <template #actions="{ row }">
           <button
