@@ -2,6 +2,7 @@ import * as yup from 'yup'
 
 const today = new Date()
 today.setHours(0, 0, 0, 0)
+
 export const committeeSchema = yup.object({
   year: yup
     .string()
@@ -33,12 +34,15 @@ export const committeeSchema = yup.object({
       },
     ),
 
-  coreMembers: yup.array().of(
-    yup.object({
-      userId: yup.string().required(),
-      roleId: yup.string().required(),
-    }),
-  ),
+  coreMembers: yup
+    .array()
+    .of(
+      yup.object({
+        userId: yup.string().required('User is required'),
+        roleId: yup.string().required(),
+      }),
+    )
+    .min(4, 'Please select a user for all core roles'),
 
   executiveMembers: yup
     .array()

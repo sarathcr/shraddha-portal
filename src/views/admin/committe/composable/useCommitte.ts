@@ -64,10 +64,7 @@ export function useCommittee(): {
   pageSize: Ref<number>
   onLazyLoad: (event: LazyLoadEvent) => Promise<void>
   addCommittee: (payload: Committee) => Promise<ApiResponse<Committee>>
-  handleEdit: (
-    newData: Committee,
-    oldData: Committee,
-  ) => Promise<{ success: boolean; committee: Committee } | null>
+  handleEdit: (committeePayload: Committee) => Promise<Committee | null>
   handleDelete: (id: string) => Promise<{ success: boolean; message: string }>
   isLoading: Ref<boolean>
   filters: Ref<{ global: { value: string | null; matchMode: string } }>
@@ -344,13 +341,12 @@ export function useCommittee(): {
       }
     }
   }
-
-  const handleEdit = async (
-    committeePayload: Committee,
-  ): Promise<{ success: boolean; committee: Committee } | null> => {
+  const handleEdit = async (committeePayload: Committee): Promise<Committee | null> => {
     try {
       if (!committeePayload.id) throw new Error('Committee ID missing for edit')
+
       const response: Committee = await editCommittee(committeePayload.id, committeePayload)
+
       if (response && response.id) {
         const index = committee.value.findIndex((c) => c.id === response.id)
         if (index !== -1) committee.value[index] = response
@@ -362,7 +358,7 @@ export function useCommittee(): {
           life: 3000,
         })
 
-        return { success: true, committee: response }
+        return response
       } else {
         toast.add({
           severity: 'error',
@@ -370,7 +366,7 @@ export function useCommittee(): {
           detail: 'Failed to update committee.',
           life: 3000,
         })
-        return { success: false, committee: committeePayload }
+        return null
       }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Unknown error occurred'

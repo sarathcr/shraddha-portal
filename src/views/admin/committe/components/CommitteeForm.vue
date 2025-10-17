@@ -14,6 +14,7 @@ import { committeeRoles, getRolesData, getUsersData, useCommittee } from '../com
 import { committeeSchema } from '../../schemas/committeeSchema'
 import { formatDateForAPI, parseDDMMYYYY } from '@/utils/dateUtils'
 import { CommitteeRoles } from '@/constants/committeeRoles.enum'
+import type { OptionItem } from '@/types/user'
 
 const emit = defineEmits<{
   (e: 'submit', payload: Committee): void
@@ -35,6 +36,9 @@ interface CommitteeForm {
   executiveMembers: CommitteeUser[]
 }
 
+const isSubmitted = ref(false)
+const duplicateUserError = ref<string | null>(null)
+
 const { handleSubmit, errors } = useForm<CommitteeForm>({
   validationSchema: committeeSchema,
   validateOnMount: false,
@@ -43,33 +47,28 @@ const { handleSubmit, errors } = useForm<CommitteeForm>({
 const { value: year } = useField<string>('year')
 const { value: startDate, errorMessage: startDateError } = useField<Date | null>('startDate')
 const { value: endDate, errorMessage: endDateError } = useField<Date | null>('endDate')
-
 const { value: isActive } = useField<boolean>('isActive')
-const { value: coreMembers } = useField<CommitteeUser[]>('coreMembers')
-const { value: executiveMembers } = useField<CommitteeUser[]>('executiveMembers')
+const { value: coreMembers, errorMessage: coreMembersError } =
+  useField<CommitteeUser[]>('coreMembers')
+const { value: executiveMembers, errorMessage: executiveMembersError } =
+  useField<CommitteeUser[]>('executiveMembers')
 isActive.value = false
 
 const coreRoles = ref<{ id: string; name: string }[]>([])
 const executiveRole = ref<{ id: string; name: string } | null>(null)
-
 const selectedCoreMembers = ref<Record<string, string>>({})
 const selectedExecutiveMember = ref<string[]>([])
-
-const { addCommittee } = useCommittee()
 const userOptions = ref<{ label: string; value: string }[]>([])
 const isStatusDisabled = ref(true)
 
+const { addCommittee, handleEdit } = useCommittee()
+
 onMounted(async () => {
-  const [, users] = await Promise.all([getRolesData(), getUsersData()])
-  userOptions.value = users
-    .filter(
-      (user): user is CommitteeUser & { name: string; roleId: string } =>
-        !!user.name && !!user.roleId,
-    )
-    .map((user) => ({
-      label: user.name,
-      value: user.roleId,
-    }))
+  await Promise.all([getRolesData(), getUsersData()])
+  userOptions.value = (await getUsersData())
+    .filter((u): u is CommitteeUser & { name: string; id: string } => !!u.name && !!u.id)
+    .map((u) => ({ label: u.name, value: u.id }))
+
   const allowedRoles = ['President', 'Secretary', 'Treasurer', 'Assistant Treasurer']
   coreRoles.value = allowedRoles
     .map((roleName) => {
@@ -85,7 +84,9 @@ onMounted(async () => {
 watch(
   selectedCoreMembers,
   (val) => {
-    coreMembers.value = Object.entries(val).map(([roleId, userId]) => ({ roleId, userId }))
+    coreMembers.value = Object.entries(val)
+      .filter(([userId]) => userId)
+      .map(([roleId, userId]) => ({ roleId, userId }))
   },
   { deep: true },
 )
@@ -98,6 +99,37 @@ watch(selectedExecutiveMember, (val) => {
 })
 
 watch(
+  [selectedCoreMembers, selectedExecutiveMember],
+  () => {
+    const selectedUsers = new Set<string>()
+    let duplicateFound = false
+
+    for (const userId of Object.values(selectedCoreMembers.value)) {
+      if (!userId) continue
+      if (selectedUsers.has(userId)) {
+        duplicateFound = true
+        break
+      }
+      selectedUsers.add(userId)
+    }
+
+    for (const userId of selectedExecutiveMember.value) {
+      if (!userId) continue
+      if (selectedUsers.has(userId)) {
+        duplicateFound = true
+        break
+      }
+      selectedUsers.add(userId)
+    }
+
+    duplicateUserError.value = duplicateFound
+      ? 'A user cannot be assigned to multiple roles.'
+      : null
+  },
+  { deep: true },
+)
+
+watch(
   () => props.committee,
   (newVal) => {
     isStatusDisabled.value = !newVal
@@ -106,9 +138,9 @@ watch(
 )
 
 watch(
-  () => props.committee,
-  (newCommittee) => {
-    if (!newCommittee) {
+  [(): Committee | null | undefined => props.committee, (): number => userOptions.value.length],
+  ([newCommittee, userCount]) => {
+    if (!newCommittee || userCount === 0) {
       year.value = ''
       startDate.value = null
       endDate.value = null
@@ -122,18 +154,19 @@ watch(
     startDate.value = parseDDMMYYYY(newCommittee.startDate ?? undefined)
     endDate.value = parseDDMMYYYY(newCommittee.endDate ?? undefined)
     isActive.value = newCommittee.isActive ?? false
-    selectedCoreMembers.value = {}
+
     const committeeData = newCommittee as unknown as CommitteeStringMembers
+    selectedCoreMembers.value = {}
     if (committeeData.coreMembers) {
       const coreNames = committeeData.coreMembers.split(',').map((n) => n.trim())
       coreRoles.value.forEach((role, index) => {
-        const userName = coreNames[index]
-        const matchUser = userOptions.value.find((u) => u.label === userName)
-        if (matchUser) {
-          selectedCoreMembers.value[role.id] = matchUser.value
-        }
+        const matchUser = userOptions.value.find(
+          (u) => u.label.trim().toLowerCase() === coreNames[index].toLowerCase(),
+        )
+        if (matchUser) selectedCoreMembers.value[role.id] = matchUser.value
       })
     }
+
     selectedExecutiveMember.value = []
     if (committeeData.executiveMembers) {
       const execNames = committeeData.executiveMembers.split(',').map((n) => n.trim())
@@ -145,24 +178,48 @@ watch(
   { immediate: true },
 )
 
-const onSubmit = handleSubmit(async (values) => {
+const getAvailableUsers = (currentRoleId?: string): OptionItem[] => {
+  const selectedIds = new Set([
+    ...Object.entries(selectedCoreMembers.value)
+      .filter(([roleId]) => roleId !== currentRoleId)
+      .map(([, userId]) => userId),
+    ...selectedExecutiveMember.value,
+  ])
+
+  return userOptions.value.filter(
+    (u) =>
+      !selectedIds.has(u.value) ||
+      (currentRoleId
+        ? selectedCoreMembers.value[currentRoleId] === u.value
+        : selectedExecutiveMember.value.includes(u.value)),
+  )
+}
+
+const onSubmit = async (): Promise<void> => {
+  isSubmitted.value = true
+
+  const isValid = await handleSubmit(() => true)()
+  if (!isValid) return
+  if (duplicateUserError.value) return
+
   const apiPayload = {
     id: props.committee?.id ?? '',
-    year: values.year,
-    startDate: values.startDate ? formatDateForAPI(values.startDate) : null,
-    endDate: values.endDate ? formatDateForAPI(values.endDate) : null,
-    isActive: values.isActive,
-    coreMembers: values.coreMembers,
-    executiveMembers: values.executiveMembers,
+    year: year.value,
+    startDate: startDate.value ? formatDateForAPI(startDate.value) : null,
+    endDate: endDate.value ? formatDateForAPI(endDate.value) : null,
+    isActive: isActive.value,
+    coreMembers: coreMembers.value,
+    executiveMembers: executiveMembers.value,
   }
+
   if (props.committee?.id) {
-    // const result = await handleEdit(apiPayload)
-    // if (result?.success) emit('submit', result.committee)
+    const result = await handleEdit(apiPayload)
+    if (result) emit('submit', result)
   } else {
     const response = await addCommittee(apiPayload)
     if (response.succeeded && response.data) emit('submit', response.data)
   }
-})
+}
 
 const onCancel = (): void => {
   emit('cancel')
@@ -173,10 +230,15 @@ const onCancel = (): void => {
   <form @submit.prevent="onSubmit" class="flex flex-col gap-4 pt-2 commiteeForm">
     <div class="mb-2">
       <FloatLabel variant="on">
-        <InputText id="year" v-model="year" :class="{ 'p-invalid': errors.year }" class="w-full" />
+        <InputText
+          id="year"
+          v-model="year"
+          class="w-full"
+          :class="{ '!border-red-500': isSubmitted && errors.year }"
+        />
         <label for="year">Committee Year</label>
       </FloatLabel>
-      <small v-if="errors.year" class="text-red-500">{{ errors.year }}</small>
+      <small v-if="isSubmitted && errors.year" class="text-red-500">{{ errors.year }}</small>
     </div>
 
     <div class="flex gap-3 w-full">
@@ -185,13 +247,16 @@ const onCancel = (): void => {
           <DatePicker
             v-model="startDate"
             showIcon
-            :inputClass="{ 'p-invalid': startDateError }"
-            class="w-full"
+            id="startDate"
             dateFormat="dd-mm-yy"
+            :inputClass="{ '!border-red-500': isSubmitted && startDateError }"
+            class="w-full"
           />
           <label>Start Date</label>
         </FloatLabel>
-        <small v-if="startDateError" class="text-red-500">{{ startDateError }}</small>
+        <small v-if="isSubmitted && startDateError" class="text-red-500">{{
+          startDateError
+        }}</small>
       </div>
 
       <div class="w-1/2">
@@ -199,13 +264,13 @@ const onCancel = (): void => {
           <DatePicker
             v-model="endDate"
             showIcon
-            :inputClass="{ 'p-invalid': endDateError }"
-            class="w-full"
             dateFormat="dd-mm-yy"
+            :inputClass="{ '!border-red-500': isSubmitted && endDateError }"
+            class="w-full"
           />
           <label>End Date</label>
         </FloatLabel>
-        <small v-if="endDateError" class="text-red-500">{{ endDateError }}</small>
+        <small v-if="isSubmitted && endDateError" class="text-red-500">{{ endDateError }}</small>
       </div>
     </div>
 
@@ -226,14 +291,18 @@ const onCancel = (): void => {
           <Select
             filter
             v-model="selectedCoreMembers[role.id]"
-            :options="userOptions"
+            :options="getAvailableUsers(role.id)"
             optionLabel="label"
             optionValue="value"
             placeholder="Select User"
             class="w-full"
+            :class="{ 'p-invalid': isSubmitted && coreMembersError }"
           />
         </div>
       </div>
+      <small v-if="isSubmitted && coreMembersError" class="text-red-500">{{
+        coreMembersError
+      }}</small>
     </div>
 
     <div>
@@ -252,19 +321,20 @@ const onCancel = (): void => {
         <div class="w-1/2">
           <MultiSelect
             v-model="selectedExecutiveMember"
-            :options="userOptions"
+            :options="getAvailableUsers()"
             optionLabel="label"
             optionValue="value"
             placeholder="Select Users"
             filter
             class="w-full"
             display="chip"
-            :inputClass="{ 'p-invalid': errors.executiveMembers }"
+            :inputClass="{ '!border-red-500': isSubmitted && executiveMembersError }"
           />
         </div>
       </div>
-      <small v-if="errors.executiveMembers" class="text-red-500">{{
-        errors.executiveMembers
+      <small v-if="duplicateUserError" class="text-red-500">{{ duplicateUserError }}</small>
+      <small v-if="isSubmitted && executiveMembersError" class="text-red-500">{{
+        executiveMembersError
       }}</small>
     </div>
 
