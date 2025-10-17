@@ -296,7 +296,8 @@ onMounted(async () => {
 
       <template #body-isActive="{ row }">
         <div
-          v-tooltip.bottom="
+          tabindex="-1"
+          v-tooltip.focus.left="
             isStatusDisabled(row) ? 'This user is under the current active committee' : ''
           "
         >
