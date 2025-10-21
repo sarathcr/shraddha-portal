@@ -15,7 +15,6 @@ import {
   getCommittee,
 } from '../../services/committee.services'
 import axios, { AxiosError } from 'axios'
-import { useAuthStore } from '@/stores/auth'
 import { committeeApi } from '@/constants'
 
 export const committeeUsers: Ref<CommitteeUser[]> = ref([])
@@ -73,7 +72,6 @@ export function useCommittee(): {
   totalRecords: Ref<number>
   onStatusToggle: (committee: Committee, newStatus: boolean) => Promise<boolean>
 } {
-  const authStore = useAuthStore()
   const toast = useToast()
   const committee = ref<Committee[]>([])
   const allRows = ref<RowData[]>([])
@@ -118,9 +116,6 @@ export function useCommittee(): {
     }
 
     try {
-      const accessToken = authStore.accessToken
-      if (!accessToken) throw new Error('Authentication token not found.')
-
       const response = await committeeApi.put(`/committee/${committeeItem.id}/toggleStatus`, {
         status: newStatus,
       })

@@ -8,7 +8,12 @@ import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import ToggleSwitch from 'primevue/toggleswitch'
 import DatePicker from 'primevue/datepicker'
-import type { Committee, CommitteeStringMembers, CommitteeUser } from '@/types/commitee'
+import type {
+  Committee,
+  CommitteeFormData,
+  CommitteeStringMembers,
+  CommitteeUser,
+} from '@/types/commitee'
 import { committeeRoles, getRolesData, getUsersData, useCommittee } from '../composable/useCommitte'
 import { committeeSchema } from '../../schemas/committeeSchema'
 import { formatDateForAPI, parseDDMMYYYY } from '@/utils/dateUtils'
@@ -39,7 +44,7 @@ interface CommitteeForm {
 }
 
 const isSubmitted = ref(false)
-const duplicateUserError = ref<string | null>(null)
+const roleError = ref<string | null>(null)
 
 const { handleSubmit, errors } = useForm<CommitteeForm>({
   validationSchema: committeeSchema,
@@ -50,12 +55,11 @@ const { value: year } = useField<string>('year')
 const { value: startDate, errorMessage: startDateError } = useField<Date | null>('startDate')
 const { value: endDate, errorMessage: endDateError } = useField<Date | null>('endDate')
 const { value: isActive } = useField<boolean>('isActive')
-const { value: coreMembers, errorMessage: coreMembersError } =
-  useField<CommitteeUser[]>('coreMembers')
-const { value: executiveMembers, errorMessage: executiveMembersError } =
-  useField<CommitteeUser[]>('executiveMembers')
+const coreMembers = ref<CommitteeUser[]>([])
+const executiveMembers = ref<CommitteeUser[]>([])
+const coreMembersError = ref<string | null>(null)
+const executiveMembersError = ref<string | null>(null)
 isActive.value = false
-
 const coreRoles = ref<{ id: string; name: string }[]>([])
 const executiveRole = ref<{ id: string; name: string } | null>(null)
 const selectedCoreMembers = ref<Record<string, string>>({})
@@ -127,9 +131,7 @@ watch(
       selectedUsers.add(userId)
     }
 
-    duplicateUserError.value = duplicateFound
-      ? 'A user cannot be assigned to multiple roles.'
-      : null
+    roleError.value = duplicateFound ? 'A user cannot be assigned to multiple roles.' : null
   },
   { deep: true },
 )
@@ -141,17 +143,27 @@ watch(
   },
   { immediate: true },
 )
-
+const getInitialCommitteeData = (): CommitteeFormData => ({
+  year: '',
+  startDate: null,
+  endDate: null,
+  isActive: false,
+  coreMembers: [],
+  executiveMembers: [],
+  selectedCoreMembers: {},
+  selectedExecutiveMember: [],
+})
 watch(
   [(): Committee | null | undefined => props.committee, (): number => userOptions.value.length],
-  ([newCommittee, userCount]) => {
+  ([newCommittee, userCount]: [Committee | null | undefined, number]): void => {
     if (!newCommittee || userCount === 0) {
-      year.value = ''
-      startDate.value = null
-      endDate.value = null
-      isActive.value = false
-      selectedCoreMembers.value = {}
-      selectedExecutiveMember.value = []
+      const initial = getInitialCommitteeData()
+      year.value = initial.year
+      startDate.value = initial.startDate
+      endDate.value = initial.endDate
+      isActive.value = initial.isActive
+      selectedCoreMembers.value = initial.selectedCoreMembers
+      selectedExecutiveMember.value = initial.selectedExecutiveMember
       return
     }
 
@@ -161,12 +173,13 @@ watch(
     isActive.value = newCommittee.isActive ?? false
 
     const committeeData = newCommittee as unknown as CommitteeStringMembers
+
     selectedCoreMembers.value = {}
     if (committeeData.coreMembers) {
       const coreNames = committeeData.coreMembers.split(',').map((n) => n.trim())
       coreRoles.value.forEach((role, index) => {
         const matchUser = userOptions.value.find(
-          (u) => u.label.trim().toLowerCase() === coreNames[index].toLowerCase(),
+          (u) => u.label.trim().toLowerCase() === coreNames[index]?.toLowerCase(),
         )
         if (matchUser) selectedCoreMembers.value[role.id] = matchUser.value
       })
@@ -204,8 +217,7 @@ const onSubmit = async (): Promise<void> => {
   isSubmitted.value = true
 
   const isValid = await handleSubmit(() => true)()
-  if (!isValid) return
-  if (duplicateUserError.value) return
+  if (!isValid || roleError.value) return
 
   const apiPayload = {
     id: props.committee?.id ?? '',
@@ -217,13 +229,13 @@ const onSubmit = async (): Promise<void> => {
     executiveMembers: executiveMembers.value,
   }
 
-  if (props.committee?.id) {
-    const result = await handleEdit(apiPayload)
-    if (result) emit('submit', result)
-  } else {
-    const response = await addCommittee(apiPayload)
-    if (response.succeeded && response.data) emit('submit', response.data)
-  }
+  const result = props.committee?.id
+    ? await handleEdit(apiPayload)
+    : await (
+        await addCommittee(apiPayload)
+      )?.data
+
+  if (result) emit('submit', result)
 }
 
 const onCancel = (): void => {
@@ -344,7 +356,7 @@ const onCancel = (): void => {
             />
           </div>
         </div>
-        <small v-if="duplicateUserError" class="text-red-500">{{ duplicateUserError }}</small>
+        <small v-if="roleError" class="text-red-500">{{ roleError }}</small>
         <small v-if="isSubmitted && executiveMembersError" class="text-red-500">{{
           executiveMembersError
         }}</small>
