@@ -345,32 +345,25 @@ export function useCommittee(): {
     try {
       if (!committeePayload.id) throw new Error('Committee ID missing for edit')
 
-      const response: Committee = await editCommittee(committeePayload.id, committeePayload)
+      const response = await editCommittee(committeePayload.id, committeePayload)
+      const index = committee.value.findIndex((c) => c.id === response.id)
+      if (index !== -1) committee.value[index] = response
+      toast.add({
+        severity: 'success',
+        summary: 'Success',
+        detail: `Committee for year ${response.year} updated successfully.`,
+        life: 3000,
+      })
 
-      if (response && response.id) {
-        const index = committee.value.findIndex((c) => c.id === response.id)
-        if (index !== -1) committee.value[index] = response
-
-        toast.add({
-          severity: 'success',
-          summary: 'Success',
-          detail: `Committee for year ${response.year} updated successfully.`,
-          life: 3000,
-        })
-
-        return response
-      } else {
-        toast.add({
-          severity: 'error',
-          summary: 'Update Failed',
-          detail: 'Failed to update committee.',
-          life: 3000,
-        })
-        return null
-      }
+      return response
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Unknown error occurred'
-      toast.add({ severity: 'error', summary: 'Error', detail: message, life: 3000 })
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: message,
+        life: 3000,
+      })
       return null
     }
   }

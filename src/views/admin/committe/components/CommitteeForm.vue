@@ -296,7 +296,6 @@ const onCancel = (): void => {
             optionValue="value"
             placeholder="Select User"
             class="w-full"
-            :class="{ 'p-invalid': isSubmitted && coreMembersError }"
           />
         </div>
       </div>
@@ -328,7 +327,6 @@ const onCancel = (): void => {
             filter
             class="w-full"
             display="chip"
-            :inputClass="{ '!border-red-500': isSubmitted && executiveMembersError }"
           />
         </div>
       </div>
