@@ -276,8 +276,8 @@ const onCancel = (): void => {
 
     <div>
       <h4 class="font-semibold mb-2">Core Members</h4>
-      <div v-for="role in coreRoles" :key="role.id" class="flex gap-3 mb-2">
-        <div class="w-1/2">
+      <div v-for="role in coreRoles" :key="role.id" class="flex flex-col md:flex-row gap-3 mb-2">
+        <div class="w-full md:w-1/2">
           <Select
             :modelValue="role.id"
             :options="[role]"
@@ -287,7 +287,7 @@ const onCancel = (): void => {
             class="w-full"
           />
         </div>
-        <div class="w-1/2">
+        <div class="w-full md:w-1/2">
           <Select
             filter
             v-model="selectedCoreMembers[role.id]"
@@ -306,8 +306,8 @@ const onCancel = (): void => {
 
     <div>
       <h4 class="font-semibold mb-2">Executive Members</h4>
-      <div v-if="executiveRole" class="flex gap-3 mb-2">
-        <div class="w-1/2">
+      <div v-if="executiveRole" class="flex flex-col md:flex-row gap-3 mb-2">
+        <div class="w-full md:w-1/2">
           <Select
             :modelValue="executiveRole.id"
             :options="[executiveRole]"
@@ -317,7 +317,7 @@ const onCancel = (): void => {
             class="w-full"
           />
         </div>
-        <div class="w-1/2">
+        <div class="w-full md:w-1/2">
           <MultiSelect
             v-model="selectedExecutiveMember"
             :options="getAvailableUsers()"
