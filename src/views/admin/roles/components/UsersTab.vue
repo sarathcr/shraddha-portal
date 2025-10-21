@@ -45,8 +45,19 @@ const toast = useToast()
 const createRoles = ref([] as typeof roles.value)
 
 watch(userFormDialogVisible, (isVisible) => {
-  if (isVisible) document.body.classList.add('no-scroll')
-  else document.body.classList.remove('no-scroll')
+  if (isVisible) {
+    document.body.classList.add('no-scroll')
+  } else {
+    document.body.classList.remove('no-scroll')
+    setTimeout(() => {
+      const tabHeader = document.querySelector('.p-tablist') as HTMLElement | null
+      if (tabHeader) {
+        tabHeader.style.display = 'none'
+        void tabHeader.offsetHeight
+        tabHeader.style.display = ''
+      }
+    }, 50)
+  }
 })
 
 const openCreateUserDialog = (): void => {
