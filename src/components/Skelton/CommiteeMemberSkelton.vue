@@ -3,16 +3,14 @@ import Skeleton from 'primevue/skeleton'
 </script>
 
 <template>
-  <div
-    class="bg-white w-full p-4 min-h-[120px] rounded-md shadow-md hover:bg-gray-50 transition relative"
-  >
-    <div class="absolute top-4 right-4 p-3 rounded-md">
-      <Skeleton shape="circle" size="2rem" />
-    </div>
-    <div class="flex flex-col justify-between h-full pr-16">
-      <Skeleton height="1.25rem" width="40%" class="mb-2" />
-      <Skeleton height="2rem" width="60%" class="mb-2" />
-      <Skeleton height="1rem" width="50%" />
+  <div class="flex flex-col gap-3">
+    <div v-for="i in 4" :key="i" class="flex flex-col md:flex-row gap-3 mb-2">
+      <div class="w-full md:w-1/2">
+        <Skeleton height="2.5rem" class="w-full rounded-md" />
+      </div>
+      <div class="w-full md:w-1/2">
+        <Skeleton height="2.5rem" class="w-full rounded-md" />
+      </div>
     </div>
   </div>
 </template>

@@ -8,13 +8,14 @@ import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import ToggleSwitch from 'primevue/toggleswitch'
 import DatePicker from 'primevue/datepicker'
-
 import type { Committee, CommitteeStringMembers, CommitteeUser } from '@/types/commitee'
 import { committeeRoles, getRolesData, getUsersData, useCommittee } from '../composable/useCommitte'
 import { committeeSchema } from '../../schemas/committeeSchema'
 import { formatDateForAPI, parseDDMMYYYY } from '@/utils/dateUtils'
 import { CommitteeRoles } from '@/constants/committeeRoles.enum'
 import type { OptionItem } from '@/types/user'
+import CommitteeMemberSkelton from '@/components/Skelton/CommiteeMemberSkelton.vue'
+import CommiteeExecutiveSkelton from '@/components/Skelton/CommiteeExecutiveSkelton.vue'
 
 const emit = defineEmits<{
   (e: 'submit', payload: Committee): void
@@ -26,7 +27,8 @@ const props = defineProps<{
   executivemembers: { label: string; value: string }[]
   committee?: Committee | null
 }>()
-
+const isLoadingCoremembers = ref(true)
+const isLoadingExecutiveMemebers = ref(true)
 interface CommitteeForm {
   year: string
   startDate?: Date | null
@@ -65,6 +67,7 @@ const { addCommittee, handleEdit } = useCommittee()
 
 onMounted(async () => {
   await Promise.all([getRolesData(), getUsersData()])
+
   userOptions.value = (await getUsersData())
     .filter((u): u is CommitteeUser & { name: string; id: string } => !!u.name && !!u.id)
     .map((u) => ({ label: u.name, value: u.id }))
@@ -79,6 +82,8 @@ onMounted(async () => {
 
   const exec = committeeRoles.value.find((r) => r.label === CommitteeRoles.ExecutiveMember)
   executiveRole.value = exec ? { id: exec.value, name: exec.label } : null
+  isLoadingCoremembers.value = false
+  isLoadingExecutiveMemebers.value = false
 })
 
 watch(
@@ -273,67 +278,77 @@ const onCancel = (): void => {
         <small v-if="isSubmitted && endDateError" class="text-red-500">{{ endDateError }}</small>
       </div>
     </div>
-
     <div>
       <h4 class="font-semibold mb-2">Core Members</h4>
-      <div v-for="role in coreRoles" :key="role.id" class="flex flex-col md:flex-row gap-3 mb-2">
-        <div class="w-full md:w-1/2">
-          <Select
-            :modelValue="role.id"
-            :options="[role]"
-            optionLabel="name"
-            optionValue="id"
-            disabled
-            class="w-full"
-          />
-        </div>
-        <div class="w-full md:w-1/2">
-          <Select
-            filter
-            v-model="selectedCoreMembers[role.id]"
-            :options="getAvailableUsers(role.id)"
-            optionLabel="label"
-            optionValue="value"
-            placeholder="Select User"
-            class="w-full"
-          />
-        </div>
+      <div v-if="isLoadingCoremembers">
+        <CommitteeMemberSkelton :key="'exec-skel'" />
       </div>
-      <small v-if="isSubmitted && coreMembersError" class="text-red-500">{{
-        coreMembersError
-      }}</small>
-    </div>
 
+      <div v-else>
+        <div v-for="role in coreRoles" :key="role.id" class="flex flex-col md:flex-row gap-3 mb-2">
+          <div class="w-full md:w-1/2">
+            <Select
+              :modelValue="role.id"
+              :options="[role]"
+              optionLabel="name"
+              optionValue="id"
+              disabled
+              class="w-full"
+            />
+          </div>
+          <div class="w-full md:w-1/2">
+            <Select
+              filter
+              v-model="selectedCoreMembers[role.id]"
+              :options="getAvailableUsers(role.id)"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Select User"
+              class="w-full"
+            />
+          </div>
+        </div>
+        <small v-if="isSubmitted && coreMembersError" class="text-red-500">{{
+          coreMembersError
+        }}</small>
+      </div>
+    </div>
     <div>
       <h4 class="font-semibold mb-2">Executive Members</h4>
-      <div v-if="executiveRole" class="flex flex-col md:flex-row gap-3 mb-2">
-        <div class="w-full md:w-1/2">
-          <Select
-            :modelValue="executiveRole.id"
-            :options="[executiveRole]"
-            optionLabel="name"
-            optionValue="id"
-            disabled
-            class="w-full"
-          />
-        </div>
-        <div class="w-full md:w-1/2">
-          <MultiSelect
-            v-model="selectedExecutiveMember"
-            :options="getAvailableUsers()"
-            optionLabel="label"
-            optionValue="value"
-            placeholder="Select Users"
-            filter
-            class="w-full"
-            display="chip"
-          />
-        </div>
+      <div v-if="isLoadingExecutiveMemebers">
+        <CommiteeExecutiveSkelton :key="'exec-skel'" />
       </div>
-      <small v-if="duplicateUserError" class="text-red-500">{{ duplicateUserError }}</small>
-      <small v-if="isSubmitted && executiveMembersError" class="text-red-500">{{
-        executiveMembersError
-      }}</small>
+
+      <div v-else>
+        <div v-if="executiveRole" class="flex flex-col md:flex-row gap-3 mb-2">
+          <div class="w-full md:w-1/2">
+            <Select
+              :modelValue="executiveRole.id"
+              :options="[executiveRole]"
+              optionLabel="name"
+              optionValue="id"
+              disabled
+              class="w-full"
+            />
+          </div>
+          <div class="w-full md:w-1/2">
+            <MultiSelect
+              v-model="selectedExecutiveMember"
+              :options="getAvailableUsers()"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Select Users"
+              filter
+              class="w-full"
+              display="chip"
+            />
+          </div>
+        </div>
+        <small v-if="duplicateUserError" class="text-red-500">{{ duplicateUserError }}</small>
+        <small v-if="isSubmitted && executiveMembersError" class="text-red-500">{{
+          executiveMembersError
+        }}</small>
+      </div>
     </div>
 
     <div class="mb-2">
