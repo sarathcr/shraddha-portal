@@ -46,19 +46,20 @@ interface CommitteeForm {
 const isSubmitted = ref(false)
 const roleError = ref<string | null>(null)
 
+const isEditMode = ref(!!props.committee?.id)
 const { handleSubmit, errors } = useForm<CommitteeForm>({
-  validationSchema: committeeSchema,
-  validateOnMount: false,
+  validationSchema: committeeSchema(isEditMode.value),
 })
 
 const { value: year } = useField<string>('year')
 const { value: startDate, errorMessage: startDateError } = useField<Date | null>('startDate')
 const { value: endDate, errorMessage: endDateError } = useField<Date | null>('endDate')
 const { value: isActive } = useField<boolean>('isActive')
-const coreMembers = ref<CommitteeUser[]>([])
-const executiveMembers = ref<CommitteeUser[]>([])
-const coreMembersError = ref<string | null>(null)
-const executiveMembersError = ref<string | null>(null)
+const { value: coreMembers, errorMessage: coreMembersError } =
+  useField<CommitteeUser[]>('coreMembers')
+const { value: executiveMembers, errorMessage: executiveMembersError } =
+  useField<CommitteeUser[]>('executiveMembers')
+isActive.value = false
 isActive.value = false
 const coreRoles = ref<{ id: string; name: string }[]>([])
 const executiveRole = ref<{ id: string; name: string } | null>(null)
