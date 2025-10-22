@@ -377,6 +377,7 @@ export function useCommittee(): {
       if (!id) throw new Error('Committee ID missing for delete')
 
       const response = await deleteCommittee(id)
+
       if (response.success) {
         await fetchInitialData()
         toast.add({
@@ -385,7 +386,7 @@ export function useCommittee(): {
           detail: response.message || 'Committee deleted successfully.',
           life: 3000,
         })
-        return { success: true, message: response.message }
+        return { success: true, message: response.message || 'Committee deleted successfully.' }
       } else {
         toast.add({
           severity: 'error',
@@ -396,11 +397,26 @@ export function useCommittee(): {
         return { success: false, message: response.message || 'Delete failed' }
       }
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : 'Unknown error occurred during delete'
-      toast.add({ severity: 'error', summary: 'Error', detail: message, life: 3000 })
+      let errorMessage = 'An error occurred while deleting committee.'
 
-      return { success: false, message }
+      if (axios.isAxiosError(error)) {
+        errorMessage =
+          error.response?.data?.errorValue ||
+          error.response?.data?.message ||
+          error.message ||
+          errorMessage
+      } else if (error instanceof Error) {
+        errorMessage = error.message
+      }
+
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: errorMessage,
+        life: 3000,
+      })
+      console.error('API call failed:', error)
+      return { success: false, message: errorMessage }
     }
   }
 
