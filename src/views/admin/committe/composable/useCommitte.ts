@@ -92,7 +92,15 @@ export function useCommittee(): {
     { label: 'End Date', key: 'endDate', filterable: true, useDateFilter: true },
     { label: 'Core Members', key: 'coreMembers', filterable: true },
     { label: 'Executive Members', key: 'executiveMembers', filterable: true },
-    { label: 'Status', key: 'isActive', filterable: true, useToggle: true },
+    {
+      label: 'Status',
+      key: 'isActive',
+      filterable: true,
+      useToggle: true,
+      showFilterMatchModes: false,
+      showFilterOperator: false,
+      showAddButton: false,
+    },
   ]
 
   const statusOptions = [
@@ -322,7 +330,7 @@ export function useCommittee(): {
         message = axiosErr.response.data.errorValue
       }
 
-      toast.add({ severity: 'error', summary: 'Error', detail: message })
+      toast.add({ severity: 'error', summary: 'Error', detail: message, life: 3000 })
       error.value = message
 
       return {
