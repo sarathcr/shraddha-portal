@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { ColumnDef, RowData } from '@/types/baseTable.model'
-import { formatDateForUI } from '@/utils/dateUtils'
 import { FilterMatchMode, FilterOperator } from '@primevue/core/api'
 import type {
   DataTablePageEvent,
@@ -241,7 +240,7 @@ const getOptionLabel = (
               <DatePicker
                 v-if="col.useDateFilter"
                 v-model="tempRow[col.key] as Date | null"
-                dateFormat="yy/mm/dd"
+                dateFormat="dd/mm/yy"
                 showIcon
                 class="w-full"
               />
@@ -306,7 +305,7 @@ const getOptionLabel = (
               </div>
             </template>
             <template v-else>
-              <span v-if="col.useDateFilter">{{ formatDateForUI(data[col.key]) }}</span>
+              <span v-if="col.useDateFilter">{{ data[col.key] }}</span>
               <template v-else-if="col.useMultiSelect">
                 <div class="flex flex-wrap gap-1">
                   <Tag
@@ -342,8 +341,8 @@ const getOptionLabel = (
               <DatePicker
                 v-else-if="col.useDateFilter"
                 v-model="filterModel.value"
-                dateFormat="mm/dd/yy"
-                placeholder="mm/dd/yyyy"
+                dateFormat="dd-mm-yy"
+                placeholder="dd-mm-yyyy"
                 showIcon
                 class="w-full"
               />

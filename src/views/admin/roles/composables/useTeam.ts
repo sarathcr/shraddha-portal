@@ -2,7 +2,6 @@ import { ref, type Ref } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import type { Team } from '@/types/team'
 import type { ApiResponse } from '@/types/index'
-import { useAuthStore } from '@/stores/auth'
 import type { DataTableFilterMeta, DataTableSortMeta } from 'primevue/datatable'
 import axios from 'axios'
 import { api } from '@/constants'
@@ -33,7 +32,6 @@ export const useTeams = (): {
   onStatusToggle: (team: Team, newStatus: boolean) => Promise<void>
 } => {
   const toast = useToast()
-  const authStore = useAuthStore()
   const lastLazyLoadEvent = ref<LazyLoadEvent | null>(null)
   const teams = ref<Team[]>([])
   const isLoading = ref<boolean>(false)
@@ -45,11 +43,6 @@ export const useTeams = (): {
   const onStatusToggle = async (team: Team, newStatus: boolean): Promise<void> => {
     const originalStatus = team.status
     try {
-      const accessToken = authStore.accessToken
-      if (!accessToken) {
-        throw new Error('Authentication token not found. Please log in again.')
-      }
-
       await api.put(`/authorization/Departments/${team.id}/status`, { status: newStatus })
       team.status = newStatus
       toast.add({
@@ -188,11 +181,6 @@ export const useTeams = (): {
 
   const createTeam = async (team: Omit<Team, 'id'>): Promise<boolean> => {
     try {
-      const accessToken = authStore.accessToken
-      if (!accessToken) {
-        throw new Error('Authentication token not found. Please log in again.')
-      }
-
       await api.post<ApiResponse<Team>>('/authorization/Departments', team)
       toast.add({
         severity: 'success',
@@ -228,11 +216,6 @@ export const useTeams = (): {
 
   const editTeam = async (team: Team): Promise<void> => {
     try {
-      const accessToken = authStore.accessToken
-      if (!accessToken) {
-        throw new Error('Authentication token not found. Please log in again.')
-      }
-
       await api.put<ApiResponse<Team>>(`/authorization/Departments/${team.id}`, team)
       toast.add({
         severity: 'success',
@@ -275,10 +258,6 @@ export const useTeams = (): {
 
   const deleteTeam = async (team: Team): Promise<boolean> => {
     try {
-      const accessToken = authStore.accessToken
-      if (!accessToken) {
-        throw new Error('Authentication token not found. Please log in again.')
-      }
       await api.delete(`/authorization/Departments/${team.id}`)
       toast.add({
         severity: 'success',

@@ -45,8 +45,19 @@ const toast = useToast()
 const createRoles = ref([] as typeof roles.value)
 
 watch(userFormDialogVisible, (isVisible) => {
-  if (isVisible) document.body.classList.add('no-scroll')
-  else document.body.classList.remove('no-scroll')
+  if (isVisible) {
+    document.body.classList.add('no-scroll')
+  } else {
+    document.body.classList.remove('no-scroll')
+    setTimeout(() => {
+      const tabHeader = document.querySelector('.p-tablist') as HTMLElement | null
+      if (tabHeader) {
+        tabHeader.style.display = 'none'
+        void tabHeader.offsetHeight
+        tabHeader.style.display = ''
+      }
+    }, 50)
+  }
 })
 
 const openCreateUserDialog = (): void => {
@@ -133,7 +144,6 @@ const onSave = async (newData: RowData): Promise<void> => {
       roleId: roles.value.find((r) => r.label === newData.role)?.value ?? editableUser.value.roleId,
       isActive: editableUser.value.isActive,
     }
-
     await editUser(userToSave)
   } catch (validationError) {
     if (validationError instanceof yup.ValidationError) {
@@ -215,7 +225,6 @@ const columns = computed((): ColumnDef[] => [
     key: 'role',
     filterable: true,
     filterOption: true,
-    // Use full roles list for inline edit
     options: roles.value.map((r) => ({ label: r.label, value: r.label })),
     required: true,
     showFilterMatchModes: false,

@@ -99,8 +99,19 @@ export interface CommitteeRole {
 
 export interface CommitteeUser {
   id?: string
-  roleId?: string
-  userId?: string
+  roleId: string
+  userId: string
+  userName?: string
   name?: string
   value?: string
+}
+export interface CommitteeFormData {
+  year: string
+  startDate: Date | null
+  endDate: Date | null
+  isActive: boolean
+  coreMembers: CommitteeUser[]
+  executiveMembers: CommitteeUser[]
+  selectedCoreMembers: Record<string, string>
+  selectedExecutiveMember: string[]
 }
