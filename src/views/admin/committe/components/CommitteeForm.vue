@@ -140,10 +140,15 @@ watch(
 watch(
   () => props.committee,
   (newVal) => {
-    isStatusDisabled.value = !newVal
+    if (!newVal) {
+      isStatusDisabled.value = true
+    } else {
+      isStatusDisabled.value = !!newVal.id
+    }
   },
   { immediate: true },
 )
+
 const getInitialCommitteeData = (): CommitteeFormData => ({
   year: '',
   startDate: null,
