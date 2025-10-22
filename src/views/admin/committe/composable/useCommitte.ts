@@ -392,7 +392,7 @@ export function useCommittee(): {
           severity: 'error',
           summary: 'Delete Failed',
           detail: response.message || 'Failed to delete committee.',
-          life: 4000,
+          life: 3000,
         })
         return { success: false, message: response.message || 'Delete failed' }
       }
