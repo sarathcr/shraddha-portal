@@ -34,32 +34,23 @@ const props = defineProps<{
 }>()
 const isLoadingCoremembers = ref(true)
 const isLoadingExecutiveMemebers = ref(true)
-interface CommitteeForm {
-  year: string
-  startDate?: Date | null
-  endDate?: Date | null
-  isActive: boolean
-  coreMembers: CommitteeUser[]
-  executiveMembers: CommitteeUser[]
-}
 
 const isSubmitted = ref(false)
 const roleError = ref<string | null>(null)
 
-const { handleSubmit, errors } = useForm<CommitteeForm>({
-  validationSchema: committeeSchema,
-  validateOnMount: false,
+const isEditMode = ref(!!props.committee?.id)
+const { handleSubmit, errors } = useForm<CommitteeFormData>({
+  validationSchema: committeeSchema(isEditMode.value),
 })
 
 const { value: year } = useField<string>('year')
 const { value: startDate, errorMessage: startDateError } = useField<Date | null>('startDate')
 const { value: endDate, errorMessage: endDateError } = useField<Date | null>('endDate')
 const { value: isActive } = useField<boolean>('isActive')
-const coreMembers = ref<CommitteeUser[]>([])
-const executiveMembers = ref<CommitteeUser[]>([])
-const coreMembersError = ref<string | null>(null)
-const executiveMembersError = ref<string | null>(null)
-isActive.value = false
+const { value: coreMembers, errorMessage: coreMembersError } =
+  useField<CommitteeUser[]>('coreMembers')
+const { value: executiveMembers, errorMessage: executiveMembersError } =
+  useField<CommitteeUser[]>('executiveMembers')
 const coreRoles = ref<{ id: string; name: string }[]>([])
 const executiveRole = ref<{ id: string; name: string } | null>(null)
 const selectedCoreMembers = ref<Record<string, string>>({})
@@ -139,10 +130,15 @@ watch(
 watch(
   () => props.committee,
   (newVal) => {
-    isStatusDisabled.value = !newVal
+    if (!newVal) {
+      isStatusDisabled.value = true
+    } else {
+      isStatusDisabled.value = !!newVal.id
+    }
   },
   { immediate: true },
 )
+
 const getInitialCommitteeData = (): CommitteeFormData => ({
   year: '',
   startDate: null,

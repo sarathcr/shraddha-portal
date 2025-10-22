@@ -301,6 +301,7 @@ export function useCommittee(): {
         severity: 'success',
         summary: 'Success',
         detail: 'Committee created successfully',
+        life: 3000,
       })
 
       return {
@@ -346,7 +347,7 @@ export function useCommittee(): {
       toast.add({
         severity: 'success',
         summary: 'Success',
-        detail: `Committee for year ${response.year} updated successfully.`,
+        detail: `Committee updated successfully.`,
         life: 3000,
       })
 

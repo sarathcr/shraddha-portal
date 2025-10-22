@@ -39,6 +39,14 @@
 .p-datatable-filter-overlay-popover {
   margin: 0px 15px;
 }
+.p-tag {
+  background: transparent !important;
+  background-color: transparent !important;
+  color: var(--p-tabs-tab-hover-color) !important;
+}
+.p-tab-active {
+  color: var(--p-primary-600) !important;
+}
 .p-select-label {
   white-space: break-spaces !important;
 }
