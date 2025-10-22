@@ -65,6 +65,6 @@
 .p-tablist.sticky {
   transform: translateZ(0);
   z-index: 1105 !important;
-  position: sticky;
+  position: relative;
   top: 0;
 }
