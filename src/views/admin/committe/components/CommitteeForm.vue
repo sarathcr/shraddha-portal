@@ -34,20 +34,12 @@ const props = defineProps<{
 }>()
 const isLoadingCoremembers = ref(true)
 const isLoadingExecutiveMemebers = ref(true)
-interface CommitteeForm {
-  year: string
-  startDate?: Date | null
-  endDate?: Date | null
-  isActive: boolean
-  coreMembers: CommitteeUser[]
-  executiveMembers: CommitteeUser[]
-}
 
 const isSubmitted = ref(false)
 const roleError = ref<string | null>(null)
 
 const isEditMode = ref(!!props.committee?.id)
-const { handleSubmit, errors } = useForm<CommitteeForm>({
+const { handleSubmit, errors } = useForm<CommitteeFormData>({
   validationSchema: committeeSchema(isEditMode.value),
 })
 
