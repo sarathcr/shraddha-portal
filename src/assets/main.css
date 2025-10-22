@@ -44,9 +44,27 @@
   background-color: transparent !important;
   color: var(--p-tabs-tab-hover-color) !important;
 }
+
+.p-tablist,
+.p-tablist button,
+.p-tablist a {
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+.p-tablist a,
+.p-tablist button {
+  text-decoration: none !important;
+}
+
 .p-tab-active {
   color: var(--p-primary-600) !important;
 }
 .p-select-label {
   white-space: break-spaces !important;
+}
+.p-tablist.sticky {
+  transform: translateZ(0);
+  z-index: 1001 !important;
+  position: sticky;
+  top: 0;
 }
