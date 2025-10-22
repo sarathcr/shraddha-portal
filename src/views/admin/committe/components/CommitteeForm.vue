@@ -59,8 +59,6 @@ const { value: coreMembers, errorMessage: coreMembersError } =
   useField<CommitteeUser[]>('coreMembers')
 const { value: executiveMembers, errorMessage: executiveMembersError } =
   useField<CommitteeUser[]>('executiveMembers')
-isActive.value = false
-isActive.value = false
 const coreRoles = ref<{ id: string; name: string }[]>([])
 const executiveRole = ref<{ id: string; name: string } | null>(null)
 const selectedCoreMembers = ref<Record<string, string>>({})
