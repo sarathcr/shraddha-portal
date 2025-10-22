@@ -49,7 +49,7 @@ export default defineComponent({
       </p>
       <form @submit.prevent="onSubmit">
         <div class="flex flex-col gap-2">
-          <div class="form-group">
+          <div class="form-group mb-4">
             <FloatLabel variant="on">
               <InputText
                 class="w-full"
@@ -60,10 +60,10 @@ export default defineComponent({
               />
               <label for="email">Username</label>
             </FloatLabel>
-            <small v-if="errors.email" class="text-red-500">{{ errors.email }}</small>
+            <small v-if="errors.email" class="text-red-500 absolute">{{ errors.email }}</small>
           </div>
 
-          <div class="form-group">
+          <div class="form-group mb-4">
             <FloatLabel variant="on">
               <Password
                 class="w-full"
@@ -75,7 +75,9 @@ export default defineComponent({
               />
               <label for="password">Password</label>
             </FloatLabel>
-            <small v-if="errors.password" class="text-red-500">{{ errors.password }}</small>
+            <small v-if="errors.password" class="text-red-500 absolute">{{
+              errors.password
+            }}</small>
           </div>
         </div>
 
