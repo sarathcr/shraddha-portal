@@ -44,35 +44,27 @@
   background-color: transparent !important;
   color: var(--p-tabs-tab-hover-color) !important;
 }
+
+.p-tablist,
+.p-tablist button,
+.p-tablist a {
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+.p-tablist a,
+.p-tablist button {
+  text-decoration: none !important;
+}
+
 .p-tab-active {
   color: var(--p-primary-600) !important;
 }
 .p-select-label {
   white-space: break-spaces !important;
 }
-.p-tabview,
-.p-tabview-nav {
-  -webkit-overflow-scrolling: touch;
-  backface-visibility: hidden;
+.p-tablist.sticky {
   transform: translateZ(0);
-}
-
-.p-tabview-nav,
-.p-tabmenu-nav {
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-  transform: translateZ(0);
-  position: relative;
-  z-index: 1;
-}
-
-a,
-button,
-[role='tab'],
-.p-tabview-nav-link {
-  -webkit-user-select: none;
-  -webkit-touch-callout: none;
-}
-.p-tablist-viewport {
-  display: block !important;
+  z-index: 10000 !important;
+  position: sticky;
+  top: 0;
 }
