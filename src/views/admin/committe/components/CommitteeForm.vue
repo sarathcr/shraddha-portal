@@ -240,7 +240,7 @@ const isCommitteeChanged = (): boolean => {
     startDate: startDate.value ? formatDateForAPI(startDate.value) : null,
     endDate: endDate.value ? formatDateForAPI(endDate.value) : null,
     isActive: isActive.value,
-    coreMembers: Object.entries(selectedCoreMembers.value).map(([userId]) => {
+    coreMembers: Object.entries(selectedCoreMembers.value).map(([, userId]) => {
       const user = userOptions.value.find((u) => u.value === userId)
       return user?.label ?? ''
     }),
