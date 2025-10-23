@@ -382,7 +382,7 @@ export function useCommittee(): {
         await fetchInitialData()
         toast.add({
           severity: 'success',
-          summary: 'Deleted',
+          summary: 'success',
           detail: response.message || 'Committee deleted successfully.',
           life: 3000,
         })
