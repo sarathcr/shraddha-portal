@@ -9,7 +9,6 @@ import type { OptionItem, User } from '@/types/user'
 import Select from 'primevue/select'
 import DatePicker from 'primevue/datepicker'
 import ToggleSwitch from 'primevue/toggleswitch'
-import { formatDateForAPI } from '@/utils/dateUtils'
 
 interface UserFormValues {
   name: string
@@ -69,15 +68,6 @@ watch(
 defineExpose({ resetForm })
 
 const onSubmit = handleSubmit((values) => {
-  let dobDate: Date | undefined
-
-  if (values.dob) {
-    const parsed = new Date(values.dob)
-    if (!isNaN(parsed.getTime())) {
-      dobDate = parsed
-    }
-  }
-
   const selectedRole = props.roles.find((r) => r.value === values.role)
   const selectedTeam = props.teams.find((t) => t.value === values.team)
 
@@ -85,7 +75,7 @@ const onSubmit = handleSubmit((values) => {
     name: values.name?.trim() || '',
     employeeId: values.employeeId?.trim() || '',
     email: values.email?.trim() || '',
-    dob: dobDate ? formatDateForAPI(dobDate) : null,
+    dob: values.dob,
     teamId: selectedTeam ? parseInt(selectedTeam.value) : 0,
     roleId: selectedRole ? parseInt(selectedRole.value) : 0,
     isActive: values.status,
@@ -128,7 +118,7 @@ const onCancel = (): void => {
             'w-full [&>input]:border [&>input]:rounded-md [&>input]:!border-red-500': errors.dob,
             'w-full [&>input]:border [&>input]:rounded-md': !errors.dob,
           }"
-          dateFormat="yy/mm/dd"
+          dateFormat="dd/mm/yy"
         />
 
         <label for="dob">Date of birth</label></FloatLabel
