@@ -21,6 +21,10 @@ import { CommitteeRoles } from '@/constants/committeeRoles.enum'
 import type { OptionItem } from '@/types/user'
 import CommitteeMemberSkelton from '@/components/Skelton/CommiteeMemberSkelton.vue'
 import CommiteeExecutiveSkelton from '@/components/Skelton/CommiteeExecutiveSkelton.vue'
+import { isEqual } from 'lodash'
+import { useToast } from 'primevue/usetoast'
+
+const toast = useToast()
 
 const emit = defineEmits<{
   (e: 'submit', payload: Committee): void
@@ -59,6 +63,7 @@ const userOptions = ref<{ label: string; value: string }[]>([])
 const isStatusDisabled = ref(true)
 
 const { addCommittee, handleEdit } = useCommittee()
+const originalCommittee = ref<Committee | null>(null)
 
 onMounted(async () => {
   await Promise.all([getRolesData(), getUsersData()])
@@ -153,6 +158,7 @@ watch(
   [(): Committee | null | undefined => props.committee, (): number => userOptions.value.length],
   ([newCommittee, userCount]: [Committee | null | undefined, number]): void => {
     if (!newCommittee || userCount === 0) {
+      originalCommittee.value = JSON.parse(JSON.stringify(newCommittee))
       const initial = getInitialCommitteeData()
       year.value = initial.year
       startDate.value = initial.startDate
@@ -162,7 +168,6 @@ watch(
       selectedExecutiveMember.value = initial.selectedExecutiveMember
       return
     }
-
     year.value = newCommittee.year
     startDate.value = parseDDMMYYYY(newCommittee.startDate ?? undefined)
     endDate.value = parseDDMMYYYY(newCommittee.endDate ?? undefined)
@@ -209,11 +214,59 @@ const getAvailableUsers = (currentRoleId?: string): OptionItem[] => {
   )
 }
 
+const isCommitteeChanged = (): boolean => {
+  if (!props.committee || !originalCommittee.value) return true
+
+  const extractMemberNames = (members: string | CommitteeUser[]): string[] => {
+    if (typeof members === 'string') {
+      return members.split(',').map((s) => s.trim())
+    } else if (Array.isArray(members)) {
+      return members.map((m) => m.userName?.trim() || m.name?.trim() || '')
+    }
+    return []
+  }
+
+  const originalData = {
+    year: originalCommittee.value.year,
+    startDate: originalCommittee.value.startDate,
+    endDate: originalCommittee.value.endDate,
+    isActive: originalCommittee.value.isActive,
+    coreMembers: extractMemberNames(originalCommittee.value.coreMembers),
+    executiveMembers: extractMemberNames(originalCommittee.value.executiveMembers),
+  }
+
+  const currentData = {
+    year: year.value,
+    startDate: startDate.value ? formatDateForAPI(startDate.value) : null,
+    endDate: endDate.value ? formatDateForAPI(endDate.value) : null,
+    isActive: isActive.value,
+    coreMembers: Object.entries(selectedCoreMembers.value).map(([, userId]) => {
+      const user = userOptions.value.find((u) => u.value === userId)
+      return user?.label ?? ''
+    }),
+    executiveMembers: selectedExecutiveMember.value.map(
+      (id) => userOptions.value.find((u) => u.value === id)?.label ?? '',
+    ),
+  }
+
+  return !isEqual(originalData, currentData)
+}
+
 const onSubmit = async (): Promise<void> => {
   isSubmitted.value = true
 
   const isValid = await handleSubmit(() => true)()
   if (!isValid || roleError.value) return
+
+  if (isEditMode.value && !isCommitteeChanged()) {
+    toast.add({
+      severity: 'info',
+      summary: 'No Changes',
+      detail: 'No modifications were made.',
+      life: 3000,
+    })
+    return
+  }
 
   const apiPayload = {
     id: props.committee?.id ?? '',
