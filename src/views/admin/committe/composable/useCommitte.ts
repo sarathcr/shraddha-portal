@@ -117,7 +117,7 @@ export function useCommittee(): {
           summary: 'Warning',
           detail:
             'Another committee is already active. Only one committee can be active at a time.',
-          life: 4000,
+          life: 3000,
         })
         return false
       }
