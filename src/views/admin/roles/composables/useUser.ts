@@ -138,7 +138,7 @@ export const useUsers = (): {
       if (response.data.succeeded && response.data.data) {
         users.value = response.data.data.map((user: User) => ({
           ...user,
-          dob: user.dob ? formatDateForDisplay(user.dob) : null,
+          dob: user.dob,
         }))
         totalRecords.value = response.data.totalRecords ?? 0
         pageNumber.value = response.data.pageNumber ?? 1
@@ -165,12 +165,6 @@ export const useUsers = (): {
     } finally {
       isLoading.value = false
     }
-  }
-
-  function formatDateForDisplay(dob: string | null): string | null {
-    if (!dob) return null
-    const [year, month, day] = dob.split('-')
-    return `${day}-${month}-${year}`
   }
 
   const fetchInitialData = async (): Promise<void> => {

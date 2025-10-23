@@ -16,6 +16,7 @@ import {
 } from '../../services/committee.services'
 import axios, { AxiosError } from 'axios'
 import { committeeApi } from '@/constants'
+import { formatDateForAPI } from '@/utils/dateUtils'
 
 export const committeeUsers: Ref<CommitteeUser[]> = ref([])
 export const committeeRoles: Ref<OptionItem[]> = ref([])
@@ -209,18 +210,20 @@ export function useCommittee(): {
             operator: string
             constraints: { value: unknown; matchMode: string }[]
           }
-
           if (filter.constraints?.length) {
             const validConstraints = filter.constraints.filter(
               (c) => c.value !== null && c.value !== undefined,
             )
-
             if (validConstraints.length > 0) {
               const filterString = validConstraints
                 .map((constraint, index) => {
                   const operator =
                     index === 0 ? '' : filter.operator.toUpperCase() === 'OR' ? 'OR' : 'AND'
-                  const condition = mapMatchModeToOperator(constraint.matchMode, constraint.value)
+                  let value = constraint.value
+                  if (field.toLowerCase().includes('date') && value) {
+                    value = formatDateForAPI(value as Date)
+                  }
+                  const condition = mapMatchModeToOperator(constraint.matchMode, value)
                   return `${operator} ${condition}`.trim()
                 })
                 .join(' ')
