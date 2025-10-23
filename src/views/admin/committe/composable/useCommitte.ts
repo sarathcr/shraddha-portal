@@ -16,6 +16,7 @@ import {
 } from '../../services/committee.services'
 import axios, { AxiosError } from 'axios'
 import { committeeApi } from '@/constants'
+import { formatDateForAPI } from '@/utils/dateUtils'
 
 export const committeeUsers: Ref<CommitteeUser[]> = ref([])
 export const committeeRoles: Ref<OptionItem[]> = ref([])
@@ -81,10 +82,10 @@ export function useCommittee(): {
   const pageNumber = ref(1)
   const totalRecords = ref(0)
   const error = ref<string | null>(null)
-
   const filters = ref({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
   })
+  const lastLazyLoadEvent = ref<LazyLoadEvent | null>(null)
 
   const columns = [
     { label: 'Committee Year', key: 'year', filterable: true },
@@ -183,6 +184,7 @@ export function useCommittee(): {
 
   const onLazyLoad = async (event: LazyLoadEvent): Promise<void> => {
     isLoading.value = true
+    lastLazyLoadEvent.value = event
     try {
       const payload: {
         pagination: { pageNumber: number; pageSize: number }
@@ -209,18 +211,20 @@ export function useCommittee(): {
             operator: string
             constraints: { value: unknown; matchMode: string }[]
           }
-
           if (filter.constraints?.length) {
             const validConstraints = filter.constraints.filter(
               (c) => c.value !== null && c.value !== undefined,
             )
-
             if (validConstraints.length > 0) {
               const filterString = validConstraints
                 .map((constraint, index) => {
                   const operator =
                     index === 0 ? '' : filter.operator.toUpperCase() === 'OR' ? 'OR' : 'AND'
-                  const condition = mapMatchModeToOperator(constraint.matchMode, constraint.value)
+                  let value = constraint.value
+                  if (field.toLowerCase().includes('date') && value) {
+                    value = formatDateForAPI(value as Date)
+                  }
+                  const condition = mapMatchModeToOperator(constraint.matchMode, value)
                   return `${operator} ${condition}`.trim()
                 })
                 .join(' ')
@@ -230,7 +234,6 @@ export function useCommittee(): {
           }
         })
       }
-
       const response = await getCommittee(
         payload.pagination.pageNumber,
         payload.pagination.pageSize,
@@ -287,14 +290,17 @@ export function useCommittee(): {
     isLoading.value = true
     try {
       await Promise.all([getUsersData(), getRolesData()])
-
-      await onLazyLoad({
-        first: 0,
-        rows: pageSize.value,
-        filters: undefined,
-        sortField: null,
-        sortOrder: null,
-      })
+      if (lastLazyLoadEvent.value) {
+        await onLazyLoad(lastLazyLoadEvent.value)
+      } else {
+        await onLazyLoad({
+          first: 0,
+          rows: pageSize.value,
+          filters: undefined,
+          sortField: null,
+          sortOrder: null,
+        })
+      }
     } finally {
       isLoading.value = false
     }
@@ -311,7 +317,7 @@ export function useCommittee(): {
         detail: 'Committee created successfully',
         life: 3000,
       })
-
+      if (lastLazyLoadEvent.value) await onLazyLoad(lastLazyLoadEvent.value)
       return {
         data: response.data,
         message: 'Committee created successfully',
@@ -358,7 +364,7 @@ export function useCommittee(): {
         detail: `Committee updated successfully.`,
         life: 3000,
       })
-
+      if (lastLazyLoadEvent.value) await onLazyLoad(lastLazyLoadEvent.value)
       return response
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Unknown error occurred'
@@ -386,6 +392,7 @@ export function useCommittee(): {
           detail: response.message || 'Committee deleted successfully.',
           life: 3000,
         })
+        if (lastLazyLoadEvent.value) await onLazyLoad(lastLazyLoadEvent.value)
         return { success: true, message: response.message || 'Committee deleted successfully.' }
       } else {
         toast.add({
