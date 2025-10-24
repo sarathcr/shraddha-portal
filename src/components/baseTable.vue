@@ -388,7 +388,7 @@ const getOptionLabel = (
           </template>
         </Column>
         <template #empty>
-          <div class="text-center text-gray-500 p-4">No data found.</div>
+          <div v-if="!loading" class="text-center text-gray-500 p-4">No data found.</div>
         </template>
       </DataTable>
     </div>
