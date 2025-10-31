@@ -301,6 +301,7 @@ const getOptionLabel = (
                   v-model="tempRow[col.key] as string"
                   :type="col.key === 'email' ? 'email' : 'text'"
                   class="w-full"
+                  :disabled="col.key === 'email'"
                 />
               </div>
             </template>
