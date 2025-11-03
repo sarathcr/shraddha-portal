@@ -182,8 +182,8 @@ const columns = [
     showAddButton: false,
   },
 ]
-const showHistoryDrawer = (row: Team): void => {
-  loadHistory('team', row.id)
+const showHistoryDrawer = async (row: Team): Promise<void> => {
+  await loadHistory('team', row.id)
 }
 </script>
 
