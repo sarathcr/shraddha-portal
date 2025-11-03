@@ -244,7 +244,7 @@ const columns = [
         <ToggleSwitch
           v-else
           :modelValue="(row as Team).isActive"
-          @update:modelValue="(newValue: boolean) => onStatusToggle(row as Team, newValue)"
+          @click.stop.prevent="onStatusToggle(row as Team, !row.isActive)"
         />
       </template>
 

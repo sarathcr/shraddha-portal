@@ -269,7 +269,7 @@ onMounted(() => {
         <ToggleSwitch
           v-else
           :modelValue="row.isActive"
-          @update:modelValue="(newValue: boolean) => onStatusToggle(row, newValue)"
+          @click.stop.prevent="onStatusToggle(row as Role, !row.isActive)"
         />
       </template>
 
