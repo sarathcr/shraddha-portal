@@ -63,11 +63,11 @@ const originalCommittee = ref<Committee | null>(null)
 
 onMounted(async () => {
   await Promise.all([getRolesData(), getUsersData()])
-
-  userOptions.value = (await getUsersData())
+  const allUsers = await getUsersData()
+  const normalUsers = allUsers.filter((u) => u.role === CommitteeRoles.Normal_User)
+  userOptions.value = normalUsers
     .filter((u): u is CommitteeUser & { name: string; id: string } => !!u.name && !!u.id)
     .map((u) => ({ label: u.name, value: u.id }))
-
   const allowedRoles = ['President', 'Secretary', 'Treasurer', 'Assistant Treasurer']
   coreRoles.value = allowedRoles
     .map((roleName) => {

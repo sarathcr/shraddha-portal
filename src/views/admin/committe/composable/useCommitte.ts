@@ -17,18 +17,15 @@ import {
 import axios, { AxiosError } from 'axios'
 import { committeeApi } from '@/constants'
 import { formatDateForAPI } from '@/utils/dateUtils'
-import { CommitteeRoles } from '@/constants/committeeRoles.enum'
 
 export const committeeUsers: Ref<CommitteeUser[]> = ref([])
 export const committeeRoles: Ref<OptionItem[]> = ref([])
 
 export const getUsersData = async (): Promise<CommitteeUser[]> => {
   const users: ApiResponse<CommitteeUser[]> = await fetchUsers(-1, -1, { isActive: '= true' })
-
   if (users?.succeeded && users.data) {
-    const filteredUsers = users.data.filter((user) => user.role === CommitteeRoles.Normal_User)
-    committeeUsers.value = filteredUsers
-    return filteredUsers
+    committeeUsers.value = users.data
+    return users.data
   } else {
     committeeUsers.value = []
     return []
