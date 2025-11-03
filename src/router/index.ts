@@ -50,7 +50,7 @@ const routes: CustomRouteRecordRaw[] = [
       {
         path: 'committe',
         component: CommitteView,
-        meta: { requiresAuth: true, module: 'Committee', permission: 'READ' },
+        meta: { requiresAuth: true, module: 'Committee', permission: 'MANAGE' },
         children: [
           { path: '', component: CommitteeListView },
           { path: ':id', component: CommitteeDashboarView },
