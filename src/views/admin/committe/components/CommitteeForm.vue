@@ -64,8 +64,10 @@ const originalCommittee = ref<Committee | null>(null)
 onMounted(async () => {
   await Promise.all([getRolesData(), getUsersData()])
   const allUsers = await getUsersData()
-  const normalUsers = allUsers.filter((u) => u.role === CommitteeRoles.Normal_User)
-  userOptions.value = normalUsers
+  const filteredUsers = isEditMode.value
+    ? allUsers
+    : allUsers.filter((u) => u.role === CommitteeRoles.Normal_User)
+  userOptions.value = filteredUsers
     .filter((u): u is CommitteeUser & { name: string; id: string } => !!u.name && !!u.id)
     .map((u) => ({ label: u.name, value: u.id }))
   const allowedRoles = ['President', 'Secretary', 'Treasurer', 'Assistant Treasurer']
@@ -75,9 +77,9 @@ onMounted(async () => {
       return role ? { id: role.value, name: role.label } : null
     })
     .filter((r): r is { id: string; name: string } => r !== null)
-
   const exec = committeeRoles.value.find((r) => r.label === CommitteeRoles.ExecutiveMember)
   executiveRole.value = exec ? { id: exec.value, name: exec.label } : null
+
   isLoadingCoremembers.value = false
   isLoadingExecutiveMemebers.value = false
 })
