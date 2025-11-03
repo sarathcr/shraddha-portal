@@ -317,6 +317,7 @@ const onCancel = (): void => {
             dateFormat="dd-mm-yy"
             :inputClass="{ '!border-red-500': isSubmitted && startDateError }"
             class="w-full"
+            :disabled="isEditMode && isActive"
           />
           <label>Start Date</label>
         </FloatLabel>
