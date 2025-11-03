@@ -207,8 +207,8 @@ const columns = [
   },
 ]
 
-const showHistoryDrawer = (row: Role): void => {
-  loadHistory('role', row.id)
+const showHistoryDrawer = async (row: Role): Promise<void> => {
+  await loadHistory('role', row.id)
 }
 
 onMounted(() => {
