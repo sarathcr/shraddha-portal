@@ -207,8 +207,8 @@ const columns = [
   },
 ]
 
-const showHistoryDrawer = (row: Role): void => {
-  loadHistory('role', row.id)
+const showHistoryDrawer = async (row: Role): Promise<void> => {
+  await loadHistory('role', row.id)
 }
 
 onMounted(() => {
@@ -276,7 +276,7 @@ onMounted(() => {
         <ToggleSwitch
           v-else
           :modelValue="row.isActive"
-          @update:modelValue="(newValue: boolean) => onStatusToggle(row, newValue)"
+          @click.stop.prevent="onStatusToggle(row as Role, !row.isActive)"
         />
       </template>
 

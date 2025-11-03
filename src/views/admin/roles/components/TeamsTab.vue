@@ -182,8 +182,8 @@ const columns = [
     showAddButton: false,
   },
 ]
-const showHistoryDrawer = (row: Team): void => {
-  loadHistory('team', row.id)
+const showHistoryDrawer = async (row: Team): Promise<void> => {
+  await loadHistory('team', row.id)
 }
 </script>
 
@@ -251,7 +251,7 @@ const showHistoryDrawer = (row: Team): void => {
         <ToggleSwitch
           v-else
           :modelValue="(row as Team).isActive"
-          @update:modelValue="(newValue: boolean) => onStatusToggle(row as Team, newValue)"
+          @click.stop.prevent="onStatusToggle(row as Team, !row.isActive)"
         />
       </template>
 

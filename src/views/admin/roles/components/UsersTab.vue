@@ -258,8 +258,8 @@ const isStatusDisabled = (row: User): boolean => {
   return roleLabel ? Object.values(CommitteeRoles).includes(roleLabel as CommitteeRoles) : false
 }
 
-const showHistoryDrawer = (row: User): void => {
-  loadHistory('user', row.id)
+const showHistoryDrawer = async (row: User): Promise<void> => {
+  await loadHistory('user', row.id)
 }
 
 onMounted(async () => {

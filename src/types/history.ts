@@ -7,3 +7,4 @@ export interface HistoryEntry {
   newValue?: string
   date: string
 }
+export type EntityType = 'user' | 'team' | 'role' | 'committee'

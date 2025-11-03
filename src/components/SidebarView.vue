@@ -6,9 +6,23 @@ import { Drawer } from 'primevue'
 import PanelMenu from 'primevue/panelmenu'
 import router from '@/router'
 
+import { hasModuleAccess } from '@/utils/permissionChecker'
+import type { ModuleName, Permission } from '@/types/permissions'
+
+interface MenuItem {
+  label: string
+  icon: string
+  command?: () => Promise<void>
+  class?: string
+  expandIconPosition?: 'right' | 'left'
+  items?: MenuItem[]
+  module?: ModuleName
+  permission?: Permission
+  to?: string
+}
+
 const sidebarStore = useSidebarStore()
 
-// Reactive screen width
 const screenWidth = ref(window.innerWidth)
 
 const updateScreenWidth = (): void => {
@@ -20,149 +34,210 @@ const updateScreenWidth = (): void => {
   }
 }
 
-onMounted(() => {
+onMounted((): void => {
   window.addEventListener('resize', updateScreenWidth)
   updateScreenWidth()
 })
 
-onUnmounted(() => {
+onUnmounted((): void => {
   window.removeEventListener('resize', updateScreenWidth)
 })
 
-// Computed reactive props
-const isModal = computed(() => screenWidth.value < 1024)
-const isDismissable = computed(() => screenWidth.value < 1024)
+const isModal = computed((): boolean => screenWidth.value < 1024)
+const isDismissable = computed((): boolean => screenWidth.value < 1024)
 
-// Computed items for PanelMenu with active state logic
-const menuItems = computed(() => {
+const fullMenuItems: MenuItem[] = [
+  {
+    label: 'Dashboard',
+    icon: 'pi pi-home',
+    module: 'Dashboard',
+    permission: 'READ',
+    to: '/admin/dashboard',
+    command: async (): Promise<void> => {
+      await router.push('/admin/dashboard')
+      if (isModal.value) sidebarStore.isSidebarVisible = false
+    },
+  },
+  {
+    label: 'Roles And Access',
+    icon: 'pi pi-shield',
+    module: 'RolesAndAccess',
+    permission: 'READ',
+    to: '/admin/roles',
+    command: async (): Promise<void> => {
+      await router.push('/admin/roles')
+      if (isModal.value) sidebarStore.isSidebarVisible = false
+    },
+  },
+  {
+    label: 'Events',
+    icon: 'pi pi-calendar',
+    module: 'Events',
+    permission: 'READ',
+    to: '/admin/events',
+  },
+  {
+    label: 'Committee',
+    icon: 'pi pi-users',
+    module: 'Committee',
+    permission: 'READ',
+    to: '/admin/committe',
+    command: async (): Promise<void> => {
+      await router.push('/admin/committe')
+      if (isModal.value) sidebarStore.isSidebarVisible = false
+    },
+  },
+  {
+    label: 'Aprovals',
+    icon: 'pi pi-search',
+    module: 'Approvals',
+    permission: 'READ',
+    to: '/admin/approvals',
+  },
+  {
+    label: 'Finance',
+    icon: 'pi pi-money-bill',
+    expandIconPosition: 'right',
+    module: 'Finance',
+    permission: 'READ',
+    to: '/admin/finance',
+    items: [
+      {
+        label: 'Fund Collection',
+        icon: 'pi pi-wallet',
+        module: 'Finance',
+        permission: 'READ',
+        to: '/admin/finance/fund-collection',
+        command: async (): Promise<void> => {
+          await router.push('/admin/finance/fund-collection')
+          if (isModal.value) sidebarStore.isSidebarVisible = false
+        },
+      },
+      {
+        label: 'Expenses',
+        icon: 'pi pi-money-bill',
+        module: 'Finance',
+        permission: 'READ',
+        to: '/admin/finance/expenses',
+        command: async (): Promise<void> => {
+          await router.push('/admin/finance/expenses')
+          if (isModal.value) sidebarStore.isSidebarVisible = false
+        },
+      },
+      {
+        label: 'Balance Sheet',
+        icon: 'pi pi-chart-bar',
+        module: 'Finance',
+        permission: 'READ',
+        to: '/admin/finance/balance-sheet',
+        command: async (): Promise<void> => {
+          await router.push('/admin/finance/balance-sheet')
+          if (isModal.value) sidebarStore.isSidebarVisible = false
+        },
+      },
+      {
+        label: 'Bills And Uploads',
+        icon: 'pi pi-file-o',
+        module: 'Finance',
+        permission: 'READ',
+        to: '/admin/finance/bills-uploads',
+        command: async (): Promise<void> => {
+          await router.push('/admin/finance/bills-uploads')
+          if (isModal.value) sidebarStore.isSidebarVisible = false
+        },
+      },
+    ],
+  },
+  {
+    label: 'Birthday Gifts',
+    icon: 'pi pi-gift',
+    module: 'BirthdayGifts',
+    permission: 'READ',
+    to: '/admin/birthday-gifts',
+  },
+  {
+    label: 'Charity',
+    icon: 'pi pi-heart',
+    module: 'Charity',
+    permission: 'READ',
+    to: '/admin/charity',
+  },
+  {
+    label: 'Tournaments',
+    icon: 'pi pi-trophy',
+    module: 'Tournaments',
+    permission: 'READ',
+    to: '/admin/tournaments',
+  },
+  {
+    label: 'Feedbacks',
+    icon: 'pi pi-comments',
+    module: 'Feedbacks',
+    permission: 'READ',
+    to: '/admin/feedbacks',
+  },
+  {
+    label: 'Meeting Minutes',
+    icon: 'pi pi-file-word',
+    module: 'MeetingMinutes',
+    permission: 'READ',
+    to: '/admin/meeting-minutes',
+  },
+]
+
+const filterMenuItems = (items: MenuItem[], currentPath: string): MenuItem[] => {
+  return items
+    .map((item): MenuItem | null => {
+      const clonedItem: MenuItem = { ...item }
+
+      if (clonedItem.items) {
+        clonedItem.items = filterMenuItems(clonedItem.items, currentPath)
+      }
+
+      const requiredModule = clonedItem.module
+      let isPermitted = true
+      if (requiredModule) {
+        isPermitted = hasModuleAccess(requiredModule)
+      }
+
+      if (isPermitted || (clonedItem.items && clonedItem.items.length > 0)) {
+        clonedItem.class = ''
+        if (clonedItem.to && currentPath === clonedItem.to) {
+          clonedItem.class = 'p-menuitem-active'
+        } else if (clonedItem.to && currentPath.startsWith(clonedItem.to)) {
+          clonedItem.class = 'p-menuitem-active'
+        }
+
+        if (clonedItem.label === 'Events' && currentPath.startsWith('/admin/events')) {
+          clonedItem.class = 'p-menuitem-active'
+        } else if (clonedItem.label === 'Aprovals' && currentPath.startsWith('/admin/approvals')) {
+          clonedItem.class = 'p-menuitem-active'
+        } else if (clonedItem.label === 'Finance' && currentPath.startsWith('/admin/finance')) {
+          clonedItem.class = 'p-menuitem-active'
+        }
+
+        if (
+          clonedItem.items &&
+          clonedItem.items.some((subItem) => subItem.class === 'p-menuitem-active')
+        ) {
+          clonedItem.class = 'p-menuitem-active'
+        }
+
+        return clonedItem
+      }
+
+      return null
+    })
+    .filter((item): item is MenuItem => item !== null)
+}
+
+const menuItems = computed((): MenuItem[] => {
   const currentPath = router.currentRoute.value.path
-  return [
-    {
-      label: 'Dashboard',
-      icon: 'pi pi-home',
-      command: async (): Promise<void> => {
-        await router.push('/admin/dashboard')
-        if (isModal.value) {
-          sidebarStore.isSidebarVisible = false
-        }
-      },
-      // Add a class or a style based on the current route
-      class: currentPath === '/admin/dashboard' ? 'p-menuitem-active' : '',
-    },
-    {
-      label: 'Roles And Access',
-      icon: 'pi pi-shield',
-      command: async (): Promise<void> => {
-        await router.push('/admin/roles')
-        if (isModal.value) {
-          sidebarStore.isSidebarVisible = false
-        }
-      },
-      class: currentPath === '/admin/roles' ? 'p-menuitem-active' : '', // Example for sub-routes
-    },
-    {
-      label: 'Events',
-      icon: 'pi pi-calendar',
-      class: currentPath.startsWith('/admin/events') ? 'p-menuitem-active' : '',
-    },
-    {
-      label: 'Committee',
-      icon: 'pi pi-users',
-      command: async (): Promise<void> => {
-        await router.push('/admin/committe')
-        if (isModal.value) {
-          sidebarStore.isSidebarVisible = false
-        }
-      },
-      class: currentPath.startsWith('/admin/committe') ? 'p-menuitem-active' : '',
-    },
-    {
-      label: 'Aprovals',
-      icon: 'pi pi-search',
-      class: currentPath.startsWith('/admin/approvals') ? 'p-menuitem-active' : '',
-    },
-    {
-      label: 'Finance',
-      icon: 'pi pi-money-bill',
-      expandIconPosition: 'right',
-      items: [
-        {
-          label: 'Fund Collection',
-          icon: 'pi pi-wallet',
-          command: async (): Promise<void> => {
-            await router.push('/admin/finance/fund-collection')
-            if (isModal.value) {
-              sidebarStore.isSidebarVisible = false
-            }
-          },
-          class: currentPath === '/admin/finance/fund-collection' ? 'p-menuitem-active' : '',
-        },
-        {
-          label: 'Expenses',
-          icon: 'pi pi-money-bill',
-          command: async (): Promise<void> => {
-            await router.push('/admin/finance/expenses')
-            if (isModal.value) {
-              sidebarStore.isSidebarVisible = false
-            }
-          },
-          class: currentPath === '/admin/finance/expenses' ? 'p-menuitem-active' : '',
-        },
-        {
-          label: 'Balance Sheet',
-          icon: 'pi pi-chart-bar',
-          command: async (): Promise<void> => {
-            await router.push('/admin/finance/balance-sheet')
-            if (isModal.value) {
-              sidebarStore.isSidebarVisible = false
-            }
-          },
-          class: currentPath === '/admin/finance/balance-sheet' ? 'p-menuitem-active' : '',
-        },
-        {
-          label: 'Bills And Uploads',
-          icon: 'pi pi-file-o',
-          command: async (): Promise<void> => {
-            await router.push('/admin/finance/bills-uploads')
-            if (isModal.value) {
-              sidebarStore.isSidebarVisible = false
-            }
-          },
-          class: currentPath === '/admin/finance/bills-uploads' ? 'p-menuitem-active' : '',
-        },
-      ],
-      // Highlight parent "Finance" if any sub-item is active
-      class: currentPath.startsWith('/admin/finance') ? 'p-menuitem-active' : '',
-    },
-    {
-      label: 'Birthday Gifts',
-      icon: 'pi pi-gift',
-      class: currentPath.startsWith('/admin/birthday-gifts') ? 'p-menuitem-active' : '',
-    },
-    {
-      label: 'Charity',
-      icon: 'pi pi-heart',
-      class: currentPath.startsWith('/admin/charity') ? 'p-menuitem-active' : '',
-    },
-    {
-      label: 'Tournaments',
-      icon: 'pi pi-trophy',
-      class: currentPath.startsWith('/admin/tournaments') ? 'p-menuitem-active' : '',
-    },
-    {
-      label: 'Feedbacks',
-      icon: 'pi pi-comments',
-      class: currentPath.startsWith('/admin/feedbacks') ? 'p-menuitem-active' : '',
-    },
-    {
-      label: 'Meeting Minutes',
-      icon: 'pi pi-file-word',
-      class: currentPath.startsWith('/admin/meeting-minutes') ? 'p-menuitem-active' : '',
-    },
-  ]
+  return filterMenuItems(fullMenuItems, currentPath)
 })
 </script>
 <template class="sidebar-drawer">
+   
   <Drawer
     class="sidebar-drawer"
     v-model:visible="sidebarStore.isSidebarVisible"
