@@ -4,4 +4,5 @@ export enum CommitteeRoles {
   Treasurer = 'Treasurer',
   AssistantTreasurer = 'Assistant Treasurer',
   ExecutiveMember = 'Executive Committee Member',
+  Normal_User = 'Normal User',
 }

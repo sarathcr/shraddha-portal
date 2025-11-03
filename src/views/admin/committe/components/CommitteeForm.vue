@@ -25,7 +25,6 @@ import { isEqual } from 'lodash'
 import { useToast } from 'primevue/usetoast'
 
 const toast = useToast()
-
 const emit = defineEmits<{
   (e: 'submit', payload: Committee): void
   (e: 'cancel'): void
@@ -38,15 +37,12 @@ const props = defineProps<{
 }>()
 const isLoadingCoremembers = ref(true)
 const isLoadingExecutiveMemebers = ref(true)
-
 const isSubmitted = ref(false)
 const roleError = ref<string | null>(null)
-
 const isEditMode = ref(!!props.committee?.id)
 const { handleSubmit, errors } = useForm<CommitteeFormData>({
   validationSchema: committeeSchema(isEditMode.value),
 })
-
 const { value: year } = useField<string>('year')
 const { value: startDate, errorMessage: startDateError } = useField<Date | null>('startDate')
 const { value: endDate, errorMessage: endDateError } = useField<Date | null>('endDate')
@@ -204,7 +200,6 @@ const getAvailableUsers = (currentRoleId?: string): OptionItem[] => {
       .map(([, userId]) => userId),
     ...selectedExecutiveMember.value,
   ])
-
   return userOptions.value.filter(
     (u) =>
       !selectedIds.has(u.value) ||
