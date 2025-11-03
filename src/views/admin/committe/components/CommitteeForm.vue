@@ -403,6 +403,8 @@ const onCancel = (): void => {
               filter
               class="w-full"
               display="chip"
+              :maxSelectedLabels="3"
+              selectedItemsLabel="{0} users selected"
             />
           </div>
         </div>
