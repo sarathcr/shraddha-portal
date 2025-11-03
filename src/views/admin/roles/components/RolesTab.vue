@@ -13,6 +13,8 @@ import { roleSchema } from '@/views/admin/schemas/roleSchema'
 import * as yup from 'yup'
 import { useToast } from 'primevue/usetoast'
 import { isEqual } from 'lodash'
+import { useHistory } from '@/composables/useHistory'
+import HistoryDrawer from '@/components/HistoryDrawer.vue'
 
 const {
   roles,
@@ -37,6 +39,7 @@ const originalRole = ref<Role | null>(null)
 const editableRole = ref<Role | null>(null)
 const deleteDialogVisible = ref(false)
 const roleToDelete = ref<Role | null>(null)
+const { historyDrawerVisible, historyData, loadHistory } = useHistory()
 const toast = useToast()
 const permissions: PermissionOptions[] = [
   { label: 'Read', value: 'READ' },
@@ -204,6 +207,10 @@ const columns = [
   },
 ]
 
+const showHistoryDrawer = async (row: Role): Promise<void> => {
+  await loadHistory('role', row.id)
+}
+
 onMounted(() => {
   void fetchInitialData()
 })
@@ -269,11 +276,17 @@ onMounted(() => {
         <ToggleSwitch
           v-else
           :modelValue="row.isActive"
-          @update:modelValue="(newValue: boolean) => onStatusToggle(row, newValue)"
+          @click.stop.prevent="onStatusToggle(row as Role, !row.isActive)"
         />
       </template>
 
       <template #actions="{ row }">
+        <button
+          @click="showHistoryDrawer(row)"
+          class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
+        >
+          <i class="pi pi-history"></i>
+        </button>
         <button
           @click="onEditRole(row)"
           class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
@@ -288,6 +301,7 @@ onMounted(() => {
         </button>
       </template>
     </BaseTable>
+    <HistoryDrawer v-model:visible="historyDrawerVisible" :historyData="historyData" />
   </div>
 </template>
 <style>

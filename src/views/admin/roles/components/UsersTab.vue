@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import BaseTable from '@/components/baseTable.vue'
+import HistoryDrawer from '@/components/HistoryDrawer.vue'
 import Dialog from 'primevue/dialog'
 import Button from 'primevue/button'
 import ToggleSwitch from 'primevue/toggleswitch'
@@ -7,6 +8,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useUsers } from '@/views/admin/roles/composables/useUser'
 import UserForm from './UserForm.vue'
 import { useValidation } from '@/views/admin/roles/composables/useValidation'
+import { useHistory } from '@/composables/useHistory'
 import type { User } from '@/types/user'
 import type { RowData, ColumnDef } from '@/types/baseTable.model'
 import { userSchema } from '@/views/admin/schemas/userSchema'
@@ -40,6 +42,8 @@ const userToDelete = ref<User | null>(null)
 const editableUser = ref<User | null>(null)
 const originalUser = ref<User | null>(null)
 const userFormRef = ref<InstanceType<typeof UserForm> | null>(null)
+const { historyDrawerVisible, historyData, loadHistory } = useHistory()
+
 const toast = useToast()
 
 const createRoles = ref([] as typeof roles.value)
@@ -254,6 +258,10 @@ const isStatusDisabled = (row: User): boolean => {
   return roleLabel ? Object.values(CommitteeRoles).includes(roleLabel as CommitteeRoles) : false
 }
 
+const showHistoryDrawer = async (row: User): Promise<void> => {
+  await loadHistory('user', row.id)
+}
+
 onMounted(async () => {
   await fetchInitialData()
 })
@@ -338,6 +346,12 @@ onMounted(async () => {
 
       <template #actions="{ row }">
         <button
+          @click="showHistoryDrawer(row)"
+          class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
+        >
+          <i class="pi pi-history"></i>
+        </button>
+        <button
           @click="onEdit(row as User)"
           class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
         >
@@ -351,5 +365,6 @@ onMounted(async () => {
         </button>
       </template>
     </BaseTable>
+    <HistoryDrawer v-model:visible="historyDrawerVisible" :historyData="historyData" />
   </div>
 </template>

@@ -13,6 +13,8 @@ import { useToast } from 'primevue'
 import * as yup from 'yup'
 import { teamSchema } from '@/views/admin/schemas/teamSchema'
 import { isEqual } from 'lodash'
+import { useHistory } from '@/composables/useHistory'
+import HistoryDrawer from '@/components/HistoryDrawer.vue'
 
 const {
   teams,
@@ -35,6 +37,8 @@ const deleteDialogVisible = ref(false)
 const teamToDelete = ref<Team | null>(null)
 const editableTeam = ref<Team | null>(null)
 const originalTeam = ref<Team | null>(null)
+const { historyDrawerVisible, historyData, loadHistory } = useHistory()
+
 const toast = useToast()
 watch(
   [teamFormDialogVisible, deleteDialogVisible],
@@ -178,6 +182,9 @@ const columns = [
     showAddButton: false,
   },
 ]
+const showHistoryDrawer = async (row: Team): Promise<void> => {
+  await loadHistory('team', row.id)
+}
 </script>
 
 <template>
@@ -244,11 +251,17 @@ const columns = [
         <ToggleSwitch
           v-else
           :modelValue="(row as Team).isActive"
-          @update:modelValue="(newValue: boolean) => onStatusToggle(row as Team, newValue)"
+          @click.stop.prevent="onStatusToggle(row as Team, !row.isActive)"
         />
       </template>
 
       <template #actions="{ row }">
+        <button
+          @click="showHistoryDrawer(row)"
+          class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
+        >
+          <i class="pi pi-history"></i>
+        </button>
         <button
           @click="onEditTeam(row)"
           class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
@@ -263,6 +276,7 @@ const columns = [
         </button>
       </template>
     </BaseTable>
+    <HistoryDrawer v-model:visible="historyDrawerVisible" :historyData="historyData" />
   </div>
 </template>
 
