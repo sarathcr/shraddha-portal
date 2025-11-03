@@ -99,6 +99,7 @@ export interface CommitteeRole {
 
 export interface CommitteeUser {
   id?: string
+  role?: string
   roleId: string
   userId: string
   userName?: string
