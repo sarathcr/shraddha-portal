@@ -15,18 +15,20 @@ import {
   getCommittee,
 } from '../../services/committee.services'
 import axios, { AxiosError } from 'axios'
-import { useAuthStore } from '@/stores/auth'
 import { committeeApi } from '@/constants'
+import { formatDateForAPI } from '@/utils/dateUtils'
 
 export const committeeUsers: Ref<CommitteeUser[]> = ref([])
 export const committeeRoles: Ref<OptionItem[]> = ref([])
 
-export const getUsersData = async (): Promise<void> => {
+export const getUsersData = async (): Promise<CommitteeUser[]> => {
   const users: ApiResponse<CommitteeUser[]> = await fetchUsers(-1, -1, { isActive: '= true' })
   if (users?.succeeded && users.data) {
     committeeUsers.value = users.data
+    return users.data
   } else {
     committeeUsers.value = []
+    return []
   }
 }
 
@@ -62,19 +64,15 @@ export function useCommittee(): {
   pageSize: Ref<number>
   onLazyLoad: (event: LazyLoadEvent) => Promise<void>
   addCommittee: (payload: Committee) => Promise<ApiResponse<Committee>>
-  handleEdit: (
-    newData: Committee,
-    oldData: Committee,
-  ) => Promise<{ success: boolean; committee: Committee } | null>
+  handleEdit: (committeePayload: Committee) => Promise<Committee | null>
   handleDelete: (id: string) => Promise<{ success: boolean; message: string }>
   isLoading: Ref<boolean>
   filters: Ref<{ global: { value: string | null; matchMode: string } }>
   clearFilter: () => void
   fetchInitialData: () => Promise<void>
   totalRecords: Ref<number>
-  onStatusToggle: (committee: Committee, newStatus: boolean) => Promise<void>
+  onStatusToggle: (committee: Committee, newStatus: boolean) => Promise<boolean>
 } {
-  const authStore = useAuthStore()
   const toast = useToast()
   const committee = ref<Committee[]>([])
   const allRows = ref<RowData[]>([])
@@ -84,18 +82,38 @@ export function useCommittee(): {
   const pageNumber = ref(1)
   const totalRecords = ref(0)
   const error = ref<string | null>(null)
-
   const filters = ref({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
   })
+  const lastLazyLoadEvent = ref<LazyLoadEvent | null>(null)
 
   const columns = [
     { label: 'Committee Year', key: 'year', filterable: true },
-    { label: 'Start Date', key: 'startDate', filterable: true, useDateFilter: true },
-    { label: 'End Date', key: 'endDate', filterable: true, useDateFilter: true },
+    {
+      label: 'Start Date',
+      key: 'startDate',
+      filterable: true,
+      useDateFilter: true,
+      showAddButton: false,
+    },
+    {
+      label: 'End Date',
+      key: 'endDate',
+      filterable: true,
+      useDateFilter: true,
+      showAddButton: false,
+    },
     { label: 'Core Members', key: 'coreMembers', filterable: true },
     { label: 'Executive Members', key: 'executiveMembers', filterable: true },
-    { label: 'Status', key: 'isActive', filterable: true, useToggle: true },
+    {
+      label: 'Status',
+      key: 'isActive',
+      filterable: true,
+      useToggle: true,
+      showFilterMatchModes: false,
+      showFilterOperator: false,
+      showAddButton: false,
+    },
   ]
 
   const statusOptions = [
@@ -103,29 +121,39 @@ export function useCommittee(): {
     { label: 'Inactive', value: 'false' },
   ]
 
-  const onStatusToggle = async (committee: Committee, newStatus: boolean): Promise<void> => {
-    const originalStatus = committee.status
-    try {
-      const accessToken = authStore.accessToken
-      if (!accessToken) {
-        throw new Error('Authentication token not found. Please log in again.')
+  const onStatusToggle = async (committeeItem: Committee, newStatus: boolean): Promise<boolean> => {
+    if (newStatus) {
+      const anyOtherActive = committee.value.some((c) => c.isActive && c.id !== committeeItem.id)
+      if (anyOtherActive) {
+        toast.add({
+          severity: 'warn',
+          summary: 'Warning',
+          detail:
+            'Another committee is already active. Only one committee can be active at a time.',
+          life: 3000,
+        })
+        return false
       }
+    }
 
-      await committeeApi.put(`/committee/${committee.id}/toggleStatus`, {
+    try {
+      const response = await committeeApi.put(`/committee/${committeeItem.id}/toggleStatus`, {
         status: newStatus,
       })
-      committee.status = newStatus
-      toast.add({
-        severity: 'success',
-        summary: 'Success',
-        detail: 'Committee status updated successfully.',
-        life: 3000,
-      })
-      await fetchInitialData()
-    } catch (error) {
-      committee.status = originalStatus
 
-      if (axios.isAxiosError(error) && error.response && error.response.data?.errorValue) {
+      if (response && response.status === 200) {
+        toast.add({
+          severity: 'success',
+          summary: 'Success',
+          detail: 'Committee status updated successfully.',
+          life: 3000,
+        })
+        return true
+      } else {
+        return false
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.data?.errorValue) {
         toast.add({
           severity: 'error',
           summary: 'Error',
@@ -136,11 +164,12 @@ export function useCommittee(): {
         toast.add({
           severity: 'error',
           summary: 'Error',
-          detail: 'Failed to update team status.',
+          detail: 'Failed to update committee status.',
           life: 3000,
         })
       }
-      console.error('Error updating team status:', error)
+      console.error('Error updating committee status:', error)
+      return false
     }
   }
 
@@ -167,6 +196,7 @@ export function useCommittee(): {
 
   const onLazyLoad = async (event: LazyLoadEvent): Promise<void> => {
     isLoading.value = true
+    lastLazyLoadEvent.value = event
     try {
       const payload: {
         pagination: { pageNumber: number; pageSize: number }
@@ -193,18 +223,20 @@ export function useCommittee(): {
             operator: string
             constraints: { value: unknown; matchMode: string }[]
           }
-
           if (filter.constraints?.length) {
             const validConstraints = filter.constraints.filter(
               (c) => c.value !== null && c.value !== undefined,
             )
-
             if (validConstraints.length > 0) {
               const filterString = validConstraints
                 .map((constraint, index) => {
                   const operator =
                     index === 0 ? '' : filter.operator.toUpperCase() === 'OR' ? 'OR' : 'AND'
-                  const condition = mapMatchModeToOperator(constraint.matchMode, constraint.value)
+                  let value = constraint.value
+                  if (field.toLowerCase().includes('date') && value) {
+                    value = formatDateForAPI(value as Date)
+                  }
+                  const condition = mapMatchModeToOperator(constraint.matchMode, value)
                   return `${operator} ${condition}`.trim()
                 })
                 .join(' ')
@@ -214,7 +246,6 @@ export function useCommittee(): {
           }
         })
       }
-
       const response = await getCommittee(
         payload.pagination.pageNumber,
         payload.pagination.pageSize,
@@ -226,11 +257,11 @@ export function useCommittee(): {
         allRows.value = (response.data || []).map((item: Committee) => ({
           id: item.id,
           year: item.year,
-          startDate: item.startDate,
-          endDate: item.endDate,
-          coreMembers: (item.coreMembers || []).map((m: CommitteeUser) => m.name).join(', '),
+          startDate: item.startDate ?? null,
+          endDate: item.endDate ?? null,
+          coreMembers: (item.coreMembers || []).map((m: CommitteeUser) => m.userName).join(', '),
           executiveMembers: (item.executiveMembers || [])
-            .map((m: CommitteeUser) => m.name)
+            .map((m: CommitteeUser) => m.userName)
             .join(', '),
           isActive: item.isActive ?? false,
         }))
@@ -271,14 +302,17 @@ export function useCommittee(): {
     isLoading.value = true
     try {
       await Promise.all([getUsersData(), getRolesData()])
-
-      await onLazyLoad({
-        first: 0,
-        rows: pageSize.value,
-        filters: undefined,
-        sortField: null,
-        sortOrder: null,
-      })
+      if (lastLazyLoadEvent.value) {
+        await onLazyLoad(lastLazyLoadEvent.value)
+      } else {
+        await onLazyLoad({
+          first: 0,
+          rows: pageSize.value,
+          filters: undefined,
+          sortField: null,
+          sortOrder: null,
+        })
+      }
     } finally {
       isLoading.value = false
     }
@@ -293,8 +327,9 @@ export function useCommittee(): {
         severity: 'success',
         summary: 'Success',
         detail: 'Committee created successfully',
+        life: 3000,
       })
-
+      if (lastLazyLoadEvent.value) await onLazyLoad(lastLazyLoadEvent.value)
       return {
         data: response.data,
         message: 'Committee created successfully',
@@ -313,7 +348,7 @@ export function useCommittee(): {
         message = axiosErr.response.data.errorValue
       }
 
-      toast.add({ severity: 'error', summary: 'Error', detail: message })
+      toast.add({ severity: 'error', summary: 'Error', detail: message, life: 3000 })
       error.value = message
 
       return {
@@ -328,37 +363,29 @@ export function useCommittee(): {
       }
     }
   }
-
-  const handleEdit = async (
-    committeePayload: Committee,
-  ): Promise<{ success: boolean; committee: Committee } | null> => {
+  const handleEdit = async (committeePayload: Committee): Promise<Committee | null> => {
     try {
       if (!committeePayload.id) throw new Error('Committee ID missing for edit')
-      const response: Committee = await editCommittee(committeePayload.id, committeePayload)
-      if (response && response.id) {
-        const index = committee.value.findIndex((c) => c.id === response.id)
-        if (index !== -1) committee.value[index] = response
 
-        toast.add({
-          severity: 'success',
-          summary: 'Success',
-          detail: `Committee for year ${response.year} updated successfully.`,
-          life: 3000,
-        })
-
-        return { success: true, committee: response }
-      } else {
-        toast.add({
-          severity: 'error',
-          summary: 'Update Failed',
-          detail: 'Failed to update committee.',
-          life: 3000,
-        })
-        return { success: false, committee: committeePayload }
-      }
+      const response = await editCommittee(committeePayload.id, committeePayload)
+      const index = committee.value.findIndex((c) => c.id === response.id)
+      if (index !== -1) committee.value[index] = response
+      toast.add({
+        severity: 'success',
+        summary: 'Success',
+        detail: `Committee updated successfully.`,
+        life: 3000,
+      })
+      if (lastLazyLoadEvent.value) await onLazyLoad(lastLazyLoadEvent.value)
+      return response
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Unknown error occurred'
-      toast.add({ severity: 'error', summary: 'Error', detail: message, life: 3000 })
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: message,
+        life: 3000,
+      })
       return null
     }
   }
@@ -368,15 +395,17 @@ export function useCommittee(): {
       if (!id) throw new Error('Committee ID missing for delete')
 
       const response = await deleteCommittee(id)
+
       if (response.success) {
         await fetchInitialData()
         toast.add({
           severity: 'success',
-          summary: 'Deleted',
+          summary: 'success',
           detail: response.message || 'Committee deleted successfully.',
           life: 3000,
         })
-        return { success: true, message: response.message }
+        if (lastLazyLoadEvent.value) await onLazyLoad(lastLazyLoadEvent.value)
+        return { success: true, message: response.message || 'Committee deleted successfully.' }
       } else {
         toast.add({
           severity: 'error',
@@ -387,11 +416,26 @@ export function useCommittee(): {
         return { success: false, message: response.message || 'Delete failed' }
       }
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : 'Unknown error occurred during delete'
-      toast.add({ severity: 'error', summary: 'Error', detail: message, life: 3000 })
+      let errorMessage = 'An error occurred while deleting committee.'
 
-      return { success: false, message }
+      if (axios.isAxiosError(error)) {
+        errorMessage =
+          error.response?.data?.errorValue ||
+          error.response?.data?.message ||
+          error.message ||
+          errorMessage
+      } else if (error instanceof Error) {
+        errorMessage = error.message
+      }
+
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: errorMessage,
+        life: 3000,
+      })
+      console.error('API call failed:', error)
+      return { success: false, message: errorMessage }
     }
   }
 

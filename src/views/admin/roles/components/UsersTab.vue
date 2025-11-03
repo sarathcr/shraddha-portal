@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import BaseTable from '@/components/baseTable.vue'
+import HistoryDrawer from '@/components/HistoryDrawer.vue'
 import Dialog from 'primevue/dialog'
 import Button from 'primevue/button'
 import ToggleSwitch from 'primevue/toggleswitch'
@@ -7,6 +8,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useUsers } from '@/views/admin/roles/composables/useUser'
 import UserForm from './UserForm.vue'
 import { useValidation } from '@/views/admin/roles/composables/useValidation'
+import { useHistory } from '@/composables/useHistory'
 import type { User } from '@/types/user'
 import type { RowData, ColumnDef } from '@/types/baseTable.model'
 import { userSchema } from '@/views/admin/schemas/userSchema'
@@ -40,13 +42,26 @@ const userToDelete = ref<User | null>(null)
 const editableUser = ref<User | null>(null)
 const originalUser = ref<User | null>(null)
 const userFormRef = ref<InstanceType<typeof UserForm> | null>(null)
+const { historyDrawerVisible, historyData, loadHistory } = useHistory()
+
 const toast = useToast()
 
 const createRoles = ref([] as typeof roles.value)
 
 watch(userFormDialogVisible, (isVisible) => {
-  if (isVisible) document.body.classList.add('no-scroll')
-  else document.body.classList.remove('no-scroll')
+  if (isVisible) {
+    document.body.classList.add('no-scroll')
+  } else {
+    document.body.classList.remove('no-scroll')
+    setTimeout(() => {
+      const tabHeader = document.querySelector('.p-tablist') as HTMLElement | null
+      if (tabHeader) {
+        tabHeader.style.display = 'none'
+        void tabHeader.offsetHeight
+        tabHeader.style.display = ''
+      }
+    }, 50)
+  }
 })
 
 const openCreateUserDialog = (): void => {
@@ -133,7 +148,6 @@ const onSave = async (newData: RowData): Promise<void> => {
       roleId: roles.value.find((r) => r.label === newData.role)?.value ?? editableUser.value.roleId,
       isActive: editableUser.value.isActive,
     }
-
     await editUser(userToSave)
   } catch (validationError) {
     if (validationError instanceof yup.ValidationError) {
@@ -197,7 +211,14 @@ const handleStatusClick = async (
 const columns = computed((): ColumnDef[] => [
   { label: 'Name', key: 'name', filterable: true, required: true },
   { label: 'Employee ID', key: 'employeeId', filterable: true, required: true },
-  { label: 'Date of Birth', key: 'dob', filterable: true, required: true, useDateFilter: true },
+  {
+    label: 'Date of Birth',
+    key: 'dob',
+    filterable: true,
+    required: true,
+    useDateFilter: true,
+    showAddButton: false,
+  },
   { label: 'Email', key: 'email', filterable: true, required: true },
   {
     label: 'Team',
@@ -215,7 +236,6 @@ const columns = computed((): ColumnDef[] => [
     key: 'role',
     filterable: true,
     filterOption: true,
-    // Use full roles list for inline edit
     options: roles.value.map((r) => ({ label: r.label, value: r.label })),
     required: true,
     showFilterMatchModes: false,
@@ -236,6 +256,10 @@ const isStatusDisabled = (row: User): boolean => {
   if (!row) return false
   const roleLabel = roles.value.find((r) => r.label === row.role)?.label
   return roleLabel ? Object.values(CommitteeRoles).includes(roleLabel as CommitteeRoles) : false
+}
+
+const showHistoryDrawer = (row: User): void => {
+  loadHistory('user', row.id)
 }
 
 onMounted(async () => {
@@ -322,6 +346,12 @@ onMounted(async () => {
 
       <template #actions="{ row }">
         <button
+          @click="showHistoryDrawer(row)"
+          class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
+        >
+          <i class="pi pi-history"></i>
+        </button>
+        <button
           @click="onEdit(row as User)"
           class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
         >
@@ -335,5 +365,6 @@ onMounted(async () => {
         </button>
       </template>
     </BaseTable>
+    <HistoryDrawer v-model:visible="historyDrawerVisible" :historyData="historyData" />
   </div>
 </template>
