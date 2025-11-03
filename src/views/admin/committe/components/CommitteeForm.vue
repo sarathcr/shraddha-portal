@@ -248,6 +248,10 @@ const isCommitteeChanged = (): boolean => {
       (id) => userOptions.value.find((u) => u.value === id)?.label ?? '',
     ),
   }
+  originalData.coreMembers.sort()
+  currentData.coreMembers.sort()
+  originalData.executiveMembers.sort()
+  currentData.executiveMembers.sort()
 
   return !isEqual(originalData, currentData)
 }
