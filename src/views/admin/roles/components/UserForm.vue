@@ -34,6 +34,9 @@ const emit = defineEmits<{
 
 const { handleSubmit, errors, resetForm, setFieldValue } = useForm<UserFormValues>({
   validationSchema: userSchema,
+  initialValues: {
+    status: true,
+  },
 })
 
 const { value: name } = useField<string>('name')

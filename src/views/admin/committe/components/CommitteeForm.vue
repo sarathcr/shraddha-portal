@@ -25,7 +25,6 @@ import { isEqual } from 'lodash'
 import { useToast } from 'primevue/usetoast'
 
 const toast = useToast()
-
 const emit = defineEmits<{
   (e: 'submit', payload: Committee): void
   (e: 'cancel'): void
@@ -38,15 +37,12 @@ const props = defineProps<{
 }>()
 const isLoadingCoremembers = ref(true)
 const isLoadingExecutiveMemebers = ref(true)
-
 const isSubmitted = ref(false)
 const roleError = ref<string | null>(null)
-
 const isEditMode = ref(!!props.committee?.id)
 const { handleSubmit, errors } = useForm<CommitteeFormData>({
   validationSchema: committeeSchema(isEditMode.value),
 })
-
 const { value: year } = useField<string>('year')
 const { value: startDate, errorMessage: startDateError } = useField<Date | null>('startDate')
 const { value: endDate, errorMessage: endDateError } = useField<Date | null>('endDate')
@@ -67,11 +63,13 @@ const originalCommittee = ref<Committee | null>(null)
 
 onMounted(async () => {
   await Promise.all([getRolesData(), getUsersData()])
-
-  userOptions.value = (await getUsersData())
+  const allUsers = await getUsersData()
+  const filteredUsers = isEditMode.value
+    ? allUsers
+    : allUsers.filter((u) => u.role === 'Normal User')
+  userOptions.value = filteredUsers
     .filter((u): u is CommitteeUser & { name: string; id: string } => !!u.name && !!u.id)
     .map((u) => ({ label: u.name, value: u.id }))
-
   const allowedRoles = ['President', 'Secretary', 'Treasurer', 'Assistant Treasurer']
   coreRoles.value = allowedRoles
     .map((roleName) => {
@@ -79,9 +77,9 @@ onMounted(async () => {
       return role ? { id: role.value, name: role.label } : null
     })
     .filter((r): r is { id: string; name: string } => r !== null)
-
   const exec = committeeRoles.value.find((r) => r.label === CommitteeRoles.ExecutiveMember)
   executiveRole.value = exec ? { id: exec.value, name: exec.label } : null
+
   isLoadingCoremembers.value = false
   isLoadingExecutiveMemebers.value = false
 })
@@ -204,7 +202,6 @@ const getAvailableUsers = (currentRoleId?: string): OptionItem[] => {
       .map(([, userId]) => userId),
     ...selectedExecutiveMember.value,
   ])
-
   return userOptions.value.filter(
     (u) =>
       !selectedIds.has(u.value) ||
@@ -248,6 +245,10 @@ const isCommitteeChanged = (): boolean => {
       (id) => userOptions.value.find((u) => u.value === id)?.label ?? '',
     ),
   }
+  originalData.coreMembers.sort()
+  currentData.coreMembers.sort()
+  originalData.executiveMembers.sort()
+  currentData.executiveMembers.sort()
 
   return !isEqual(originalData, currentData)
 }
@@ -317,6 +318,7 @@ const onCancel = (): void => {
             dateFormat="dd-mm-yy"
             :inputClass="{ '!border-red-500': isSubmitted && startDateError }"
             class="w-full"
+            :disabled="isEditMode && isActive"
           />
           <label>Start Date</label>
         </FloatLabel>
@@ -402,6 +404,8 @@ const onCancel = (): void => {
               filter
               class="w-full"
               display="chip"
+              :maxSelectedLabels="3"
+              selectedItemsLabel="{0} users selected"
             />
           </div>
         </div>

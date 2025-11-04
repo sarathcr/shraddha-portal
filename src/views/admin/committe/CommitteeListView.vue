@@ -12,6 +12,8 @@ import CommitteeForm from './components/CommitteeForm.vue'
 import { useCommittee } from './composable/useCommitte'
 import { useRouter } from 'vue-router'
 import { useValidation } from '../roles/composables/useValidation'
+import { useHistory } from '@/composables/useHistory'
+import HistoryDrawer from '@/components/HistoryDrawer.vue'
 
 const {
   isLoading,
@@ -40,6 +42,7 @@ const formMode = ref<'create' | 'edit'>('create')
 const coreMemberOptions = ref<{ label: string; value: string }[]>([])
 const executiveMemberOptions = ref<{ label: string; value: string }[]>([])
 const selectedCommittee = ref<Committee | null>(null)
+const { historyDrawerVisible, historyData, loadHistory } = useHistory()
 
 const openCreateUserDialog = (): void => {
   formMode.value = 'create'
@@ -110,6 +113,10 @@ const confirmDisable = async (): Promise<void> => {
   }
   confirmDisableDialog.value = false
   committeeToDisable.value = null
+}
+
+const showHistoryDrawer = async (row: Committee): Promise<void> => {
+  await loadHistory('committee', row.id)
 }
 </script>
 
@@ -194,6 +201,12 @@ const confirmDisable = async (): Promise<void> => {
 
         <template #actions="{ row }">
           <button
+            @click="showHistoryDrawer(row)"
+            class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
+          >
+            <i class="pi pi-history"></i>
+          </button>
+          <button
             @click="handleEditCommittee(row)"
             class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
           >
@@ -215,6 +228,7 @@ const confirmDisable = async (): Promise<void> => {
           </button>
         </template>
       </BaseTable>
+      <HistoryDrawer v-model:visible="historyDrawerVisible" :historyData="historyData" />
     </div>
   </div>
 </template>
