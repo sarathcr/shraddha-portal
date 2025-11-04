@@ -18,29 +18,44 @@ export const usePermissionStore = defineStore(
       userPermissions.value = []
     }
     const permissionMap = computed<PermissionMap>(() => {
-      const map: PermissionMap = {} as PermissionMap
+      const map = new Map<ModuleName, Set<Permission>>()
 
-      userPermissions.value.forEach((roleData) => {
-        roleData.modulePermissions.forEach((modulePerm) => {
-          const moduleName: ModuleName = modulePerm.module
-          if (!map[moduleName]) {
-            map[moduleName] = [] as Permission[]
-          }
-          modulePerm.permissions.forEach((perm) => {
-            const permission = perm.permission
-            if (!map[moduleName]!.includes(permission)) {
-              map[moduleName]!.push(permission)
-            }
-          })
-        })
-      })
+      const allModulePermissions = userPermissions.value.flatMap(
+        (roleData) => roleData.modulePermissions,
+      )
 
-      return map
+      for (const modulePerm of allModulePermissions) {
+        const moduleName = modulePerm.module
+
+        if (!map.has(moduleName)) {
+          map.set(moduleName, new Set<Permission>())
+        }
+        const permissionSet = map.get(moduleName)!
+
+        for (const perm of modulePerm.permissions) {
+          permissionSet.add(perm.permission)
+        }
+      }
+
+      const finalMapWithArrays = Object.fromEntries(
+        Array.from(map.entries(), ([moduleName, permissionSet]) => [
+          moduleName,
+          Array.from(permissionSet),
+        ]),
+      )
+
+      return finalMapWithArrays as PermissionMap
     })
 
     const permissionsLoaded = computed(() => userPermissions.value.length > 0)
 
-    return { userPermissions, permissionMap, permissionsLoaded, setPermissions, clearPermissions }
+    return {
+      userPermissions,
+      permissionMap,
+      permissionsLoaded,
+      setPermissions,
+      clearPermissions,
+    }
   },
   {
     persist: {
