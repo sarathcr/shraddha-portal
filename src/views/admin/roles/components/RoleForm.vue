@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { watch } from 'vue'
+import { ref, watch } from 'vue'
 import InputText from 'primevue/inputtext'
 import Textarea from 'primevue/textarea'
 import Checkbox from 'primevue/checkbox'
 import Button from 'primevue/button'
 import FloatLabel from 'primevue/floatlabel'
-import ToggleSwitch from 'primevue/toggleswitch' // Import ToggleSwitch
+import ToggleSwitch from 'primevue/toggleswitch'
+import MultiSelect from 'primevue/multiselect'
 import { useForm, useField } from 'vee-validate'
 import { roleSchema } from '@/views/admin/schemas/roleSchema'
 import type { Role } from '@/types/role'
@@ -19,29 +20,75 @@ const emit = defineEmits<{
   (e: 'cancel'): void
 }>()
 
-const { handleSubmit, errors, resetForm, setValues } = useForm<Role>({
+const { handleSubmit, errors, resetForm, setValues, setFieldValue } = useForm<Role>({
   validationSchema: roleSchema,
   initialValues: props.initialData || {
     roleName: '',
     description: '',
-    permissions: [],
+    modulePermissions: [],
     isActive: false,
   },
+  validateOnMount: false,
 })
 
 const { value: roleName } = useField<string>('roleName')
 const { value: description } = useField<string>('description')
-const { value: permissions } = useField<string[]>('permissions')
+const selectedModules = ref<string[]>([])
+const modulePermissions = ref<Record<string, string[]>>({})
 const { value: isActive } = useField<boolean>('isActive')
+const isSubmitted = ref(false)
 
 defineExpose({
   resetForm,
-  setFormValues: setValues,
 })
 
-const onSubmit = handleSubmit((values) => {
-  emit('submit', values)
+// dummy data for modules
+const modules = ref([
+  { id: '1', name: 'Events' },
+  { id: '2', name: 'Committee' },
+  { id: '3', name: 'Approvals' },
+  { id: '4', name: 'Finance' },
+  { id: '5', name: 'Birthday Gifts' },
+])
+
+watch(selectedModules, (newModules) => {
+  // Add new modules
+  newModules.forEach((id) => {
+    if (!modulePermissions.value[id]) {
+      modulePermissions.value[id] = []
+    }
+  })
+
+  // Remove unselected modules
+  Object.keys(modulePermissions.value).forEach((id) => {
+    if (!newModules.includes(id)) {
+      delete modulePermissions.value[id]
+    }
+  })
 })
+
+watch(
+  modulePermissions,
+  (newVal) => {
+    const formatted = Object.entries(newVal).map(([moduleId, perms]) => ({
+      moduleId,
+      permissions: perms,
+    }))
+    setFieldValue('modulePermissions', formatted)
+  },
+  { deep: true },
+)
+
+const onSubmit = handleSubmit(
+  (values) => {
+    isSubmitted.value = true
+    emit('submit', values)
+  },
+  (errors) => {
+    isSubmitted.value = true
+    console.error('Validation failed:', errors)
+  },
+)
 
 const onCancel = (): void => {
   emit('cancel')
@@ -83,24 +130,56 @@ watch(
         />
         <label for="description">Role Description</label>
       </FloatLabel>
-      <small class="text-red-500 leading-none">{{ errors.description }}</small>
+      <small class="text-red-500">{{ errors.description }}</small>
     </div>
+    <div>
+      <h3 class="font-semibold text-sm mb-2">Modules & Permissions</h3>
+      <MultiSelect
+        v-model="selectedModules"
+        :options="modules"
+        optionLabel="name"
+        optionValue="id"
+        placeholder="Select Modules"
+        filter
+        class="w-full"
+        display="chip"
+        :maxSelectedLabels="3"
+      />
+    </div>
+    <div
+      v-if="selectedModules.length"
+      class="flex flex-col gap-3 mt-2 border border-gray-300 rounded-lg"
+    >
+      <div
+        v-for="moduleId in selectedModules"
+        :key="moduleId"
+        class="flex flex-wrap md:flex-nowrap items-start gap-6 p-3 rounded-lg"
+      >
+        <!-- Module Name -->
+        <div class="flex-1">
+          <InputText
+            :value="modules.find((m) => m.id === moduleId)?.name"
+            disabled
+            class="w-full bg-gray-100"
+          />
+        </div>
 
-    <div class="mb-2">
-      <p class="font-medium mb-2">Permissions</p>
-      <div class="flex flex-wrap gap-4">
-        <div
-          v-for="perm in ['read', 'create', 'update', 'delete']"
-          :key="perm"
-          class="flex items-center gap-2"
-        >
-          <Checkbox v-model="permissions" :inputId="perm" :value="perm" />
-          <label :for="perm" class="cursor-pointer capitalize">{{ perm }}</label>
+        <!-- Permissions -->
+        <div class="flex flex-wrap gap-4 flex-1">
+          <div
+            v-for="permissions in ['read', 'create', 'update', 'delete']"
+            :key="permissions"
+            class="flex items-center gap-2 cursor-pointer"
+          >
+            <Checkbox :value="permissions" v-model="modulePermissions[moduleId]" />
+            <span class="capitalize">{{ permissions }}</span>
+          </div>
         </div>
       </div>
-      <small class="text-red-500">{{ errors.permissions }}</small>
     </div>
-
+    <small v-if="errors.modulePermissions && isSubmitted" class="text-red-500">{{
+      errors.modulePermissions
+    }}</small>
     <div class="mb-2">
       <div>
         <label for="isActive">Status</label>

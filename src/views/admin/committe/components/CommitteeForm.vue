@@ -64,9 +64,9 @@ const originalCommittee = ref<Committee | null>(null)
 onMounted(async () => {
   await Promise.all([getRolesData(), getUsersData()])
   const allUsers = await getUsersData()
-  const filteredUsers = isEditMode.value
-    ? allUsers
-    : allUsers.filter((u) => u.role === 'Normal User')
+  const filteredUsers = allUsers.filter(
+    (u) => Array.isArray(u.roles) && u.roles.some((r) => r.role === 'Normal User'),
+  )
   userOptions.value = filteredUsers
     .filter((u): u is CommitteeUser & { name: string; id: string } => !!u.name && !!u.id)
     .map((u) => ({ label: u.name, value: u.id }))
@@ -318,7 +318,7 @@ const onCancel = (): void => {
             dateFormat="dd-mm-yy"
             :inputClass="{ '!border-red-500': isSubmitted && startDateError }"
             class="w-full"
-            :disabled="isEditMode && isActive"
+            :disabled="isEditMode"
           />
           <label>Start Date</label>
         </FloatLabel>
@@ -335,6 +335,7 @@ const onCancel = (): void => {
             dateFormat="dd-mm-yy"
             :inputClass="{ '!border-red-500': isSubmitted && endDateError }"
             class="w-full"
+            :disabled="isEditMode && !isActive"
           />
           <label>End Date</label>
         </FloatLabel>

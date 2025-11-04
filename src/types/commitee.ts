@@ -99,12 +99,14 @@ export interface CommitteeRole {
 
 export interface CommitteeUser {
   id?: string
-  role?: string
-  roleId: string
   userId: string
   userName?: string
   name?: string
   value?: string
+  roles?: {
+    role: string
+    roleId: string
+  }[]
 }
 export interface CommitteeFormData {
   year: string

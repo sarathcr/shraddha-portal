@@ -87,9 +87,11 @@ const onSaveRole = async (newData: RowData): Promise<void> => {
   const originalDataToCompare = {
     roleName: originalRole.value.roleName,
     description: originalRole.value.description,
-    permissions: (originalRole.value.permissions ?? [])
-      .map((p: string | { value: string }) => (typeof p === 'string' ? p : p.value))
-      .sort(),
+    modulePermissions: (originalRole.value.modulePermissions ?? []).map((mp) => ({
+      moduleId: mp.moduleId,
+      permissions: (mp.permissions ?? []).sort(),
+    })),
+
     isActive: originalRole.value.isActive,
   }
 
