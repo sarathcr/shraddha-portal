@@ -143,6 +143,7 @@ watch(
         filter
         class="w-full"
         display="chip"
+        :maxSelectedLabels="3"
       />
     </div>
     <div

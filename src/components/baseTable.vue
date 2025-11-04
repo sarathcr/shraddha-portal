@@ -288,6 +288,7 @@ const getOptionLabel = (
                   display="chip"
                   filter
                   class="w-full"
+                  :maxSelectedLabels="3"
                 />
               </div>
               <div v-else>
@@ -357,6 +358,7 @@ const getOptionLabel = (
                 filter
                 display="chip"
                 class="w-full"
+                :maxSelectedLabels="3"
               />
               <Select
                 v-else-if="col.useToggle"
