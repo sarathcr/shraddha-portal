@@ -26,7 +26,7 @@ export function useLogin(): UseLoginReturn {
       if (response && response.accessToken) {
         authStore.setTokens(response.accessToken, response.refreshToken)
 
-        if (response.userPermissions) {
+        if (response.userPermissions && Array.isArray(response.userPermissions)) {
           permissionStore.setPermissions(response.userPermissions)
         }
 

@@ -27,7 +27,7 @@ export interface UserPermissionsData {
 export interface LoginApiResult {
   accessToken: string
   refreshToken: string
-  userPermissions: UserPermissionsData
+  userPermissions: UserPermissionsData[]
 }
 
 export type PermissionMap = Record<ModuleName, Permission[] | undefined>
