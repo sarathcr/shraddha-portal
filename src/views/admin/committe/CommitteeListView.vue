@@ -200,32 +200,34 @@ const showHistoryDrawer = async (row: Committee): Promise<void> => {
         </template>
 
         <template #actions="{ row }">
-          <button
-            @click="showHistoryDrawer(row)"
-            class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
-          >
-            <i class="pi pi-history"></i>
-          </button>
-          <button
-            @click="handleEditCommittee(row)"
-            class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
-          >
-            <i class="pi pi-pencil text-slate-700 text-base"></i>
-          </button>
+          <div class="flex flex-nowrap">
+            <button
+              @click="showHistoryDrawer(row)"
+              class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
+            >
+              <i class="pi pi-history"></i>
+            </button>
+            <button
+              @click="handleEditCommittee(row)"
+              class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
+            >
+              <i class="pi pi-pencil text-slate-700 text-base"></i>
+            </button>
 
-          <button
-            @click="handleDeleteConfirmation(row as Committee)"
-            class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
-          >
-            <i class="pi pi-trash text-red-600 text-base"></i>
-          </button>
+            <button
+              @click="handleDeleteConfirmation(row as Committee)"
+              class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
+            >
+              <i class="pi pi-trash text-red-600 text-base"></i>
+            </button>
 
-          <button
-            @click="handleViewCommittee(row)"
-            class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
-          >
-            <i class="pi pi-eye text-blue-600 text-base"></i>
-          </button>
+            <button
+              @click="handleViewCommittee(row)"
+              class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
+            >
+              <i class="pi pi-eye text-blue-600 text-base"></i>
+            </button>
+          </div>
         </template>
       </BaseTable>
       <HistoryDrawer v-model:visible="historyDrawerVisible" :historyData="historyData" />
