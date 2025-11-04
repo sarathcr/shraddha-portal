@@ -236,11 +236,12 @@ const columns = computed((): ColumnDef[] => [
     key: 'role',
     filterable: true,
     filterOption: true,
-    options: roles.value.map((r) => ({ label: r.label, value: r.label })),
+    // options: roles.value.map((r) => ({ label: r.label, value: r.label })),
     required: true,
     showFilterMatchModes: false,
     showFilterOperator: false,
     showAddButton: false,
+    useMultiSelect: true,
   },
   {
     label: 'Status',
