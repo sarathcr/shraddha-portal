@@ -66,7 +66,9 @@ onMounted(async () => {
   const allUsers = await getUsersData()
   const filteredUsers = isEditMode.value
     ? allUsers
-    : allUsers.filter((u) => u.role === 'Normal User')
+    : allUsers.filter(
+        (u) => Array.isArray(u.roles) && u.roles.some((r) => r.role === 'Normal User'),
+      )
   userOptions.value = filteredUsers
     .filter((u): u is CommitteeUser & { name: string; id: string } => !!u.name && !!u.id)
     .map((u) => ({ label: u.name, value: u.id }))
