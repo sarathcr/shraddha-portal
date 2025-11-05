@@ -65,7 +65,6 @@ watch(userFormDialogVisible, (isVisible) => {
 })
 
 const openCreateUserDialog = (): void => {
-  // TS Fix: Explicitly typing 'r' as OptionItem to resolve TS7006
   createRoles.value = roles.value.filter((r: OptionItem) => !r.isCommitteeRole)
 
   userFormDialogVisible.value = true
