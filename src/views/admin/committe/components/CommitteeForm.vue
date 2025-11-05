@@ -17,7 +17,7 @@ import type {
 import { committeeRoles, getRolesData, getUsersData, useCommittee } from '../composable/useCommitte'
 import { committeeSchema } from '../../schemas/committeeSchema'
 import { formatDateForAPI, parseDDMMYYYY } from '@/utils/dateUtils'
-import { CommitteeRoles } from '@/constants/committeeRoles.enum'
+import { AdministrativeRoles, CommitteeRoles } from '@/constants/committeeRoles.enum'
 import type { OptionItem } from '@/types/user'
 import CommitteeMemberSkelton from '@/components/Skelton/CommiteeMemberSkelton.vue'
 import CommiteeExecutiveSkelton from '@/components/Skelton/CommiteeExecutiveSkelton.vue'
@@ -64,9 +64,18 @@ const originalCommittee = ref<Committee | null>(null)
 onMounted(async () => {
   await Promise.all([getRolesData(), getUsersData()])
   const allUsers = await getUsersData()
-  const filteredUsers = allUsers.filter(
-    (u) => Array.isArray(u.roles) && u.roles.some((r) => r.role === 'Normal User'),
-  )
+  const filteredUsers = allUsers.filter((u) => {
+    if (!Array.isArray(u.roles)) return false
+    const roleNames = u.roles.map((r) => r.role)
+    const hasNormalUser = roleNames.includes('Normal User')
+    const hasExcludedRole = [
+      AdministrativeRoles.AdminHR,
+      AdministrativeRoles.Director,
+      AdministrativeRoles.DeliveryManager,
+    ].some((excluded) => roleNames.includes(excluded))
+    return hasNormalUser && !hasExcludedRole
+  })
+
   userOptions.value = filteredUsers
     .filter((u): u is CommitteeUser & { name: string; id: string } => !!u.name && !!u.id)
     .map((u) => ({ label: u.name, value: u.id }))
