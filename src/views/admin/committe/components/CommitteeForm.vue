@@ -67,15 +67,13 @@ onMounted(async () => {
   const filteredUsers = allUsers.filter((u) => {
     if (!Array.isArray(u.roles)) return false
     const roleNames = u.roles.map((r) => r.role)
-    const hasNormalUser = roleNames.includes('Normal User')
     const hasExcludedRole = [
       AdministrativeRoles.AdminHR,
       AdministrativeRoles.Director,
       AdministrativeRoles.DeliveryManager,
     ].some((excluded) => roleNames.includes(excluded))
-    return hasNormalUser && !hasExcludedRole
+    return !hasExcludedRole
   })
-
   userOptions.value = filteredUsers
     .filter((u): u is CommitteeUser & { name: string; id: string } => !!u.name && !!u.id)
     .map((u) => ({ label: u.name, value: u.id }))
@@ -88,7 +86,6 @@ onMounted(async () => {
     .filter((r): r is { id: string; name: string } => r !== null)
   const exec = committeeRoles.value.find((r) => r.label === CommitteeRoles.ExecutiveMember)
   executiveRole.value = exec ? { id: exec.value, name: exec.label } : null
-
   isLoadingCoremembers.value = false
   isLoadingExecutiveMemebers.value = false
 })

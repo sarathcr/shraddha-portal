@@ -24,6 +24,7 @@ import { CommitteeRoles } from '@/constants/committeeRoles.enum'
 const props = defineProps<{
   columns: ColumnDef[]
   rows: RowData[]
+  unremovableRoleId?: string | null
   totalRecords?: number
   rowsPerPage?: number
   editableRow?: RowData | null
@@ -98,6 +99,9 @@ watch(
     if (newRow) {
       Object.keys(tempRow).forEach((key) => delete tempRow[key])
       Object.assign(tempRow, JSON.parse(JSON.stringify(newRow)))
+      if (Array.isArray(tempRow.roles)) {
+        tempRow.roles = tempRow.roles.map((roleObj) => roleObj.roleId)
+      }
     } else {
       Object.keys(tempRow).forEach((key) => delete tempRow[key])
     }
@@ -165,13 +169,31 @@ onMounted(() => {
     filters: tableFilters.value,
   } as DataTablePageEvent)
 })
+
+type OptionObject = { label: string; value: string }
+
+const isOptionObject = (o: string | OptionObject): o is OptionObject => {
+  return typeof o === 'object' && o !== null && 'value' in o && 'label' in o
+}
+
 const getOptionLabel = (
-  options: (string | { label: string; value: string })[] | undefined,
+  options: (string | OptionObject)[] | undefined,
   value: string | undefined,
 ): string => {
   if (!options || value === undefined) return value ?? ''
-  const opt = options.find((o) => (typeof o === 'object' ? o.value === value : o === value))
-  return opt && typeof opt === 'object' ? opt.label : value
+
+  const opt = options.find((o) => {
+    if (isOptionObject(o)) {
+      return o.value === value
+    }
+    return o === value
+  })
+
+  if (opt && isOptionObject(opt)) {
+    return opt.label
+  }
+
+  return value ?? ''
 }
 </script>
 <template>
@@ -244,7 +266,72 @@ const getOptionLabel = (
                 showIcon
                 class="w-full"
               />
+                     
+              <div v-else-if="col.useMultiSelect">
+                                         
+                <MultiSelect
+                  :key="data.id"
+                  v-model="tempRow[col.key] as string[]"
+                  :options="col.options"
+                  optionLabel="label"
+                  optionValue="value"
+                  filter
+                  class="w-full"
+                  :maxSelectedLabels="2"
+                  display="chip"
+                  chipIcon="false"
+                  :placeholder="col.placeholder || `Select ${col.label}`"
+                  :disabled="
+                    col.key === 'roles' &&
+                    Array.isArray(tempRow[col.key]) &&
+                    (tempRow[col.key] as string[]).some((roleId) => {
+                      const roleOption = col.options?.find(
+                        (r) => isOptionObject(r) && String(r.value) === String(roleId),
+                      )
 
+                      const roleLabel =
+                        roleOption && isOptionObject(roleOption) ? roleOption.label : undefined
+
+                      return Object.values(CommitteeRoles).some(
+                        (committeeRole) =>
+                          String(committeeRole).trim().toLowerCase() ===
+                          (roleLabel ? String(roleLabel).trim().toLowerCase() : ''),
+                      )
+                    })
+                  "
+                  :optionDisabled="
+                    (opt) => {
+                      const option = opt?.option || opt
+                      if (col.key !== 'roles') return false
+
+                      const isUnremovable =
+                        props.unremovableRoleId &&
+                        isOptionObject(option) &&
+                        option.value === props.unremovableRoleId
+                      if (isUnremovable) return true
+
+                      const isCommitteeRole = Object.values(CommitteeRoles).some(
+                        (role) =>
+                          (isOptionObject(option) &&
+                            String(role).trim().toLowerCase() ===
+                              String(option.label).trim().toLowerCase()) ||
+                          (isOptionObject(option) &&
+                            String(role).trim().toLowerCase() ===
+                              String(option.value).trim().toLowerCase()),
+                      )
+
+                      if (isCommitteeRole) {
+                        return true
+                      }
+
+                      return false
+                    }
+                  "
+                />
+
+                             
+              </div>
+                           
               <div v-else-if="col.filterOption">
                 <div
                   tabindex="-1"
@@ -263,34 +350,11 @@ const getOptionLabel = (
                     optionValue="value"
                     :placeholder="col.placeholder || `Select ${col.label}`"
                     class="w-full"
-                    :disabled="
-                      col.key === 'role' &&
-                      Object.values(CommitteeRoles).includes(tempRow[col.key] as CommitteeRoles)
-                    "
-                    :optionDisabled="
-                      (opt) =>
-                        col.key === 'role' &&
-                        Object.values(CommitteeRoles).includes(opt.value as CommitteeRoles) &&
-                        opt.value !== tempRow[col.key]
-                    "
                   />
                 </div>
               </div>
 
-              <div v-else-if="col.useMultiSelect">
-                <MultiSelect
-                  :key="data.id"
-                  v-model="tempRow[col.key]"
-                  :options="col.options"
-                  optionLabel="label"
-                  optionValue="value"
-                  :placeholder="col.placeholder || `Select ${col.label}`"
-                  display="chip"
-                  filter
-                  class="w-full"
-                  :maxSelectedLabels="3"
-                />
-              </div>
+                           
               <div v-else>
                 <ToggleSwitch
                   v-if="col.useToggle"
@@ -311,9 +375,9 @@ const getOptionLabel = (
               <template v-else-if="col.useMultiSelect">
                 <div class="flex flex-wrap gap-1">
                   <Tag
-                    v-for="item in data[col.key]"
-                    :key="item"
-                    :value="getOptionLabel(col.options || [], item)"
+                    v-for="(roleObj, index) in data.roles"
+                    :key="roleObj.roleId || index"
+                    :value="roleObj.role"
                     class="mr-1"
                   />
                 </div>
@@ -321,7 +385,7 @@ const getOptionLabel = (
               <ToggleSwitch
                 v-else-if="col.useToggle"
                 :modelValue="Boolean(data[col.key])"
-                @update:modelValue="(newValue) => $emit('save', { ...data, [col.key]: newValue })"
+                @update:modelValue="(newValue) => emit('save', { ...data, [col.key]: newValue })"
               />
               <span v-else>
                 <span>{{ getOptionLabel(col.options, data[col.key]) }}</span>
