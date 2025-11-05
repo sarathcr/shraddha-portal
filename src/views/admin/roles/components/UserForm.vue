@@ -16,12 +16,10 @@ interface UserFormValues {
   dob: Date | null
   email: string
   team: string
-  role: string
   status: boolean
 }
 
 const props = defineProps<{
-  roles: OptionItem[]
   teams: OptionItem[]
   initialData?: Omit<User, 'id'>
   isLoading: boolean
@@ -44,7 +42,6 @@ const { value: employeeId } = useField<string>('employeeId')
 const { value: dob } = useField<Date | null>('dob')
 const { value: email } = useField<string>('email')
 const { value: team } = useField<string>('team')
-const { value: role } = useField<string>('role')
 const { value: status } = useField<boolean>('status')
 
 watch(
@@ -61,7 +58,6 @@ watch(
       setFieldValue('employeeId', newVal.employeeId as string)
       setFieldValue('email', newVal.email as string)
       setFieldValue('team', newVal.team as string)
-      setFieldValue('role', newVal.role as string)
       setFieldValue('status', (newVal.status as boolean) ?? true)
     }
   },
@@ -71,7 +67,6 @@ watch(
 defineExpose({ resetForm })
 
 const onSubmit = handleSubmit((values) => {
-  const selectedRole = props.roles.find((r) => r.value === values.role)
   const selectedTeam = props.teams.find((t) => t.value === values.team)
 
   const payload: User = {
@@ -80,7 +75,6 @@ const onSubmit = handleSubmit((values) => {
     email: values.email?.trim() || '',
     dob: values.dob,
     teamId: selectedTeam ? parseInt(selectedTeam.value) : 0,
-    roleId: selectedRole ? parseInt(selectedRole.value) : 0,
     isActive: values.status,
   }
 
@@ -175,23 +169,6 @@ const onCancel = (): void => {
       </FloatLabel>
 
       <small class="text-red-500">{{ errors.team }}</small>
-    </div>
-
-    <div class="mb-2">
-      <FloatLabel variant="on">
-        <Select
-          id="role"
-          filter
-          v-model="role"
-          :options="props.roles"
-          optionLabel="label"
-          optionValue="value"
-          class="w-full"
-          :class="{ '!border-red-500': errors.role }"
-        /><label for="role">Role</label>
-      </FloatLabel>
-
-      <small class="text-red-500">{{ errors.role }}</small>
     </div>
 
     <div class="mb-2">

@@ -9,12 +9,12 @@ import { useUsers } from '@/views/admin/roles/composables/useUser'
 import UserForm from './UserForm.vue'
 import { useValidation } from '@/views/admin/roles/composables/useValidation'
 import { useHistory } from '@/composables/useHistory'
-import type { User } from '@/types/user'
+import type { User, UserRole, OptionItem } from '@/types/user'
 import type { RowData, ColumnDef } from '@/types/baseTable.model'
 import { userSchema } from '@/views/admin/schemas/userSchema'
 import * as yup from 'yup'
 import { useToast } from 'primevue'
-import { isEqual } from 'lodash'
+import { isEqual, sortBy } from 'lodash'
 import { CommitteeRoles } from '@/constants/committeeRoles.enum'
 
 const {
@@ -46,7 +46,7 @@ const { historyDrawerVisible, historyData, loadHistory } = useHistory()
 
 const toast = useToast()
 
-const createRoles = ref([] as typeof roles.value)
+const createRoles = ref<OptionItem[]>([])
 
 watch(userFormDialogVisible, (isVisible) => {
   if (isVisible) {
@@ -65,7 +65,7 @@ watch(userFormDialogVisible, (isVisible) => {
 })
 
 const openCreateUserDialog = (): void => {
-  createRoles.value = roles.value.filter((r) => !r.isCommitteeRole)
+  createRoles.value = roles.value.filter((r: OptionItem) => !r.isCommitteeRole)
 
   userFormDialogVisible.value = true
   userFormRef.value?.resetForm()
@@ -82,17 +82,30 @@ const handleUserFormCancel = (): void => {
 
 const onEdit = (row: User): void => {
   originalUser.value = JSON.parse(JSON.stringify(row))
+
+  const selectedRoleIds =
+    row.roles && Array.isArray(row.roles) ? row.roles.map((r: UserRole) => r.roleId) : []
+
   editableUser.value = {
     ...row,
     teamId: row.teamId ?? null,
     roleId: row.roleId ?? null,
+    roles: selectedRoleIds,
     isActive: row.isActive ?? null,
   }
   editingRows.value = [row]
 }
 
+const getRoleIdsForComparison = (user: User | null): string[] => {
+  if (!user || !user.roles || !Array.isArray(user.roles)) return []
+
+  return sortBy(user.roles.map((r: UserRole) => r.roleId))
+}
+
 const onSave = async (newData: RowData): Promise<void> => {
   if (!editableUser.value) return
+  const newRoleIds = Array.isArray(newData.roles) ? sortBy(newData.roles) : []
+  const originalRoleIds = getRoleIdsForComparison(originalUser.value)
 
   const originalDataToCompare = {
     name: originalUser.value?.name,
@@ -100,7 +113,7 @@ const onSave = async (newData: RowData): Promise<void> => {
     dob: originalUser.value?.dob,
     email: originalUser.value?.email,
     team: teams.value.find((t) => t.value === originalUser.value?.teamId)?.label ?? null,
-    role: roles.value.find((r) => r.value === originalUser.value?.roleId)?.label ?? null,
+    roles: originalRoleIds,
     status: originalUser.value?.isActive,
   }
 
@@ -110,7 +123,7 @@ const onSave = async (newData: RowData): Promise<void> => {
     dob: newData.dob,
     email: newData.email,
     team: newData.team,
-    role: newData.role,
+    roles: newRoleIds,
     status: editableUser.value.isActive,
   }
 
@@ -134,7 +147,9 @@ const onSave = async (newData: RowData): Promise<void> => {
     dob: newData.dob,
     email: newData.email,
     team: newData.team,
-    role: newData.role,
+    roles: Array.isArray(newData.roles)
+      ? newData.roles.map((id) => roles.value.find((r) => r.value === id)?.label ?? '').join(', ')
+      : '',
     status: editableUser.value.isActive,
   }
 
@@ -145,7 +160,8 @@ const onSave = async (newData: RowData): Promise<void> => {
       ...editableUser.value,
       ...newData,
       teamId: teams.value.find((t) => t.label === newData.team)?.value ?? editableUser.value.teamId,
-      roleId: roles.value.find((r) => r.label === newData.role)?.value ?? editableUser.value.roleId,
+      roles: newRoleIds as string[],
+      roleId: undefined,
       isActive: editableUser.value.isActive,
     }
     await editUser(userToSave)
@@ -233,14 +249,15 @@ const columns = computed((): ColumnDef[] => [
   },
   {
     label: 'Role',
-    key: 'role',
+    key: 'roles',
     filterable: true,
     filterOption: true,
-    options: roles.value.map((r) => ({ label: r.label, value: r.label })),
+    options: roles.value.map((r) => ({ label: r.label, value: String(r.value) })),
     required: true,
     showFilterMatchModes: false,
     showFilterOperator: false,
     showAddButton: false,
+    useMultiSelect: true,
   },
   {
     label: 'Status',
@@ -254,13 +271,21 @@ const columns = computed((): ColumnDef[] => [
 ])
 const isStatusDisabled = (row: User): boolean => {
   if (!row) return false
-  const roleLabel = roles.value.find((r) => r.label === row.role)?.label
-  return roleLabel ? Object.values(CommitteeRoles).includes(roleLabel as CommitteeRoles) : false
+
+  return row.roles && Array.isArray(row.roles)
+    ? row.roles.some((role: UserRole) =>
+        Object.values(CommitteeRoles).includes(role.role as CommitteeRoles),
+      )
+    : false
 }
 
 const showHistoryDrawer = async (row: User): Promise<void> => {
   await loadHistory('user', row.id)
 }
+
+const normalUserRoleId = computed((): string | null => {
+  return roles.value.find((r) => r.label === 'Normal User')?.value ?? null
+})
 
 onMounted(async () => {
   await fetchInitialData()
@@ -308,6 +333,7 @@ onMounted(async () => {
       :editableRow="editingRows[0] as RowData"
       :loading="isLoading"
       :statusOptions="statusOptions"
+      :unremovableRoleId="normalUserRoleId"
       @save="onSave"
       @cancel="onCancel"
       @lazy:load="onLazyLoad"
