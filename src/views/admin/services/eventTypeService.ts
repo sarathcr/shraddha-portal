@@ -1,11 +1,7 @@
 import { committeeApi } from '@/constants'
 import type { ApiResponse } from '@/types'
+import type { EventType } from '@/types/event'
 import axios, { AxiosError } from 'axios'
-
-export interface EventType {
-  eventTypeName: string
-  description: string
-}
 
 export const getEventTypes = async (
   pageNumber = 1,

@@ -1,15 +1,8 @@
 import { ref, onMounted, type Ref } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { getEventTypes } from '../../services/eventTypeService'
-import type { EventType } from '../../services/eventTypeService'
 import type { ApiResponse } from '@/types'
-
-interface UseEventTypesReturn {
-  eventTypes: Ref<EventType[]>
-  loading: Ref<boolean>
-  error: Ref<string | null>
-  fetchAllEventTypes: () => Promise<void>
-}
+import type { EventType, UseEventTypesReturn } from '@/types/event'
 
 export function useEventTypes(): UseEventTypesReturn {
   const eventTypes: Ref<EventType[]> = ref([])
