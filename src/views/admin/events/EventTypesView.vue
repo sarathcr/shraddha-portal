@@ -21,7 +21,7 @@ const eventTypes = [
 </script>
 
 <template>
-  <div class="flex flex-wrap gap-2">
+  <div class="grid lg:grid-cols-4 gap-4">
     <EventTypeCard
       v-for="(event, index) in eventTypes"
       :key="index"

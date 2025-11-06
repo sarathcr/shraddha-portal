@@ -8,12 +8,10 @@ const props = defineProps<{
 </script>
 
 <template>
-  <Card class="w-80 cursor-pointer hover:!bg-gray-50">
+  <Card class="w-full cursor-pointer hover:!bg-gray-50">
     <template #title>{{ props.title }}</template>
     <template #content>
-      <p class="m-0">
-        {{ props.description || 'No description available.' }}
-      </p>
+      {{ props.description || 'No description available.' }}
     </template>
   </Card>
 </template>
