@@ -374,12 +374,21 @@ const getOptionLabel = (
               <span v-if="col.useDateFilter">{{ data[col.key] }}</span>
               <template v-else-if="col.useMultiSelect">
                 <div class="flex flex-wrap gap-1">
-                  <Tag
-                    v-for="(roleObj, index) in data.roles"
-                    :key="roleObj.roleId || index"
-                    :value="roleObj.role"
-                    class="mr-1"
-                  />
+                  <template v-if="col.key === 'roles' && Array.isArray(data.roles)">
+                    <Tag
+                      v-for="(roleObj, index) in data.roles"
+                      :key="roleObj.roleId || index"
+                      :value="roleObj.role"
+                    />
+                  </template>
+
+                  <template v-else-if="Array.isArray(data[col.key])">
+                    <Tag
+                      v-for="(value, index) in data[col.key] as string[]"
+                      :key="index"
+                      :value="getOptionLabel(col.options, value)"
+                    />
+                  </template>
                 </div>
               </template>
               <ToggleSwitch
