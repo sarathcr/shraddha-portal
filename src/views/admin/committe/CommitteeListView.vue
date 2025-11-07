@@ -14,6 +14,18 @@ import { useRouter } from 'vue-router'
 import { useValidation } from '../roles/composables/useValidation'
 import { useHistory } from '@/composables/useHistory'
 import HistoryDrawer from '@/components/HistoryDrawer.vue'
+import type { ModuleName } from '@/types/permissions'
+
+import { useModulePermissions } from '@/composables/useModulePermissions'
+
+const MODULE_NAME: ModuleName = 'Committee'
+
+const {
+  canCreate,
+  canUpdate,
+  canDelete,
+  canRead: canViewHistory,
+} = useModulePermissions(MODULE_NAME)
 
 const {
   isLoading,
@@ -183,7 +195,7 @@ const showHistoryDrawer = async (row: Committee): Promise<void> => {
         :paginator="true"
         :saveDisabled="isSaveDisabled"
       >
-        <template #table-header>
+        <template #table-header v-if="canCreate">
           <Button
             label="New Committee"
             icon="pi pi-plus"
@@ -194,20 +206,24 @@ const showHistoryDrawer = async (row: Committee): Promise<void> => {
 
         <template #body-isActive="{ row }">
           <ToggleSwitch
+            v-if="canUpdate"
             :modelValue="row.isActive"
             @click.stop="(e: Event) => handleStatusClick(row, !row.isActive, e)"
           />
+          <span v-else>{{ row.isActive ? 'Active' : 'Inactive' }}</span>
         </template>
 
         <template #actions="{ row }">
           <div class="flex flex-nowrap">
             <button
+              v-if="canViewHistory"
               @click="showHistoryDrawer(row)"
               class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
             >
               <i class="pi pi-history"></i>
             </button>
             <button
+              v-if="canUpdate"
               @click="handleEditCommittee(row)"
               class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
             >
@@ -215,6 +231,7 @@ const showHistoryDrawer = async (row: Committee): Promise<void> => {
             </button>
 
             <button
+              v-if="canDelete"
               @click="handleDeleteConfirmation(row as Committee)"
               class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
             >
@@ -222,6 +239,7 @@ const showHistoryDrawer = async (row: Committee): Promise<void> => {
             </button>
 
             <button
+              v-if="canViewHistory"
               @click="handleViewCommittee(row)"
               class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
             >
