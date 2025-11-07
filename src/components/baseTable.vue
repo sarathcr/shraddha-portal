@@ -417,7 +417,7 @@ const getOptionLabel = (
                 v-else-if="col.useDateFilter"
                 v-model="filterModel.value"
                 dateFormat="dd-mm-yy"
-                placeholder="dd-mm-yyyy"
+                placeholder="dd-mm-yy"
                 showIcon
                 class="w-full"
               />
