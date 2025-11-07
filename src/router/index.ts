@@ -10,6 +10,9 @@ import DashboardView from '@/views/admin/dashboard/DashboardView.vue'
 import RolesView from '@/views/admin/roles/RolesView.vue'
 import LoginView from '@/views/auth/login/LoginView.vue'
 import CommitteeListView from '@/views/admin/committe/CommitteeListView.vue'
+import EventTypesView from '@/views/admin/events/EventTypesView.vue'
+import EventView from '@/views/admin/events/EventView.vue'
+import EventsListView from '@/views/admin/events/EventsListView.vue'
 
 interface CustomRouteMeta extends RouteMeta {
   requiresAuth: boolean
@@ -54,6 +57,15 @@ const routes: CustomRouteRecordRaw[] = [
         children: [
           { path: '', component: CommitteeListView },
           { path: ':id', component: CommitteeDashboarView },
+        ],
+      },
+      {
+        path: 'events',
+        component: EventView,
+        meta: { requiresAuth: true, module: 'Events', permission: 'READ' },
+        children: [
+          { path: '', component: EventTypesView },
+          { path: ':id', component: EventsListView },
         ],
       },
     ],

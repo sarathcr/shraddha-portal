@@ -75,6 +75,10 @@ const fullMenuItems: MenuItem[] = [
     module: 'Events',
     permission: 'READ',
     to: '/admin/events',
+    command: async (): Promise<void> => {
+      await router.push('/admin/events')
+      if (isModal.value) sidebarStore.isSidebarVisible = false
+    },
   },
   {
     label: 'Committee',
