@@ -1,32 +1,26 @@
 <script setup lang="ts">
+import EventTypeCardSkeleton from '@/components/Skelton/EventTypeCardSkeleton.vue'
 import EventTypeCard from './components/EventTypeCard.vue'
+import { useEventTypes } from './composables/useEventTypes'
+import { Toast } from 'primevue'
 
-const eventTypes = [
-  {
-    title: 'Celebrations',
-    description:
-      'Company-wide festivals, annual days, and other special occasions celebrated together.',
-  },
-  {
-    title: 'Birthdays',
-    description:
-      'Monthly birthday celebrations recognizing team members and fostering camaraderie.',
-  },
-  {
-    title: 'MOM (Meetings)',
-    description:
-      'Official committee meetings with recorded Minutes of Meeting (MOM) for key decisions.',
-  },
-]
+const { eventTypes, loading, error } = useEventTypes()
 </script>
 
 <template>
-  <div class="grid lg:grid-cols-4 gap-4">
-    <EventTypeCard
-      v-for="(event, index) in eventTypes"
-      :key="index"
-      :title="event.title"
-      :description="event.description"
-    />
+  <div class="p-4">
+    <Toast />
+    <div v-if="loading" class="grid lg:grid-cols-4 gap-4">
+      <EventTypeCardSkeleton v-for="i in 4" :key="i" />
+    </div>
+    <div v-else-if="error" class="text-red-500">{{ error }}</div>
+    <div v-else class="grid lg:grid-cols-4 gap-4">
+      <EventTypeCard
+        v-for="event in eventTypes"
+        :key="event.eventTypeName"
+        :title="event.eventTypeName"
+        :description="event.description"
+      />
+    </div>
   </div>
 </template>
