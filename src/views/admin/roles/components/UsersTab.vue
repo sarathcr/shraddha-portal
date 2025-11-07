@@ -16,6 +16,7 @@ import * as yup from 'yup'
 import { useToast } from 'primevue'
 import { isEqual, sortBy } from 'lodash'
 import { CommitteeRoles } from '@/constants/committeeRoles.enum'
+import { formatDateForAPI } from '@/utils/dateUtils'
 
 const {
   users,
@@ -102,6 +103,22 @@ const getRoleIdsForComparison = (user: User | null): string[] => {
   return sortBy(user.roles.map((r: UserRole) => r.roleId))
 }
 
+const normalizeDOB = (dob: unknown): string | null => {
+  if (!dob) return null
+  let dateObj: Date | null = null
+  if (dob instanceof Date) {
+    dateObj = dob
+  } else if (typeof dob === 'string') {
+    if (dob.includes('T')) {
+      dateObj = new Date(dob)
+    } else if (dob.includes('-')) {
+      const [dd, mm, yyyy] = dob.split('-').map(Number)
+      dateObj = new Date(yyyy, mm - 1, dd)
+    }
+  }
+  return dateObj && !isNaN(dateObj.getTime()) ? formatDateForAPI(dateObj) : null
+}
+
 const onSave = async (newData: RowData): Promise<void> => {
   if (!editableUser.value) return
   const newRoleIds = Array.isArray(newData.roles) ? sortBy(newData.roles) : []
@@ -110,23 +127,21 @@ const onSave = async (newData: RowData): Promise<void> => {
   const originalDataToCompare = {
     name: originalUser.value?.name,
     employeeId: originalUser.value?.employeeId,
-    dob: originalUser.value?.dob,
+    dob: normalizeDOB(originalUser.value?.dob),
     email: originalUser.value?.email,
     team: teams.value.find((t) => t.value === originalUser.value?.teamId)?.label ?? null,
     roles: originalRoleIds,
     status: originalUser.value?.isActive,
   }
-
   const newDataToCompare = {
     name: newData.name,
     employeeId: newData.employeeId,
-    dob: newData.dob,
+    dob: normalizeDOB(newData.dob),
     email: newData.email,
     team: newData.team,
     roles: newRoleIds,
     status: editableUser.value.isActive,
   }
-
   if (isEqual(originalDataToCompare, newDataToCompare)) {
     toast.add({
       severity: 'info',
@@ -140,7 +155,6 @@ const onSave = async (newData: RowData): Promise<void> => {
     resetValidation()
     return
   }
-
   const dataToValidate = {
     name: newData.name,
     employeeId: newData.employeeId,
