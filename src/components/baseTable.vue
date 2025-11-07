@@ -99,6 +99,10 @@ watch(
     if (newRow) {
       Object.keys(tempRow).forEach((key) => delete tempRow[key])
       Object.assign(tempRow, JSON.parse(JSON.stringify(newRow)))
+      if (tempRow.dob && typeof tempRow.dob === 'string' && tempRow.dob.includes('-')) {
+        const [day, month, year] = tempRow.dob.split('-').map(Number)
+        tempRow.dob = new Date(year, month - 1, day)
+      }
       if (Array.isArray(tempRow.roles)) {
         tempRow.roles = tempRow.roles.map((roleObj) => roleObj.roleId)
       }
@@ -417,7 +421,7 @@ const getOptionLabel = (
                 v-else-if="col.useDateFilter"
                 v-model="filterModel.value"
                 dateFormat="dd-mm-yy"
-                placeholder="dd-mm-yyyy"
+                placeholder="dd-mm-yy"
                 showIcon
                 class="w-full"
               />

@@ -76,7 +76,7 @@ export const useRoles = (): {
           axios.isAxiosError(error) && error.response?.data?.errorValue
             ? error.response.data.errorValue
             : 'Failed to update role status.',
-        life: 3000,
+        life: 4000,
       })
       console.error('Error updating role status:', error)
     }

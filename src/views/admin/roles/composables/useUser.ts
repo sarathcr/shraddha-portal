@@ -75,7 +75,7 @@ export const useUsers = (): {
           axios.isAxiosError(error) && error.response?.data?.errorValue
             ? error.response.data.errorValue
             : 'Failed to update user status.',
-        life: 3000,
+        life: 4000,
       })
       return false
     }
