@@ -1,4 +1,4 @@
-export type Permission = 'READ' | 'WRITE' | 'UPDATE' | 'DELETE' | 'MANAGE' | 'APPROVEREJECT'
+export type Permission = 'READ' | 'CREATE' | 'UPDATE' | 'DELETE' | 'MANAGE' | 'APPROVEREJECT'
 
 export type ModuleName =
   | 'Dashboard'

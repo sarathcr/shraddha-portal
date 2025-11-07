@@ -18,6 +18,19 @@ import { isEqual, sortBy } from 'lodash'
 import { CommitteeRoles } from '@/constants/committeeRoles.enum'
 import { formatDateForAPI } from '@/utils/dateUtils'
 
+import type { ModuleName } from '@/types/permissions'
+
+import { useModulePermissions } from '@/composables/useModulePermissions'
+
+const MODULE_NAME: ModuleName = 'RolesAndAccess'
+
+const {
+  canCreate,
+  canUpdate,
+  canDelete,
+  canRead: canViewHistory,
+} = useModulePermissions(MODULE_NAME)
+
 const {
   users,
   roles,
@@ -354,7 +367,7 @@ onMounted(async () => {
       :paginator="true"
       :saveDisabled="isSaveDisabled"
     >
-      <template #table-header>
+      <template #table-header v-if="canCreate">
         <Button label="New User" icon="pi pi-plus" severity="help" @click="openCreateUserDialog" />
       </template>
 
@@ -386,18 +399,21 @@ onMounted(async () => {
 
       <template #actions="{ row }">
         <button
+          v-if="canViewHistory"
           @click="showHistoryDrawer(row)"
           class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
         >
           <i class="pi pi-history"></i>
         </button>
         <button
+          v-if="canUpdate"
           @click="onEdit(row as User)"
           class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
         >
           <i class="pi pi-pencil text-slate-700 text-base"></i>
         </button>
         <button
+          v-if="canDelete"
           @click="handleDeleteConfirmation(row as User)"
           class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
         >

@@ -15,6 +15,17 @@ import { teamSchema } from '@/views/admin/schemas/teamSchema'
 import { isEqual } from 'lodash'
 import { useHistory } from '@/composables/useHistory'
 import HistoryDrawer from '@/components/HistoryDrawer.vue'
+import type { ModuleName } from '@/types/permissions'
+import { useModulePermissions } from '@/composables/useModulePermissions'
+
+const MODULE_NAME: ModuleName = 'RolesAndAccess'
+
+const {
+  canCreate,
+  canUpdate,
+  canDelete,
+  canRead: canViewHistory,
+} = useModulePermissions(MODULE_NAME)
 
 const {
   teams,
@@ -54,6 +65,7 @@ watch(
 const teamFormRef = ref<InstanceType<typeof TeamForm> | null>(null)
 
 const onAddNewTeam = (): void => {
+  if (!canCreate) return
   teamFormDialogVisible.value = true
   teamFormRef.value?.resetForm()
 }
@@ -70,6 +82,7 @@ const handleTeamFormCancel = (): void => {
 }
 
 const onEditTeam = (row: RowData): void => {
+  if (!canUpdate) return // Security check before entering edit mode
   originalTeam.value = JSON.parse(JSON.stringify(row))
   editableTeam.value = JSON.parse(JSON.stringify(row))
   editingRows.value = [row as Team]
@@ -144,6 +157,7 @@ const onCancelEdit = (): void => {
 }
 
 const handleDeleteConfirmation = (row: RowData): void => {
+  if (!canDelete) return
   teamToDelete.value = row as Team
   deleteDialogVisible.value = true
 }
@@ -235,12 +249,12 @@ const showHistoryDrawer = async (row: Team): Promise<void> => {
       :paginator="true"
       :saveDisabled="isSaveDisabled"
     >
-      <template #table-header>
-        <Button label="Add New Team" icon="pi pi-plus" severity="help" @click="onAddNewTeam" />
+      <template #table-header v-if="canCreate">
+        <Button label="New Team" icon="pi pi-plus" severity="help" @click="onAddNewTeam" />
       </template>
       <template #body-isActive="{ row }">
         <ToggleSwitch
-          v-if="editingRows.includes(row)"
+          v-if="editingRows.includes(row) && canUpdate"
           :modelValue="editableTeam?.isActive"
           @update:modelValue="
             (newValue: boolean) => {
@@ -249,26 +263,30 @@ const showHistoryDrawer = async (row: Team): Promise<void> => {
           "
         />
         <ToggleSwitch
-          v-else
+          v-else-if="canUpdate"
           :modelValue="(row as Team).isActive"
           @click.stop.prevent="onStatusToggle(row as Team, !row.isActive)"
         />
+        <span v-else>{{ (row as Team).isActive ? 'Active' : 'Inactive' }}</span>
       </template>
 
       <template #actions="{ row }">
         <button
+          v-if="canViewHistory"
           @click="showHistoryDrawer(row)"
           class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
         >
           <i class="pi pi-history"></i>
         </button>
         <button
+          v-if="canUpdate"
           @click="onEditTeam(row)"
           class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
         >
           <i class="pi pi-pencil text-slate-700 text-base"></i>
         </button>
         <button
+          v-if="canDelete"
           @click="handleDeleteConfirmation(row)"
           class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
         >

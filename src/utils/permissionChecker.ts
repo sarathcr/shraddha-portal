@@ -18,3 +18,17 @@ export function hasModuleAccess(moduleName: ModuleName): boolean {
 
   return permissionsForModule !== undefined && permissionsForModule.length > 0
 }
+export function canPerformAction(
+  moduleName: ModuleName,
+  specificPermission: 'CREATE' | 'UPDATE' | 'DELETE' | 'READ' | 'APPROVEREJECT' | 'MANAGE',
+): boolean {
+  if (hasPermission(moduleName, specificPermission)) {
+    return true
+  }
+
+  if (hasPermission(moduleName, 'MANAGE')) {
+    return true
+  }
+
+  return false
+}
