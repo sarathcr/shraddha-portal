@@ -15,6 +15,17 @@ import { useToast } from 'primevue/usetoast'
 import { isEqual } from 'lodash'
 import { useHistory } from '@/composables/useHistory'
 import HistoryDrawer from '@/components/HistoryDrawer.vue'
+import type { ModuleName } from '@/types/permissions'
+
+import { useModulePermissions } from '@/composables/useModulePermissions'
+
+const MODULE_NAME: ModuleName = 'RolesAndAccess'
+const {
+  canCreate,
+  canUpdate,
+  canDelete,
+  canRead: canViewHistory,
+} = useModulePermissions(MODULE_NAME)
 
 const {
   roles,
@@ -261,13 +272,13 @@ onMounted(() => {
       :paginator="true"
       :saveDisabled="isSaveDisabled"
     >
-      <template #table-header>
-        <Button label="Add New Role" icon="pi pi-plus" severity="help" @click="onAddNewRole" />
+      <template #table-header v-if="canCreate">
+        <Button label="New Role" icon="pi pi-plus" severity="help" @click="onAddNewRole" />
       </template>
 
       <template #body-isActive="{ row }">
         <ToggleSwitch
-          v-if="editingRows.includes(row)"
+          v-if="canUpdate && editingRows.includes(row)"
           :modelValue="editableRole?.isActive"
           @update:modelValue="
             (newValue: boolean) => {
@@ -276,26 +287,30 @@ onMounted(() => {
           "
         />
         <ToggleSwitch
-          v-else
+          v-else-if="canUpdate"
           :modelValue="row.isActive"
           @click.stop.prevent="onStatusToggle(row as Role, !row.isActive)"
         />
+        <span v-else>{{ (row as Role).isActive ? 'Active' : 'Inactive' }}</span>
       </template>
 
       <template #actions="{ row }">
         <button
+          v-if="canViewHistory"
           @click="showHistoryDrawer(row)"
           class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
         >
           <i class="pi pi-history"></i>
         </button>
         <button
+          v-if="canUpdate"
           @click="onEditRole(row)"
           class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
         >
           <i class="pi pi-pencil text-slate-700 text-base"></i>
         </button>
         <button
+          v-if="canDelete"
           @click="handleDeleteConfirmation(row)"
           class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
         >
