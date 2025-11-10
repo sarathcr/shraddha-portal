@@ -16,6 +16,7 @@ import * as yup from 'yup'
 import { useToast } from 'primevue'
 import { isEqual } from 'lodash'
 import { CommitteeRoles } from '@/constants/committeeRoles.enum'
+import DialogFooter from '@/components/DialogFooter.vue'
 
 const {
   users,
@@ -276,14 +277,21 @@ onMounted(async () => {
       modal
       @hide="handleUserFormCancel"
     >
-      <UserForm
-        ref="userFormRef"
-        :roles="createRoles"
-        :teams="teams"
-        :is-loading="isLoading"
-        @submit="handleUserFormSubmit"
-        @cancel="handleUserFormCancel"
-      />
+      <div class="relative flex flex-col">
+        <UserForm
+          class="flex-1 overflow-y-auto p-4 max-h-[400px]"
+          ref="userFormRef"
+          :roles="createRoles"
+          :teams="teams"
+          :is-loading="isLoading"
+          @submit="handleUserFormSubmit"
+          @cancel="handleUserFormCancel"
+        />
+        <DialogFooter
+          @cancel="handleUserFormCancel"
+          @submit="userFormRef?.onSubmit && userFormRef.onSubmit()"
+        />
+      </div>
     </Dialog>
     <Dialog
       v-model:visible="deleteDialogVisible"
