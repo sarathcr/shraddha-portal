@@ -1,7 +1,7 @@
 import type { Ref } from 'vue'
 
 export interface EventType {
-  id: string | number
+  id: string
   eventTypeName: string
   description: string
 }

@@ -21,7 +21,7 @@ const props = defineProps<{
       </figure>
     </template>
     <template #title
-      ><p class="text-violet-500 uppercase text-lg">{{ props.name }}</p></template
+      ><p class="text-violet-500 font-semibold text-lg">{{ props.name }}</p></template
     >
     <template #content>
       <p>
