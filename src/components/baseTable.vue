@@ -202,7 +202,7 @@ const getOptionLabel = (
 </script>
 <template>
   <div class="space-y-4 h-full p-4 flex flex-col justify-between">
-    <div class="bg-white rounded-md max-h-[calc(100vh-200px)] overflow-hidden flex flex-col">
+    <div class="bg-white rounded-md overflow-hidden flex flex-col md:max-h-[calc(100vh-200px)]">
       <BaseTableSkeleton
         v-if="loading"
         :columns-count="columns.length + 1"
