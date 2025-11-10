@@ -16,6 +16,7 @@ import { isEqual } from 'lodash'
 import { useHistory } from '@/composables/useHistory'
 import HistoryDrawer from '@/components/HistoryDrawer.vue'
 import type { ModuleName } from '@/types/permissions'
+import DialogFooter from '@/components/DialogFooter.vue'
 
 import { useModulePermissions } from '@/composables/useModulePermissions'
 
@@ -239,7 +240,18 @@ onMounted(() => {
       @hide="handleRoleFormCancel"
       class="mx-4"
     >
-      <RoleForm ref="roleFormRef" @submit="handleRoleFormSubmit" @cancel="handleRoleFormCancel" />
+      <div class="relative flex flex-col">
+        <RoleForm
+          class="flex-1 overflow-y-auto p-4 max-h-[400px]"
+          ref="roleFormRef"
+          @submit="handleRoleFormSubmit"
+          @cancel="handleRoleFormCancel"
+        />
+        <DialogFooter
+          @cancel="handleRoleFormCancel"
+          @submit="roleFormRef?.onSubmit && roleFormRef.onSubmit()"
+        />
+      </div>
     </Dialog>
 
     <Dialog
