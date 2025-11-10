@@ -3,7 +3,6 @@ import { ref, watch } from 'vue'
 import InputText from 'primevue/inputtext'
 import Textarea from 'primevue/textarea'
 import Checkbox from 'primevue/checkbox'
-import Button from 'primevue/button'
 import FloatLabel from 'primevue/floatlabel'
 import ToggleSwitch from 'primevue/toggleswitch'
 import MultiSelect from 'primevue/multiselect'
@@ -37,10 +36,6 @@ const selectedModules = ref<string[]>([])
 const modulePermissions = ref<Record<string, string[]>>({})
 const { value: isActive } = useField<boolean>('isActive')
 const isSubmitted = ref(false)
-
-defineExpose({
-  resetForm,
-})
 
 // dummy data for modules
 const modules = ref([
@@ -89,11 +84,10 @@ const onSubmit = handleSubmit(
     console.error('Validation failed:', errors)
   },
 )
-
-const onCancel = (): void => {
-  emit('cancel')
-  resetForm()
-}
+defineExpose({
+  resetForm,
+  onSubmit,
+})
 
 watch(
   () => props.initialData,
@@ -189,10 +183,10 @@ watch(
         {{ errors.isActive }}
       </small>
     </div>
-
-    <div class="flex justify-end gap-2 mt-2">
-      <Button label="Cancel" severity="secondary" @click="onCancel" />
-      <Button type="submit" label="Save" />
-    </div>
   </form>
 </template>
+<style>
+.p-dialog-content {
+  overflow-y: unset;
+}
+</style>

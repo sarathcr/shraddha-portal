@@ -2,7 +2,6 @@
 import { watch } from 'vue'
 import InputText from 'primevue/inputtext'
 import Textarea from 'primevue/textarea'
-import Button from 'primevue/button'
 import ToggleSwitch from 'primevue/toggleswitch'
 import FloatLabel from 'primevue/floatlabel'
 import { useForm, useField } from 'vee-validate'
@@ -32,11 +31,6 @@ const { value: teamName } = useField<string>('teamName')
 const { value: description } = useField<string>('description')
 const { value: isActive } = useField<boolean>('isActive')
 
-defineExpose({
-  resetForm,
-  setFormValues: setValues,
-})
-
 const onSubmit = handleSubmit((values) => {
   emit('submit', {
     ...values,
@@ -44,10 +38,11 @@ const onSubmit = handleSubmit((values) => {
   })
 })
 
-const onCancel = (): void => {
-  emit('cancel')
-  resetForm()
-}
+defineExpose({
+  resetForm,
+  setFormValues: setValues,
+  onSubmit,
+})
 
 watch(
   () => props.initialData,
@@ -98,11 +93,6 @@ watch(
       <small v-if="errors.isActive" class="text-red-500">
         {{ errors.isActive }}
       </small>
-    </div>
-
-    <div class="flex justify-end gap-2 mt-2">
-      <Button label="Cancel" severity="secondary" @click="onCancel" />
-      <Button type="submit" label="Save" />
     </div>
   </form>
 </template>

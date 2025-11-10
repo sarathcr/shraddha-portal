@@ -17,6 +17,7 @@ import { useHistory } from '@/composables/useHistory'
 import HistoryDrawer from '@/components/HistoryDrawer.vue'
 import type { ModuleName } from '@/types/permissions'
 import { useModulePermissions } from '@/composables/useModulePermissions'
+import DialogFooter from '@/components/DialogFooter.vue'
 
 const MODULE_NAME: ModuleName = 'RolesAndAccess'
 
@@ -216,6 +217,10 @@ const showHistoryDrawer = async (row: Team): Promise<void> => {
         :teams="teams"
         @submit="handleTeamFormSubmit"
         @cancel="handleTeamFormCancel"
+      />
+      <DialogFooter
+        @cancel="handleTeamFormCancel"
+        @submit="teamFormRef?.onSubmit && teamFormRef.onSubmit()"
       />
     </Dialog>
 

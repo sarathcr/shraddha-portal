@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { watch } from 'vue'
 import InputText from 'primevue/inputtext'
-import Button from 'primevue/button'
 import FloatLabel from 'primevue/floatlabel'
 import { useForm, useField } from 'vee-validate'
 import { userSchema } from '@/views/admin/schemas/userSchema'
@@ -64,8 +63,6 @@ watch(
   { immediate: true },
 )
 
-defineExpose({ resetForm })
-
 const onSubmit = handleSubmit((values) => {
   const selectedTeam = props.teams.find((t) => t.value === values.team)
 
@@ -80,11 +77,7 @@ const onSubmit = handleSubmit((values) => {
 
   emit('submit', payload)
 })
-
-const onCancel = (): void => {
-  emit('cancel')
-  resetForm()
-}
+defineExpose({ resetForm, onSubmit })
 </script>
 
 <template>
@@ -179,11 +172,6 @@ const onCancel = (): void => {
       <small v-if="errors.status" class="text-red-500">
         {{ errors.status }}
       </small>
-    </div>
-
-    <div class="flex justify-end gap-2 mt-2">
-      <Button label="Cancel" severity="secondary" @click="onCancel" :disabled="isLoading" />
-      <Button type="submit" label="Save" :loading="isLoading" />
     </div>
   </form>
 </template>
