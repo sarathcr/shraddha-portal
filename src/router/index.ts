@@ -34,6 +34,11 @@ const router = createRouter({
         },
         { path: 'dashboard', component: DashboardView },
         { path: 'roles', component: RolesView },
+        {
+          path: 'event-types',
+          component: DashboardView,
+          children: [{ path: '/event-types', component: DashboardView }],
+        },
       ],
     },
 

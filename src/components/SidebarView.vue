@@ -159,6 +159,26 @@ const menuItems = computed(() => {
       icon: 'pi pi-file-word',
       class: currentPath.startsWith('/admin/meeting-minutes') ? 'p-menuitem-active' : '',
     },
+    {
+      label: 'Settings',
+      icon: 'pi pi-money-bill',
+      expandIconPosition: 'right',
+      items: [
+        {
+          label: 'Event Types',
+          icon: 'pi pi-wallet',
+          command: async (): Promise<void> => {
+            await router.push('/admin/event-types')
+            if (isModal.value) {
+              sidebarStore.isSidebarVisible = false
+            }
+          },
+          class: currentPath === '/admin/event-types' ? 'p-menuitem-active' : '',
+        },
+      ],
+      // Highlight parent "Settings" if any sub-item is active
+      class: currentPath.startsWith('/admin/settings') ? 'p-menuitem-active' : '',
+    },
   ]
 })
 </script>
