@@ -13,8 +13,10 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <Card class="w-full cursor-pointer hover:!bg-gray-50" @click="emit('select', props.id)">
-    <template #title>{{ props.title }}</template>
+  <Card class="w-full cursor-pointer hover:!bg-violet-50" @click="emit('select', props.id)">
+    <template #title
+      ><p class="text-violet-600 uppercase text-lg">{{ props.title }}</p></template
+    >
     <template #content>
       {{ props.description || 'No description available.' }}
     </template>
