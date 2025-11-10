@@ -16,18 +16,26 @@ const props = defineProps<{
         <img
           alt="user header"
           src="../../../../assets/events/istockphoto-1371940128-612x612.jpg"
-          class="rounded-t-lg border-b-3 border-gray-300 w-full"
+          class="rounded-t-lg border-gray-300 w-full"
         />
       </figure>
     </template>
-    <template #title>{{ props.name }}</template>
+    <template #title
+      ><p class="text-violet-500 uppercase text-lg">{{ props.name }}</p></template
+    >
     <template #content>
       <p>
         {{ props.description }}
       </p>
     </template>
     <template #footer>
-      <p class="italic flex flex-row-reverse mt-auto">{{ props.startDate }}</p>
+      <p
+        v-if="props.startDate !== props.endDate"
+        class="italic flex flex-row-reverse mt-auto text-sm"
+      >
+        {{ props.startDate }} - {{ props.endDate }}
+      </p>
+      <p v-else class="italic flex flex-row-reverse mt-auto text-sm">{{ props.startDate }}</p>
     </template>
   </Card>
 </template>

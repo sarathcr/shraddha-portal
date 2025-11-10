@@ -1,19 +1,20 @@
 <script setup lang="ts">
-import { useRoute } from 'vue-router'
+import PageTitle from '@/components/PageTitle.vue'
 import EventCard from './components/EventCard.vue'
 import { useEvents } from './composables/useEvents'
-const route = useRoute()
-const eventTypeId = route.params.id as string
+import EventCardSkeleton from '@/components/Skelton/EventCardSkeleton.vue'
 
 const { events, loading, error } = useEvents()
 </script>
 
 <template>
   <div>
-    <h2>Events for Type ID: {{ eventTypeId }}</h2>
-    <div v-if="loading" class="text-gray-500">Loading events...</div>
+    <PageTitle pageName="Celebrations" />
+    <div v-if="loading" class="grid lg:grid-cols-2 xl:grid-cols-4 gap-4 mt-4">
+      <EventCardSkeleton v-for="i in 4" :key="i" />
+    </div>
     <div v-else-if="error" class="text-red-500">{{ error }}</div>
-    <div v-else class="grid lg:grid-cols-4 gap-4">
+    <div v-else class="grid lg:grid-cols-2 xl:grid-cols-4 gap-4 mt-4">
       <EventCard
         v-for="(event, index) in events"
         :key="index"
