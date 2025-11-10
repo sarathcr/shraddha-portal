@@ -16,6 +16,20 @@ import * as yup from 'yup'
 import { useToast } from 'primevue'
 import { isEqual, sortBy } from 'lodash'
 import { CommitteeRoles } from '@/constants/committeeRoles.enum'
+import { formatDateForAPI } from '@/utils/dateUtils'
+
+import type { ModuleName } from '@/types/permissions'
+
+import { useModulePermissions } from '@/composables/useModulePermissions'
+
+const MODULE_NAME: ModuleName = 'RolesAndAccess'
+
+const {
+  canCreate,
+  canUpdate,
+  canDelete,
+  canRead: canViewHistory,
+} = useModulePermissions(MODULE_NAME)
 
 const {
   users,
@@ -102,6 +116,22 @@ const getRoleIdsForComparison = (user: User | null): string[] => {
   return sortBy(user.roles.map((r: UserRole) => r.roleId))
 }
 
+const normalizeDOB = (dob: unknown): string | null => {
+  if (!dob) return null
+  let dateObj: Date | null = null
+  if (dob instanceof Date) {
+    dateObj = dob
+  } else if (typeof dob === 'string') {
+    if (dob.includes('T')) {
+      dateObj = new Date(dob)
+    } else if (dob.includes('-')) {
+      const [dd, mm, yyyy] = dob.split('-').map(Number)
+      dateObj = new Date(yyyy, mm - 1, dd)
+    }
+  }
+  return dateObj && !isNaN(dateObj.getTime()) ? formatDateForAPI(dateObj) : null
+}
+
 const onSave = async (newData: RowData): Promise<void> => {
   if (!editableUser.value) return
   const newRoleIds = Array.isArray(newData.roles) ? sortBy(newData.roles) : []
@@ -110,23 +140,21 @@ const onSave = async (newData: RowData): Promise<void> => {
   const originalDataToCompare = {
     name: originalUser.value?.name,
     employeeId: originalUser.value?.employeeId,
-    dob: originalUser.value?.dob,
+    dob: normalizeDOB(originalUser.value?.dob),
     email: originalUser.value?.email,
     team: teams.value.find((t) => t.value === originalUser.value?.teamId)?.label ?? null,
     roles: originalRoleIds,
     status: originalUser.value?.isActive,
   }
-
   const newDataToCompare = {
     name: newData.name,
     employeeId: newData.employeeId,
-    dob: newData.dob,
+    dob: normalizeDOB(newData.dob),
     email: newData.email,
     team: newData.team,
     roles: newRoleIds,
     status: editableUser.value.isActive,
   }
-
   if (isEqual(originalDataToCompare, newDataToCompare)) {
     toast.add({
       severity: 'info',
@@ -140,7 +168,6 @@ const onSave = async (newData: RowData): Promise<void> => {
     resetValidation()
     return
   }
-
   const dataToValidate = {
     name: newData.name,
     employeeId: newData.employeeId,
@@ -340,7 +367,7 @@ onMounted(async () => {
       :paginator="true"
       :saveDisabled="isSaveDisabled"
     >
-      <template #table-header>
+      <template #table-header v-if="canCreate">
         <Button label="New User" icon="pi pi-plus" severity="help" @click="openCreateUserDialog" />
       </template>
 
@@ -372,18 +399,21 @@ onMounted(async () => {
 
       <template #actions="{ row }">
         <button
+          v-if="canViewHistory"
           @click="showHistoryDrawer(row)"
           class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
         >
           <i class="pi pi-history"></i>
         </button>
         <button
+          v-if="canUpdate"
           @click="onEdit(row as User)"
           class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
         >
           <i class="pi pi-pencil text-slate-700 text-base"></i>
         </button>
         <button
+          v-if="canDelete"
           @click="handleDeleteConfirmation(row as User)"
           class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
         >
