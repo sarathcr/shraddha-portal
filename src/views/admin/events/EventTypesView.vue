@@ -12,11 +12,11 @@ const { eventTypes, loading, error } = useEventTypes()
   <div>
     <Toast />
     <PageTitle pageName="Event Types" />
-    <div v-if="loading" class="grid lg:grid-cols-4 gap-4 mt-4">
+    <div v-if="loading" class="grid lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-4">
       <EventTypeCardSkeleton v-for="i in 4" :key="i" />
     </div>
     <div v-else-if="error" class="text-red-500">{{ error }}</div>
-    <div v-else class="grid lg:grid-cols-4 gap-4 mt-4">
+    <div v-else class="grid lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-4">
       <EventTypeCard
         v-for="event in eventTypes"
         :key="event.eventTypeName"

@@ -10,7 +10,7 @@ const props = defineProps<{
 <template>
   <Card class="w-full cursor-pointer hover:!bg-violet-50">
     <template #title
-      ><p class="text-violet-600 uppercase">{{ props.title }}</p></template
+      ><p class="text-violet-600 uppercase text-lg">{{ props.title }}</p></template
     >
     <template #content>
       {{ props.description || 'No description available.' }}
