@@ -3,18 +3,20 @@ import EventTypeCardSkeleton from '@/components/Skelton/EventTypeCardSkeleton.vu
 import EventTypeCard from './components/EventTypeCard.vue'
 import { useEventTypes } from './composables/useEventTypes'
 import { Toast } from 'primevue'
+import PageTitle from '@/components/PageTitle.vue'
 
 const { eventTypes, loading, error } = useEventTypes()
 </script>
 
 <template>
-  <div class="p-4">
+  <div>
     <Toast />
-    <div v-if="loading" class="grid lg:grid-cols-4 gap-4">
+    <PageTitle pageName="Event Types" />
+    <div v-if="loading" class="grid lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-4">
       <EventTypeCardSkeleton v-for="i in 4" :key="i" />
     </div>
     <div v-else-if="error" class="text-red-500">{{ error }}</div>
-    <div v-else class="grid lg:grid-cols-4 gap-4">
+    <div v-else class="grid lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-4">
       <EventTypeCard
         v-for="event in eventTypes"
         :key="event.eventTypeName"
