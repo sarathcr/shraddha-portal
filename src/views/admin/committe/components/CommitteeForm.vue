@@ -4,7 +4,6 @@ import { useForm, useField } from 'vee-validate'
 import FloatLabel from 'primevue/floatlabel'
 import Select from 'primevue/select'
 import MultiSelect from 'primevue/multiselect'
-import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import ToggleSwitch from 'primevue/toggleswitch'
 import DatePicker from 'primevue/datepicker'
@@ -293,10 +292,9 @@ const onSubmit = async (): Promise<void> => {
 
   if (result) emit('submit', result)
 }
-
-const onCancel = (): void => {
-  emit('cancel')
-}
+defineExpose({
+  onSubmit,
+})
 </script>
 
 <template>
@@ -426,11 +424,6 @@ const onCancel = (): void => {
     <div class="mb-2">
       <h4 class="font-semibold mb-2">Status</h4>
       <ToggleSwitch v-model="isActive" :disabled="isStatusDisabled" />
-    </div>
-
-    <div class="flex justify-end gap-2 mt-2">
-      <Button label="Cancel" severity="secondary" @click="onCancel" />
-      <Button type="submit" label="Save" />
     </div>
   </form>
 </template>
