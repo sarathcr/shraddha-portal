@@ -2,13 +2,18 @@
 import { Card } from 'primevue'
 
 const props = defineProps<{
+  id: string | number
   title: string
   description?: string
+}>()
+
+const emit = defineEmits<{
+  (e: 'select', id: string | number): void
 }>()
 </script>
 
 <template>
-  <Card class="w-full cursor-pointer hover:!bg-gray-50">
+  <Card class="w-full cursor-pointer hover:!bg-gray-50" @click="emit('select', props.id)">
     <template #title>{{ props.title }}</template>
     <template #content>
       {{ props.description || 'No description available.' }}

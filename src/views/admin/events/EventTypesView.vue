@@ -3,8 +3,14 @@ import EventTypeCardSkeleton from '@/components/Skelton/EventTypeCardSkeleton.vu
 import EventTypeCard from './components/EventTypeCard.vue'
 import { useEventTypes } from './composables/useEventTypes'
 import { Toast } from 'primevue'
+import { useRouter } from 'vue-router'
 
 const { eventTypes, loading, error } = useEventTypes()
+const router = useRouter()
+
+const handleSelect = async (id: string | number): Promise<void> => {
+  await router.push(`/admin/events/${id}`)
+}
 </script>
 
 <template>
@@ -18,8 +24,10 @@ const { eventTypes, loading, error } = useEventTypes()
       <EventTypeCard
         v-for="event in eventTypes"
         :key="event.eventTypeName"
+        :id="event.id"
         :title="event.eventTypeName"
         :description="event.description"
+        @select="handleSelect"
       />
     </div>
   </div>
