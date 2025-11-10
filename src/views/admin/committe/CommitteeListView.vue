@@ -17,6 +17,7 @@ import HistoryDrawer from '@/components/HistoryDrawer.vue'
 import type { ModuleName } from '@/types/permissions'
 
 import { useModulePermissions } from '@/composables/useModulePermissions'
+import DialogFooter from '@/components/DialogFooter.vue'
 
 const MODULE_NAME: ModuleName = 'Committee'
 
@@ -55,6 +56,7 @@ const coreMemberOptions = ref<{ label: string; value: string }[]>([])
 const executiveMemberOptions = ref<{ label: string; value: string }[]>([])
 const selectedCommittee = ref<Committee | null>(null)
 const { historyDrawerVisible, historyData, loadHistory } = useHistory()
+const CommitteeFormRef = ref<InstanceType<typeof CommitteeForm> | null>(null)
 
 const openCreateUserDialog = (): void => {
   formMode.value = 'create'
@@ -146,11 +148,16 @@ const showHistoryDrawer = async (row: Committee): Promise<void> => {
         @hide="handleCommitteeFormCancel"
       >
         <CommitteeForm
+          ref="CommitteeFormRef"
           :coremembers="coreMemberOptions"
           :executivemembers="executiveMemberOptions"
           @cancel="handleCommitteeFormCancel"
           @submit="handleCommitteeFormSubmit"
           :committee="selectedCommittee"
+        />
+        <DialogFooter
+          @cancel="handleCommitteeFormCancel"
+          @submit="CommitteeFormRef?.onSubmit && CommitteeFormRef.onSubmit()"
         />
       </Dialog>
       <Dialog
