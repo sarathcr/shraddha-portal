@@ -427,3 +427,12 @@ defineExpose({
     </div>
   </form>
 </template>
+<style>
+.p-dialog-content {
+  overflow-y: unset !important;
+}
+.commiteeForm {
+  overflow-y: auto;
+  max-height: 500px;
+}
+</style>
