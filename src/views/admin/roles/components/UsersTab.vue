@@ -330,7 +330,7 @@ onMounted(async () => {
     >
       <div class="relative flex flex-col">
         <UserForm
-          class="flex-1 overflow-y-auto p-4 max-h-[400px]"
+          class="flex-1 overflow-y-auto p-4"
           ref="userFormRef"
           :roles="createRoles"
           :teams="teams"
