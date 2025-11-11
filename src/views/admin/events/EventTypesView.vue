@@ -5,9 +5,17 @@ import { useEventTypes } from './composables/useEventTypes'
 import { Toast } from 'primevue'
 import { useRouter } from 'vue-router'
 import PageTitle from '@/components/PageTitle.vue'
+import { useHistory } from '@/composables/useHistory'
+import HistoryDrawer from '@/components/HistoryDrawer.vue'
 
 const { eventTypes, loading, error } = useEventTypes()
 const router = useRouter()
+
+const { historyDrawerVisible, historyData, loadHistory } = useHistory()
+
+const openHistory = async (id: string): Promise<void> => {
+  await loadHistory('eventType', id)
+}
 
 const handleSelect = async (id: string | number): Promise<void> => {
   await router.push(`/admin/events/${id}`)
@@ -30,7 +38,9 @@ const handleSelect = async (id: string | number): Promise<void> => {
         :title="event.eventTypeName"
         :description="event.description"
         @select="handleSelect"
+        @history="openHistory"
       />
     </div>
+    <HistoryDrawer v-model:visible="historyDrawerVisible" :historyData="historyData" />
   </div>
 </template>

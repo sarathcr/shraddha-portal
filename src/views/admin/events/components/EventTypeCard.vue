@@ -8,17 +8,24 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'select', id: string | number): void
+  (e: 'select', id: string): void
+  (e: 'history', id: string): void
 }>()
 </script>
 
 <template>
   <Card class="w-full cursor-pointer hover:!bg-violet-50" @click="emit('select', props.id)">
-    <template #title
-      ><p class="text-violet-600 capitalize font-semibold text-lg">{{ props.title }}</p></template
+    <template #title>
+      <p class="text-violet-600 capitalize font-semibold text-lg">{{ props.title }}</p></template
     >
     <template #content>
-      {{ props.description || 'No description available.' }}
+      <div class="flex items-center justify-between">
+        <p>{{ props.description || 'No description available.' }}</p>
+        <i
+          class="pi pi-history hover:bg-violet-100 p-2 rounded"
+          @click.stop="emit('history', props.id)"
+        ></i>
+      </div>
     </template>
   </Card>
 </template>
