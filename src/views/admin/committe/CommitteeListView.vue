@@ -217,7 +217,7 @@ const showHistoryDrawer = async (row: Committee): Promise<void> => {
             :modelValue="row.isActive"
             @click.stop="(e: Event) => handleStatusClick(row, !row.isActive, e)"
           />
-          <span v-else>{{ row.isActive ? 'Active' : 'Inactive' }}</span>
+          <span v-else><ToggleSwitch v-model="row.isActive" disabled /></span>
         </template>
 
         <template #actions="{ row }">
