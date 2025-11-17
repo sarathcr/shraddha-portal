@@ -12,11 +12,20 @@ export const roleSchema = yup.object({
     .trim()
     .min(2, 'Description must be at least 2 characters')
     .required('Description is required'),
-  permissions: yup
+  modulePermissions: yup
     .array()
-    .of(yup.string())
-    .min(1, 'At least one permission must be selected')
+    .of(
+      yup.object({
+        moduleId: yup.string().required('Module is required'),
+        permissions: yup
+          .array()
+          .of(yup.string())
+          .min(1, 'At least one permission must be selected')
+          .required('Permissions are required'),
+      }),
+    )
+    .min(1, 'At least one module must be selected')
+    .required('Module permissions are required'),
 
-    .required('Permissions are required'),
   isActive: yup.boolean().required('Status is required'),
 })

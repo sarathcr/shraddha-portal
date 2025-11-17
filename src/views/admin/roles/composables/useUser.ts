@@ -75,7 +75,7 @@ export const useUsers = (): {
           axios.isAxiosError(error) && error.response?.data?.errorValue
             ? error.response.data.errorValue
             : 'Failed to update user status.',
-        life: 3000,
+        life: 4000,
       })
       return false
     }
@@ -168,7 +168,6 @@ export const useUsers = (): {
   }
 
   const fetchInitialData = async (): Promise<void> => {
-    isLoading.value = true
     try {
       const [rolesResponse, teamsResponse] = await Promise.all([
         api.post<ApiResponse<Role[]>>('/authorization/Roles/pagination', {
@@ -201,8 +200,6 @@ export const useUsers = (): {
       }
     } catch (error) {
       console.error(error)
-    } finally {
-      isLoading.value = false
     }
   }
 

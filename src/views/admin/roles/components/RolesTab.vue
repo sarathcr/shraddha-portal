@@ -13,6 +13,20 @@ import { roleSchema } from '@/views/admin/schemas/roleSchema'
 import * as yup from 'yup'
 import { useToast } from 'primevue/usetoast'
 import { isEqual } from 'lodash'
+import { useHistory } from '@/composables/useHistory'
+import HistoryDrawer from '@/components/HistoryDrawer.vue'
+import type { ModuleName } from '@/types/permissions'
+import DialogFooter from '@/components/DialogFooter.vue'
+
+import { useModulePermissions } from '@/composables/useModulePermissions'
+
+const MODULE_NAME: ModuleName = 'RolesAndAccess'
+const {
+  canCreate,
+  canUpdate,
+  canDelete,
+  canRead: canViewHistory,
+} = useModulePermissions(MODULE_NAME)
 
 const {
   roles,
@@ -37,6 +51,7 @@ const originalRole = ref<Role | null>(null)
 const editableRole = ref<Role | null>(null)
 const deleteDialogVisible = ref(false)
 const roleToDelete = ref<Role | null>(null)
+const { historyDrawerVisible, historyData, loadHistory } = useHistory()
 const toast = useToast()
 const permissions: PermissionOptions[] = [
   { label: 'Read', value: 'READ' },
@@ -84,9 +99,11 @@ const onSaveRole = async (newData: RowData): Promise<void> => {
   const originalDataToCompare = {
     roleName: originalRole.value.roleName,
     description: originalRole.value.description,
-    permissions: (originalRole.value.permissions ?? [])
-      .map((p: string | { value: string }) => (typeof p === 'string' ? p : p.value))
-      .sort(),
+    modulePermissions: (originalRole.value.modulePermissions ?? []).map((mp) => ({
+      moduleId: mp.moduleId,
+      permissions: (mp.permissions ?? []).sort(),
+    })),
+
     isActive: originalRole.value.isActive,
   }
 
@@ -204,6 +221,10 @@ const columns = [
   },
 ]
 
+const showHistoryDrawer = async (row: Role): Promise<void> => {
+  await loadHistory('role', row.id)
+}
+
 onMounted(() => {
   void fetchInitialData()
 })
@@ -219,7 +240,18 @@ onMounted(() => {
       @hide="handleRoleFormCancel"
       class="mx-4"
     >
-      <RoleForm ref="roleFormRef" @submit="handleRoleFormSubmit" @cancel="handleRoleFormCancel" />
+      <div class="relative flex flex-col">
+        <RoleForm
+          class="flex-1 overflow-y-auto p-4 max-h-[400px]"
+          ref="roleFormRef"
+          @submit="handleRoleFormSubmit"
+          @cancel="handleRoleFormCancel"
+        />
+        <DialogFooter
+          @cancel="handleRoleFormCancel"
+          @submit="roleFormRef?.onSubmit && roleFormRef.onSubmit()"
+        />
+      </div>
     </Dialog>
 
     <Dialog
@@ -252,13 +284,13 @@ onMounted(() => {
       :paginator="true"
       :saveDisabled="isSaveDisabled"
     >
-      <template #table-header>
-        <Button label="Add New Role" icon="pi pi-plus" severity="help" @click="onAddNewRole" />
+      <template #table-header v-if="canCreate">
+        <Button label="New Role" icon="pi pi-plus" severity="help" @click="onAddNewRole" />
       </template>
 
       <template #body-isActive="{ row }">
         <ToggleSwitch
-          v-if="editingRows.includes(row)"
+          v-if="canUpdate && editingRows.includes(row)"
           :modelValue="editableRole?.isActive"
           @update:modelValue="
             (newValue: boolean) => {
@@ -267,20 +299,30 @@ onMounted(() => {
           "
         />
         <ToggleSwitch
-          v-else
+          v-else-if="canUpdate"
           :modelValue="row.isActive"
-          @update:modelValue="(newValue: boolean) => onStatusToggle(row, newValue)"
+          @click.stop.prevent="onStatusToggle(row as Role, !row.isActive)"
         />
+        <span v-else>{{ (row as Role).isActive ? 'Active' : 'Inactive' }}</span>
       </template>
 
       <template #actions="{ row }">
         <button
+          v-if="canViewHistory"
+          @click="showHistoryDrawer(row)"
+          class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
+        >
+          <i class="pi pi-history"></i>
+        </button>
+        <button
+          v-if="canUpdate"
           @click="onEditRole(row)"
           class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
         >
           <i class="pi pi-pencil text-slate-700 text-base"></i>
         </button>
         <button
+          v-if="canDelete"
           @click="handleDeleteConfirmation(row)"
           class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
         >
@@ -288,6 +330,7 @@ onMounted(() => {
         </button>
       </template>
     </BaseTable>
+    <HistoryDrawer v-model:visible="historyDrawerVisible" :historyData="historyData" />
   </div>
 </template>
 <style>

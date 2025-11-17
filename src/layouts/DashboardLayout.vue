@@ -54,7 +54,7 @@ onUnmounted(() => {
         class="dashboardLayout__sidebar transition-all duration-400 ease-in-out"
         :class="[sidebarStore.isSidebarVisible && isDesktop ? 'w-[240px]' : 'w-0']"
       >
-        <div class="w-full lg:w-[240px] bg-white h-full">
+        <div class="w-full lg:w-[240px] h-full">
           <SidebarView />
         </div>
       </div>

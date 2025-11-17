@@ -12,6 +12,21 @@ import CommitteeForm from './components/CommitteeForm.vue'
 import { useCommittee } from './composable/useCommitte'
 import { useRouter } from 'vue-router'
 import { useValidation } from '../roles/composables/useValidation'
+import { useHistory } from '@/composables/useHistory'
+import HistoryDrawer from '@/components/HistoryDrawer.vue'
+import type { ModuleName } from '@/types/permissions'
+
+import { useModulePermissions } from '@/composables/useModulePermissions'
+import DialogFooter from '@/components/DialogFooter.vue'
+
+const MODULE_NAME: ModuleName = 'Committee'
+
+const {
+  canCreate,
+  canUpdate,
+  canDelete,
+  canRead: canViewHistory,
+} = useModulePermissions(MODULE_NAME)
 
 const {
   isLoading,
@@ -40,6 +55,8 @@ const formMode = ref<'create' | 'edit'>('create')
 const coreMemberOptions = ref<{ label: string; value: string }[]>([])
 const executiveMemberOptions = ref<{ label: string; value: string }[]>([])
 const selectedCommittee = ref<Committee | null>(null)
+const { historyDrawerVisible, historyData, loadHistory } = useHistory()
+const CommitteeFormRef = ref<InstanceType<typeof CommitteeForm> | null>(null)
 
 const openCreateUserDialog = (): void => {
   formMode.value = 'create'
@@ -111,6 +128,10 @@ const confirmDisable = async (): Promise<void> => {
   confirmDisableDialog.value = false
   committeeToDisable.value = null
 }
+
+const showHistoryDrawer = async (row: Committee): Promise<void> => {
+  await loadHistory('committee', row.id)
+}
 </script>
 
 <template>
@@ -127,11 +148,16 @@ const confirmDisable = async (): Promise<void> => {
         @hide="handleCommitteeFormCancel"
       >
         <CommitteeForm
+          ref="CommitteeFormRef"
           :coremembers="coreMemberOptions"
           :executivemembers="executiveMemberOptions"
           @cancel="handleCommitteeFormCancel"
           @submit="handleCommitteeFormSubmit"
           :committee="selectedCommittee"
+        />
+        <DialogFooter
+          @cancel="handleCommitteeFormCancel"
+          @submit="CommitteeFormRef?.onSubmit && CommitteeFormRef.onSubmit()"
         />
       </Dialog>
       <Dialog
@@ -176,7 +202,7 @@ const confirmDisable = async (): Promise<void> => {
         :paginator="true"
         :saveDisabled="isSaveDisabled"
       >
-        <template #table-header>
+        <template #table-header v-if="canCreate">
           <Button
             label="New Committee"
             icon="pi pi-plus"
@@ -187,34 +213,49 @@ const confirmDisable = async (): Promise<void> => {
 
         <template #body-isActive="{ row }">
           <ToggleSwitch
+            v-if="canUpdate"
             :modelValue="row.isActive"
             @click.stop="(e: Event) => handleStatusClick(row, !row.isActive, e)"
           />
+          <span v-else><ToggleSwitch v-model="row.isActive" disabled /></span>
         </template>
 
         <template #actions="{ row }">
-          <button
-            @click="handleEditCommittee(row)"
-            class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
-          >
-            <i class="pi pi-pencil text-slate-700 text-base"></i>
-          </button>
+          <div class="flex flex-nowrap">
+            <button
+              v-if="canViewHistory"
+              @click="showHistoryDrawer(row)"
+              class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
+            >
+              <i class="pi pi-history"></i>
+            </button>
+            <button
+              v-if="canUpdate"
+              @click="handleEditCommittee(row)"
+              class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
+            >
+              <i class="pi pi-pencil text-slate-700 text-base"></i>
+            </button>
 
-          <button
-            @click="handleDeleteConfirmation(row as Committee)"
-            class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
-          >
-            <i class="pi pi-trash text-red-600 text-base"></i>
-          </button>
+            <button
+              v-if="canDelete"
+              @click="handleDeleteConfirmation(row as Committee)"
+              class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
+            >
+              <i class="pi pi-trash text-red-600 text-base"></i>
+            </button>
 
-          <button
-            @click="handleViewCommittee(row)"
-            class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
-          >
-            <i class="pi pi-eye text-blue-600 text-base"></i>
-          </button>
+            <button
+              v-if="canViewHistory"
+              @click="handleViewCommittee(row)"
+              class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
+            >
+              <i class="pi pi-eye text-blue-600 text-base"></i>
+            </button>
+          </div>
         </template>
       </BaseTable>
+      <HistoryDrawer v-model:visible="historyDrawerVisible" :historyData="historyData" />
     </div>
   </div>
 </template>
