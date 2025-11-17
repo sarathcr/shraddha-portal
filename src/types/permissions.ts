@@ -12,6 +12,7 @@ export type ModuleName =
   | 'Tournaments'
   | 'Feedbacks'
   | 'MeetingMinutes'
+  | 'Settings'
 
 export interface ModulePermission {
   moduleId: string

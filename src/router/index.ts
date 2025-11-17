@@ -70,7 +70,7 @@ const routes: CustomRouteRecordRaw[] = [
         ],
       },
       {
-        path: 'Settings',
+        path: 'event-types',
         component: EventTypeListView,
         children: [{ path: '/event-types', component: EventTypeListView }],
       },

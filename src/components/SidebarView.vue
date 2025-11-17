@@ -187,6 +187,23 @@ const fullMenuItems: MenuItem[] = [
     permission: 'READ',
     to: '/admin/meeting-minutes',
   },
+  {
+    label: 'Settings',
+    icon: 'pi pi-money-bill',
+    expandIconPosition: 'right',
+    items: [
+      {
+        label: 'Event Types',
+        icon: 'pi pi-wallet',
+        command: async (): Promise<void> => {
+          await router.push('/admin/event-types')
+          if (isModal.value) {
+            sidebarStore.isSidebarVisible = false
+          }
+        },
+      },
+    ],
+  },
 ]
 
 const filterMenuItems = (items: MenuItem[], currentPath: string): MenuItem[] => {
