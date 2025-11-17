@@ -8,6 +8,7 @@ import RolesView from '@/views/admin/roles/RolesView.vue'
 import LoginView from '@/views/auth/login/LoginView.vue'
 import CommitteeListView from '@/views/admin/committe/CommitteeListView.vue'
 import { useAuthStore } from '@/stores/auth'
+import EventTypeListView from '@/views/admin/event-type/EventTypeListView.vue'
 
 const router = createRouter({
   history: createWebHashHistory(import.meta.env.BASE_URL),
@@ -36,8 +37,8 @@ const router = createRouter({
         { path: 'roles', component: RolesView },
         {
           path: 'event-types',
-          component: DashboardView,
-          children: [{ path: '/event-types', component: DashboardView }],
+          component: EventTypeListView,
+          children: [{ path: '/event-types', component: EventTypeListView }],
         },
       ],
     },
