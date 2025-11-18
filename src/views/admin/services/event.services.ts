@@ -4,8 +4,8 @@ import type { Event } from '@/types/event'
 import axios, { AxiosError } from 'axios'
 
 export const getEvents = async (
-  pageNumber = 1,
-  pageSize = 10,
+  pageNumber: number,
+  pageSize: number,
   filterMap: Record<string, string> = {},
 ): Promise<ApiResponse<Event[]>> => {
   try {
