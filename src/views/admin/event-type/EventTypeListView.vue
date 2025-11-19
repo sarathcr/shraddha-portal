@@ -15,7 +15,7 @@ import { useEventType } from './composables/useEventType'
 const {
   isLoading,
   columns,
-  allRows,
+  eventTypes,
   editingRows,
   fetchInitialData,
   totalRecords,
@@ -80,7 +80,7 @@ const handleEventTypeFormCancel = (): void => {
 
       <BaseTable
         :columns="columns"
-        :rows="allRows"
+        :rows="eventTypes"
         :totalRecords="totalRecords"
         :rowsPerPage="pageSize"
         :editableRow="editingRows[0] as RowData"

@@ -3,12 +3,12 @@ import { useToast } from 'primevue/usetoast'
 
 import type { ApiResponse } from '@/types/index'
 import type { DataTableFilterMeta, DataTableSortMeta } from 'primevue/datatable'
-import axios, { AxiosError } from 'axios'
-import { api } from '@/constants'
+
 import { mapMatchModeToOperator } from '@/utils/filterUtils'
 import type { EventType } from '@/types/eventType.model'
-import type { ColumnDef, RowData } from '@/types/baseTable.model'
-import { createEventType } from '../../services/eventType.services'
+import type { ColumnDef } from '@/types/baseTable.model'
+import { createEventType, getEventTypes } from '../../services/eventTypeService'
+import axios, { AxiosError } from 'axios'
 
 type LazyLoadEvent = {
   first: number
@@ -22,19 +22,17 @@ type LazyLoadEvent = {
 export const useEventType = (): {
   eventTypes: Ref<EventType[]>
   columns: ColumnDef[]
-  allRows: Ref<RowData[]>
+
   isLoading: Ref<boolean>
   totalRecords: Ref<number>
   pageNumber: Ref<number>
   pageSize: Ref<number>
   editingRows: Ref<EventType[]>
-
   fetchInitialData: () => Promise<void>
   onLazyLoad: (event: LazyLoadEvent) => Promise<void>
   addEventType: (payload: EventType) => Promise<ApiResponse<EventType>>
 } => {
   const toast = useToast()
-
   const eventTypes = ref<EventType[]>([])
   const isLoading = ref<boolean>(false)
   const totalRecords = ref<number>(0)
@@ -42,12 +40,11 @@ export const useEventType = (): {
   const pageNumber = ref<number>(1)
   const pageSize = ref<number>(20)
   const editingRows = ref<EventType[]>([])
-  const allRows = ref<RowData[]>([])
 
   const lastLazyLoadEvent = ref<LazyLoadEvent | null>(null)
 
   const columns = [
-    { label: 'Event TypeName', key: 'eventTypeName', filterable: true },
+    { label: 'EventType Name', key: 'eventTypeName', filterable: true },
     {
       label: 'Description',
       key: 'description',
@@ -79,12 +76,6 @@ export const useEventType = (): {
         })
       }
 
-      const backendKeys: Record<string, string> = {
-        eventTypeName: 'eventTypeName',
-        description: 'description',
-        permissions: 'permissions',
-      }
-
       if (event.filters) {
         Object.entries(event.filters).forEach(([field, filterMeta]) => {
           const filter = filterMeta as {
@@ -103,27 +94,28 @@ export const useEventType = (): {
                 return `${operator} ${condition}`.trim()
               })
               .join(' ')
-            const backendField = backendKeys[field] || field
-            payload.filterMap[backendField] = filterString
+
+            payload.filterMap[field] = filterString
           }
         })
       }
 
-      const response = await api.post<ApiResponse<EventType[]>>(
-        '/authorization/eventTypes/pagination',
-        payload,
+      const response = await getEventTypes(
+        payload.pagination.pageNumber,
+        payload.pagination.pageSize,
+        payload.filterMap,
       )
 
-      if (response.data.succeeded && response.data.data) {
-        eventTypes.value = response.data.data
-        totalRecords.value = response.data.totalRecords ?? 0
-        pageNumber.value = response.data.pageNumber ?? 1
-        pageSize.value = response.data.pageSize ?? 20
+      if (response?.succeeded) {
+        eventTypes.value = response.data ?? []
+        totalRecords.value = response.totalRecords ?? 0
+        pageNumber.value = response.pageNumber ?? payload.pagination.pageNumber
+        pageSize.value = response.pageSize ?? payload.pagination.pageSize
       } else {
         toast.add({
           severity: 'error',
           summary: 'Error',
-          detail: response.data.message || 'Failed to load role data.',
+          detail: response.data || 'Failed to load Event type data.',
           life: 3000,
         })
       }
@@ -134,7 +126,7 @@ export const useEventType = (): {
         detail:
           axios.isAxiosError(error) && error.response?.data?.errorValue
             ? error.response.data.errorValue
-            : 'An error occurred while fetching roles.',
+            : 'An error occurred while fetching Event Types.',
         life: 3000,
       })
       console.error('API call failed:', error)
@@ -210,7 +202,6 @@ export const useEventType = (): {
     totalRecords,
     pageNumber,
     pageSize,
-    allRows,
     editingRows,
     fetchInitialData,
     onLazyLoad,

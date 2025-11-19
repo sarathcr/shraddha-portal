@@ -1,7 +1,7 @@
 import { committeeApi } from '@/constants'
 import type { ApiResponse } from '@/types'
-import type { EventType } from '@/types/event'
-import axios, { AxiosError } from 'axios'
+import type { EventType } from '@/types/eventType.model'
+import axios, { AxiosError, type AxiosResponse } from 'axios'
 
 export const getEventTypes = async (
   pageNumber = 1,
@@ -43,4 +43,9 @@ export const getEventTypes = async (
       totalRecords: 0,
     }
   }
+}
+
+// Create new Eventype
+export const createEventType = (newEventType: EventType): Promise<AxiosResponse<EventType>> => {
+  return committeeApi.post<EventType>('/committee/EventType', newEventType)
 }
