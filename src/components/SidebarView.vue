@@ -189,12 +189,12 @@ const fullMenuItems: MenuItem[] = [
   },
   {
     label: 'Settings',
-    icon: 'pi pi-money-bill',
+    icon: 'pi pi-cog',
     expandIconPosition: 'right',
     items: [
       {
         label: 'Event Types',
-        icon: 'pi pi-wallet',
+        icon: 'pi pi-calendar',
         command: async (): Promise<void> => {
           await router.push('/admin/event-types')
           if (isModal.value) {
