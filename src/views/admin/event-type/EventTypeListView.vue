@@ -91,7 +91,7 @@ const handleEventTypeFormCancel = (): void => {
       >
         <template #table-header>
           <Button
-            label="New EventType"
+            label="New Event Type"
             icon="pi pi-plus"
             severity="help"
             @click="openCreateEventTypeDialog"

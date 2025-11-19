@@ -47,7 +47,7 @@ export const useEventType = (): {
   const lastLazyLoadEvent = ref<LazyLoadEvent | null>(null)
 
   const columns = [
-    { label: 'Event TypeName', key: 'eventTypeName', filterable: true },
+    { label: 'Event Type Name', key: 'eventTypeName', filterable: true },
     {
       label: 'Description',
       key: 'description',
