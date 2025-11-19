@@ -26,5 +26,7 @@ export interface UseEventsReturn {
   events: Ref<Event[]>
   loading: Ref<boolean>
   error: Ref<string | null>
-  fetchEvents: (eventTypeId: string) => Promise<void>
+  hasMore: Ref<boolean>
+  loadEvents: (filters: Record<string, string>) => Promise<void>
+  loadMore: (filters: Record<string, string>) => Promise<void>
 }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import InputText from 'primevue/inputtext'
 import Textarea from 'primevue/textarea'
 import Checkbox from 'primevue/checkbox'
@@ -9,6 +9,7 @@ import MultiSelect from 'primevue/multiselect'
 import { useForm, useField } from 'vee-validate'
 import { roleSchema } from '@/views/admin/schemas/roleSchema'
 import type { Role } from '@/types/role'
+import { fetchAvailableModules } from '@/views/auth/services/module.service'
 
 const props = defineProps<{
   initialData?: Omit<Role, 'id'>
@@ -37,15 +38,27 @@ const modulePermissions = ref<Record<string, string[]>>({})
 const { value: isActive } = useField<boolean>('isActive')
 const isSubmitted = ref(false)
 
-// dummy data for modules
-const modules = ref([
-  { id: '1', name: 'Events' },
-  { id: '2', name: 'Committee' },
-  { id: '3', name: 'Approvals' },
-  { id: '4', name: 'Finance' },
-  { id: '5', name: 'Birthday Gifts' },
-])
+const modules = ref<{ id: string; name: string }[]>([])
+const loadingModules = ref(true)
 
+async function loadModules(): Promise<void> {
+  loadingModules.value = true
+  try {
+    const apiData = await fetchAvailableModules()
+
+    modules.value = apiData.map((m, index) => ({
+      id: String(index + 1),
+      name: m,
+    }))
+  } catch (error) {
+    console.error('Failed to load modules:', error)
+  } finally {
+    loadingModules.value = false
+  }
+}
+onMounted(() => {
+  loadModules().catch((err) => console.error(err))
+})
 watch(selectedModules, (newModules) => {
   // Add new modules
   newModules.forEach((id) => {
@@ -129,6 +142,7 @@ watch(
     <div>
       <h3 class="font-semibold text-sm mb-2">Modules & Permissions</h3>
       <MultiSelect
+        v-if="!loadingModules"
         v-model="selectedModules"
         :options="modules"
         optionLabel="name"

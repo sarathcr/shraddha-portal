@@ -15,7 +15,7 @@ export type ModuleName =
 
 export interface ModulePermission {
   moduleId: string
-  module: ModuleName
+  module: string
   permissions: { permissionId: string; permission: Permission }[]
 }
 
@@ -30,4 +30,4 @@ export interface LoginApiResult {
   userPermissions: UserPermissionsData[]
 }
 
-export type PermissionMap = Record<ModuleName, Permission[] | undefined>
+export type PermissionMap = Record<string, Permission[] | undefined>
