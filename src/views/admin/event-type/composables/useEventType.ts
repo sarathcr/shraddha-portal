@@ -45,6 +45,7 @@ export const useEventType = (): {
 
   const columns = [
     { label: 'Event Type Name', key: 'eventTypeName', filterable: true },
+
     {
       label: 'Description',
       key: 'description',

@@ -97,6 +97,17 @@ const handleEventTypeFormCancel = (): void => {
             @click="openCreateEventTypeDialog"
           />
         </template>
+        <template>
+          <button class="p-2 rounded hover:bg-gray-200 transition cursor-pointer">
+            <i class="pi pi-history"></i>
+          </button>
+          <button class="p-2 rounded hover:bg-gray-200 transition cursor-pointer">
+            <i class="pi pi-pencil text-slate-700 text-base"></i>
+          </button>
+          <button class="p-2 rounded hover:bg-gray-200 transition cursor-pointer">
+            <i class="pi pi-trash text-red-600 text-base"></i>
+          </button>
+        </template>
       </BaseTable>
     </div>
   </div>

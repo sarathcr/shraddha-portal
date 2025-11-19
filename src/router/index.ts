@@ -2,7 +2,7 @@ import { createRouter, createWebHashHistory, type RouteRecordRaw, type RouteMeta
 import { useAuthStore } from '@/stores/auth'
 import { usePermissionStore } from '@/stores/permission'
 import { hasModuleAccess } from '@/utils/permissionChecker'
-import type { ModuleName, Permission } from '@/types/permissions'
+import type { Permission } from '@/types/permissions'
 import DashboardLayout from '@/layouts/DashboardLayout.vue'
 import CommitteView from '@/views/admin/committe/CommitteView.vue'
 import CommitteeDashboarView from '@/views/admin/committe/dashboard/committeeDashboarView.vue'
@@ -17,7 +17,7 @@ import EventTypeListView from '@/views/admin/event-type/EventTypeListView.vue'
 
 interface CustomRouteMeta extends RouteMeta {
   requiresAuth: boolean
-  module?: ModuleName
+  module?: string
   permission?: Permission
 }
 

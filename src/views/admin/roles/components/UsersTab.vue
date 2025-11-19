@@ -18,11 +18,9 @@ import { isEqual, sortBy } from 'lodash'
 import { CommitteeRoles } from '@/constants/committeeRoles.enum'
 import { formatDateForAPI } from '@/utils/dateUtils'
 import DialogFooter from '@/components/DialogFooter.vue'
-import type { ModuleName } from '@/types/permissions'
-
 import { useModulePermissions } from '@/composables/useModulePermissions'
 
-const MODULE_NAME: ModuleName = 'RolesAndAccess'
+const MODULE_NAME: string = 'RolesAndAccess'
 
 const {
   canCreate,

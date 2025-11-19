@@ -7,7 +7,7 @@ import PanelMenu from 'primevue/panelmenu'
 import router from '@/router'
 
 import { hasModuleAccess } from '@/utils/permissionChecker'
-import type { ModuleName, Permission } from '@/types/permissions'
+import type { Permission } from '@/types/permissions'
 
 interface MenuItem {
   label: string
@@ -16,7 +16,7 @@ interface MenuItem {
   class?: string
   expandIconPosition?: 'right' | 'left'
   items?: MenuItem[]
-  module?: ModuleName
+  module?: string
   permission?: Permission
   to?: string
 }

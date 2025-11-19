@@ -15,12 +15,11 @@ import { useToast } from 'primevue/usetoast'
 import { isEqual } from 'lodash'
 import { useHistory } from '@/composables/useHistory'
 import HistoryDrawer from '@/components/HistoryDrawer.vue'
-import type { ModuleName } from '@/types/permissions'
 import DialogFooter from '@/components/DialogFooter.vue'
 
 import { useModulePermissions } from '@/composables/useModulePermissions'
 
-const MODULE_NAME: ModuleName = 'RolesAndAccess'
+const MODULE_NAME: string = 'RolesAndAccess'
 const {
   canCreate,
   canUpdate,
