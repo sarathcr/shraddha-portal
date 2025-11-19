@@ -8,13 +8,16 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'select', id: string): void
+  (e: 'select', payload: { id: string; name: string }): void
   (e: 'history', id: string): void
 }>()
 </script>
 
 <template>
-  <Card class="w-full cursor-pointer hover:!bg-violet-50" @click="emit('select', props.id)">
+  <Card
+    class="w-full cursor-pointer hover:!bg-violet-50"
+    @click="emit('select', { id: props.id, name: props.title })"
+  >
     <template #title>
       <p class="text-violet-600 capitalize font-semibold text-lg">{{ props.title }}</p></template
     >

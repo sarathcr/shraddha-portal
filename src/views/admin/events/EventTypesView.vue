@@ -17,8 +17,11 @@ const openHistory = async (id: string): Promise<void> => {
   await loadHistory('eventType', id)
 }
 
-const handleSelect = async (id: string | number): Promise<void> => {
-  await router.push(`/admin/events/${id}`)
+const handleSelect = async (payload: { id: string; name: string }): Promise<void> => {
+  await router.push({
+    path: `/admin/events/${payload.id}`,
+    query: { name: payload.name },
+  })
 }
 </script>
 
