@@ -70,9 +70,10 @@ const routes: CustomRouteRecordRaw[] = [
         ],
       },
       {
-        path: 'event-types',
+        path: 'settings/event-types',
         component: EventTypeListView,
-        children: [{ path: '/event-types', component: EventTypeListView }],
+        children: [{ path: 'settings/event-types', component: EventTypeListView }],
+        meta: { requiresAuth: true, module: 'Settings', permission: 'READ' },
       },
     ],
   },

@@ -196,7 +196,7 @@ const fullMenuItems: MenuItem[] = [
         label: 'Event Types',
         icon: 'pi pi-calendar',
         command: async (): Promise<void> => {
-          await router.push('/admin/event-types')
+          await router.push('/admin/settings/event-types')
           if (isModal.value) {
             sidebarStore.isSidebarVisible = false
           }
