@@ -7,6 +7,16 @@ const props = defineProps<{
   endDate: string
   status: string
 }>()
+
+const htmlToPlain = (html: string): string => {
+  return html
+    .replace(/<\/h[1-6]>/gi, '\n')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .trim()
+}
 </script>
 
 <template>
@@ -25,7 +35,7 @@ const props = defineProps<{
     >
     <template #content>
       <p>
-        {{ props.description }}
+        {{ htmlToPlain(props.description) }}
       </p>
     </template>
     <template #footer>
