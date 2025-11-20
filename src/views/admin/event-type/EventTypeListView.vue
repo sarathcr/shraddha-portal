@@ -11,6 +11,10 @@ import { useValidation } from '../roles/composables/useValidation'
 import type { EventType } from '@/types/eventType.model'
 import EventTypeForm from './components/EventTypeForm.vue'
 import { useEventType } from './composables/useEventType'
+import { useModulePermissions } from '@/composables/useModulePermissions'
+
+const MODULE_NAME: string = 'Settings'
+const { canDelete } = useModulePermissions(MODULE_NAME)
 
 const {
   isLoading,
@@ -18,17 +22,16 @@ const {
   eventTypes,
   editingRows,
   fetchInitialData,
+  deleteEventType,
   totalRecords,
   pageSize,
   onLazyLoad,
 } = useEventType()
 
 const { isSaveDisabled } = useValidation()
-
 const userFormDialogVisible = ref(false)
-
 const deleteDialogVisible = ref(false)
-
+const eventTypeToDelete = ref<EventType | null>(null)
 const formMode = ref<'create' | 'edit'>('create')
 const selectedEventType = ref<EventType | null>(null)
 
@@ -46,6 +49,21 @@ const handlEventTypeFormSubmit = async (): Promise<void> => {
 const handleEventTypeFormCancel = (): void => {
   userFormDialogVisible.value = false
 }
+const handleDeleteConfirmation = (row: RowData): void => {
+  eventTypeToDelete.value = row as EventType
+  deleteDialogVisible.value = true
+}
+
+const onDeleteEventType = async (): Promise<void> => {
+  if (eventTypeToDelete.value) {
+    const success = await deleteEventType(eventTypeToDelete.value)
+    if (success) {
+      deleteDialogVisible.value = false
+      eventTypeToDelete.value = null
+    }
+  }
+}
+
 const onEditEvent = (row: EventType): void => {
   formMode.value = JSON.parse(JSON.stringify(row))
 }
@@ -78,6 +96,7 @@ const onEditEvent = (row: EventType): void => {
         </div>
         <template #footer>
           <Button label="Cancel" severity="secondary" @click="deleteDialogVisible = false" />
+          <Button label="Delete" severity="danger" @click="onDeleteEventType" />
         </template>
       </Dialog>
 
@@ -110,7 +129,11 @@ const onEditEvent = (row: EventType): void => {
           >
             <i class="pi pi-pencil text-slate-700 text-base"></i>
           </button>
-          <button class="p-2 rounded hover:bg-gray-200 transition cursor-pointer">
+          <button
+            v-if="canDelete"
+            @click="handleDeleteConfirmation(row)"
+            class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
+          >
             <i class="pi pi-trash text-red-600 text-base"></i>
           </button>
         </template>
