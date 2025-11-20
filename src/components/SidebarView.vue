@@ -190,6 +190,8 @@ const fullMenuItems: MenuItem[] = [
   {
     label: 'Settings',
     icon: 'pi pi-cog',
+    module: 'Settings',
+    permission: 'READ',
     expandIconPosition: 'right',
     items: [
       {

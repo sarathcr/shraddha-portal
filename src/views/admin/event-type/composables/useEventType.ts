@@ -1,14 +1,13 @@
 import { ref, type Ref } from 'vue'
 import { useToast } from 'primevue/usetoast'
 
-import type { ApiResponse } from '@/types/index'
-import type { DataTableFilterMeta, DataTableSortMeta } from 'primevue/datatable'
+import type { DataTableFilterMeta } from 'primevue/datatable'
 
 import { mapMatchModeToOperator } from '@/utils/filterUtils'
 import type { EventType } from '@/types/eventType.model'
 import type { ColumnDef } from '@/types/baseTable.model'
 import { createEventType, getEventTypes } from '../../services/eventTypeService'
-import axios, { AxiosError } from 'axios'
+import axios from 'axios'
 
 type LazyLoadEvent = {
   first: number
@@ -16,13 +15,11 @@ type LazyLoadEvent = {
   filters: DataTableFilterMeta | undefined
   sortField?: string | ((item: unknown) => string) | null
   sortOrder?: 0 | 1 | -1 | null
-  multiSortMeta?: DataTableSortMeta[] | null
 }
 
 export const useEventType = (): {
   eventTypes: Ref<EventType[]>
   columns: ColumnDef[]
-
   isLoading: Ref<boolean>
   totalRecords: Ref<number>
   pageNumber: Ref<number>
@@ -30,13 +27,13 @@ export const useEventType = (): {
   editingRows: Ref<EventType[]>
   fetchInitialData: () => Promise<void>
   onLazyLoad: (event: LazyLoadEvent) => Promise<void>
-  addEventType: (payload: EventType) => Promise<ApiResponse<EventType>>
+  addEventType: (payload: EventType) => Promise<boolean>
 } => {
   const toast = useToast()
   const eventTypes = ref<EventType[]>([])
   const isLoading = ref<boolean>(false)
   const totalRecords = ref<number>(0)
-  const error = ref<string | null>(null)
+
   const pageNumber = ref<number>(1)
   const pageSize = ref<number>(20)
   const editingRows = ref<EventType[]>([])
@@ -150,7 +147,7 @@ export const useEventType = (): {
     }
   }
 
-  const addEventType = async (eventTypeItem: EventType): Promise<ApiResponse<EventType>> => {
+  const addEventType = async (eventTypeItem: EventType): Promise<boolean> => {
     try {
       const response = await createEventType(eventTypeItem)
       eventTypes.value.push(response.data)
@@ -158,41 +155,28 @@ export const useEventType = (): {
       toast.add({
         severity: 'success',
         summary: 'Success',
-        detail: 'EventType created successfully',
+        detail: 'Event type created successfully.',
         life: 3000,
       })
-      if (lastLazyLoadEvent.value) await onLazyLoad(lastLazyLoadEvent.value)
-      return {
-        data: response.data,
-        message: 'EventType created successfully',
-        succeeded: true,
-        errors: null,
-        pageNumber: 1,
-        pageSize: 1,
-        totalPages: 1,
-        totalRecords: 1,
-      }
-    } catch (err: unknown) {
-      let message = 'Failed to create EventType'
 
-      const axiosErr = err as AxiosError<{ errorValue?: string }>
-      if (axiosErr.response?.data?.errorValue) {
-        message = axiosErr.response.data.errorValue
+      if (lastLazyLoadEvent.value) {
+        await onLazyLoad(lastLazyLoadEvent.value)
       }
 
-      toast.add({ severity: 'error', summary: 'Error', detail: message, life: 3000 })
-      error.value = message
+      return true
+    } catch (error) {
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail:
+          axios.isAxiosError(error) && error.response?.data?.errorValue
+            ? error.response.data.errorValue
+            : 'Failed to create event type.',
+        life: 3000,
+      })
 
-      return {
-        data: null,
-        message,
-        succeeded: false,
-        errors: err,
-        pageNumber: 0,
-        pageSize: 0,
-        totalPages: 0,
-        totalRecords: 0,
-      }
+      console.error('Error creating event type:', error)
+      return false
     }
   }
 

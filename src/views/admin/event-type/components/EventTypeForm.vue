@@ -10,7 +10,7 @@ import type { EventType } from '@/types/eventType.model'
 import { useEventType } from '../composables/useEventType'
 
 const props = defineProps<{
-  initialData?: EventType // allow id in edit mode
+  initialData?: EventType
 }>()
 
 const { addEventType } = useEventType()
@@ -38,20 +38,17 @@ defineExpose({
 
 const onSubmit = handleSubmit(async (values) => {
   const payload: EventType = {
-    id: props.initialData?.id ?? '', // only added when editing
+    id: props.initialData?.id ?? '',
     eventTypeName: values.eventTypeName,
     description: values.description,
   }
 
-  let result: EventType | null = null
-
-  // Creating mode
   const response = await addEventType(payload)
-  result = response?.data ?? null
 
-  if (result) emit('submit', result)
+  if (response) {
+    emit('submit', payload)
+  }
 })
-
 const onCancel = (): void => {
   emit('cancel')
   resetForm()

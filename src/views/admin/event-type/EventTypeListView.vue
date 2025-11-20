@@ -46,6 +46,9 @@ const handlEventTypeFormSubmit = async (): Promise<void> => {
 const handleEventTypeFormCancel = (): void => {
   userFormDialogVisible.value = false
 }
+const onEditEvent = (row: EventType): void => {
+  formMode.value = JSON.parse(JSON.stringify(row))
+}
 </script>
 
 <template>
@@ -97,11 +100,14 @@ const handleEventTypeFormCancel = (): void => {
             @click="openCreateEventTypeDialog"
           />
         </template>
-        <template>
+        <template #actions="{ row }">
           <button class="p-2 rounded hover:bg-gray-200 transition cursor-pointer">
             <i class="pi pi-history"></i>
           </button>
-          <button class="p-2 rounded hover:bg-gray-200 transition cursor-pointer">
+          <button
+            @click="onEditEvent(row)"
+            class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
+          >
             <i class="pi pi-pencil text-slate-700 text-base"></i>
           </button>
           <button class="p-2 rounded hover:bg-gray-200 transition cursor-pointer">
