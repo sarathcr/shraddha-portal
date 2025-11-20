@@ -6,7 +6,7 @@ import type { DataTableFilterMeta } from 'primevue/datatable'
 import { mapMatchModeToOperator } from '@/utils/filterUtils'
 import type { EventType } from '@/types/eventType.model'
 import type { ColumnDef } from '@/types/baseTable.model'
-import { createEventType, getEventTypes } from '../../services/eventTypeService'
+import { createEventType, getEventTypes, removeEventType } from '../../services/eventTypeService'
 import axios from 'axios'
 
 type LazyLoadEvent = {
@@ -27,6 +27,7 @@ export const useEventType = (): {
   editingRows: Ref<EventType[]>
   fetchInitialData: () => Promise<void>
   onLazyLoad: (event: LazyLoadEvent) => Promise<void>
+  deleteEventType: (role: EventType) => Promise<boolean>
   addEventType: (payload: EventType) => Promise<boolean>
 } => {
   const toast = useToast()
@@ -180,6 +181,36 @@ export const useEventType = (): {
     }
   }
 
+  const deleteEventType = async (eventTypeItem: EventType): Promise<boolean> => {
+    try {
+      const { success, message } = await removeEventType(eventTypeItem.id)
+      if (!success) {
+        throw new Error(message || 'Failed to delete event type.')
+      }
+      toast.add({
+        severity: 'success',
+        summary: 'Success',
+        detail: message || 'Event type deleted successfully.',
+        life: 3000,
+      })
+
+      if (lastLazyLoadEvent.value) await onLazyLoad(lastLazyLoadEvent.value)
+      return true
+    } catch (error) {
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail:
+          axios.isAxiosError(error) && error.response?.data?.errorValue
+            ? error.response.data.errorValue
+            : 'Failed to delete Event Type.',
+        life: 3000,
+      })
+      console.error('Error deleting Event Type:', error)
+      return false
+    }
+  }
+
   return {
     eventTypes,
     columns,
@@ -190,6 +221,7 @@ export const useEventType = (): {
     editingRows,
     fetchInitialData,
     onLazyLoad,
+    deleteEventType,
     addEventType,
   }
 }

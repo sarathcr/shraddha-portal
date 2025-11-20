@@ -49,3 +49,15 @@ export const getEventTypes = async (
 export const createEventType = (newEventType: EventType): Promise<AxiosResponse<EventType>> => {
   return committeeApi.post<EventType>('/committee/EventType', newEventType)
 }
+
+// Delete Event Type
+export const removeEventType = async (
+  id: string,
+): Promise<{ success: boolean; message: string }> => {
+  const { data } = await committeeApi.delete(`/committee/EventType/${id}`)
+
+  return {
+    success: data?.succeeded ?? data?.success ?? true,
+    message: data?.message ?? 'Event type deleted successfully.',
+  }
+}
