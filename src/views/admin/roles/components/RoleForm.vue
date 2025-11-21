@@ -202,7 +202,14 @@ watch(
         <!-- Permissions -->
         <div class="flex flex-wrap gap-4 flex-1">
           <div
-            v-for="permissions in ['read', 'create', 'update', 'delete']"
+            v-for="permissions in [
+              'read',
+              'create',
+              'update',
+              'delete',
+              'manage',
+              'approve reject',
+            ]"
             :key="permissions"
             class="flex items-center gap-2 cursor-pointer"
           >
