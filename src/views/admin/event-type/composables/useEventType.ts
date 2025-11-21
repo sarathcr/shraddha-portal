@@ -1,12 +1,17 @@
 import { ref, type Ref } from 'vue'
 import { useToast } from 'primevue/usetoast'
 
-import type { DataTableFilterMeta } from 'primevue/datatable'
+import type { DataTableFilterMeta, DataTableSortMeta } from 'primevue/datatable'
 
 import { mapMatchModeToOperator } from '@/utils/filterUtils'
 import type { EventType } from '@/types/eventType.model'
 import type { ColumnDef } from '@/types/baseTable.model'
-import { createEventType, getEventTypes, removeEventType } from '../../services/eventTypeService'
+import {
+  createEventType,
+  editEventType,
+  getEventTypes,
+  handleDeleteEventType,
+} from '../../services/eventTypeService'
 import axios from 'axios'
 
 type LazyLoadEvent = {
@@ -15,6 +20,7 @@ type LazyLoadEvent = {
   filters: DataTableFilterMeta | undefined
   sortField?: string | ((item: unknown) => string) | null
   sortOrder?: 0 | 1 | -1 | null
+  multiSortMeta?: DataTableSortMeta[] | null
 }
 
 export const useEventType = (): {
@@ -27,7 +33,8 @@ export const useEventType = (): {
   editingRows: Ref<EventType[]>
   fetchInitialData: () => Promise<void>
   onLazyLoad: (event: LazyLoadEvent) => Promise<void>
-  deleteEventType: (role: EventType) => Promise<boolean>
+  deleteEventType: (payload: EventType) => Promise<boolean>
+  handleeditEventType: (payload: EventType) => Promise<void>
   addEventType: (payload: EventType) => Promise<boolean>
 } => {
   const toast = useToast()
@@ -102,6 +109,7 @@ export const useEventType = (): {
       const response = await getEventTypes(
         payload.pagination.pageNumber,
         payload.pagination.pageSize,
+        payload.multiSortedColumns,
         payload.filterMap,
       )
 
@@ -181,9 +189,45 @@ export const useEventType = (): {
     }
   }
 
+  const handleeditEventType = async (eventTypePayload: EventType): Promise<void> => {
+    try {
+      if (!eventTypePayload.id) {
+        throw new Error('EventType ID missing for edit')
+      }
+
+      const updated = await editEventType(eventTypePayload.id, eventTypePayload)
+
+      const index = eventTypes.value.findIndex((c) => c.id === updated.id)
+      if (index !== -1) {
+        eventTypes.value[index] = updated
+      }
+
+      toast.add({
+        severity: 'success',
+        summary: 'Success',
+        detail: 'EventType updated successfully.',
+        life: 3000,
+      })
+
+      if (lastLazyLoadEvent.value) {
+        await onLazyLoad(lastLazyLoadEvent.value)
+      }
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'An unexpected error occurred. Please try again.'
+
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: message,
+        life: 3000,
+      })
+    }
+  }
+
   const deleteEventType = async (eventTypeItem: EventType): Promise<boolean> => {
     try {
-      const { success, message } = await removeEventType(eventTypeItem.id)
+      const { success, message } = await handleDeleteEventType(eventTypeItem.id)
       if (!success) {
         throw new Error(message || 'Failed to delete event type.')
       }
@@ -223,5 +267,6 @@ export const useEventType = (): {
     onLazyLoad,
     deleteEventType,
     addEventType,
+    handleeditEventType,
   }
 }
