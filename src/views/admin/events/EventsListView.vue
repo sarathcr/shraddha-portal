@@ -8,7 +8,7 @@ import { onMounted, onUnmounted, ref, watch } from 'vue'
 import { Button, Dialog, Toast } from 'primevue'
 import EventForm from './components/EventForm.vue'
 import { useEventForm } from './composables/useEventForm'
-import type { EventFormPayload, EventFormUI } from '@/types/event'
+import type { EventFormPayload, EventFormData } from '@/types/event'
 import DialogFooter from '@/components/DialogFooter.vue'
 import type { ModuleName } from '@/types/permissions'
 import { useModulePermissions } from '@/composables/useModulePermissions'
@@ -20,8 +20,8 @@ const { canCreate } = useModulePermissions(MODULE_NAME)
 const route = useRoute()
 const EventFormDialogVisible = ref(false)
 const formMode = ref<'create' | 'edit'>('create')
-const { committees, loadCommittees, submitEvent } = useEventForm()
-const selectedEvent = ref<EventFormUI | null>(null)
+const { submitEvent } = useEventForm()
+const selectedEvent = ref<EventFormData | null>(null)
 const eventFormRef = ref<InstanceType<typeof EventForm> | null>(null)
 
 const openCreateEventDialog = (): void => {
@@ -63,7 +63,6 @@ const handleEventSubmit = async (payload: EventFormPayload): Promise<void> => {
 
 onMounted(() => {
   void loadEvents({ eventTypeId })
-  void loadCommittees()
   scrollContainer.value?.addEventListener('scroll', handleScroll)
 })
 
@@ -102,7 +101,6 @@ watch(EventFormDialogVisible, (visible) => {
     >
       <EventForm
         ref="eventFormRef"
-        :committees="committees"
         :eventTypeId="eventTypeId"
         :initialData="formMode === 'edit' ? selectedEvent : null"
         @submit="handleEventSubmit"

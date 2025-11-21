@@ -1,22 +1,19 @@
 <script setup lang="ts">
 import { useForm, useField } from 'vee-validate'
 import { eventFormSchema } from '@/views/admin/schemas/eventSchema'
-import type { EventFormPayload, EventFormUI, Committee, EventStatus } from '@/types/event'
-import type { PropType } from 'vue'
+import type { EventFormPayload, EventFormData, EventStatus } from '@/types/event'
+import { onMounted, type PropType } from 'vue'
 
 import InputText from 'primevue/inputtext'
 import FloatLabel from 'primevue/floatlabel'
 import Editor from 'primevue/editor'
 import { DatePicker, Select } from 'primevue'
+import { useEventForm } from '../composables/useEventForm'
 
 const props = defineProps({
   initialData: {
-    type: Object as PropType<EventFormUI | null>,
+    type: Object as PropType<EventFormData | null>,
     default: null,
-  },
-  committees: {
-    type: Array as PropType<Committee[]>,
-    required: true,
   },
   eventTypeId: {
     type: String,
@@ -29,7 +26,7 @@ const emit = defineEmits<{
   (e: 'cancel'): void
 }>()
 
-const { handleSubmit, errors } = useForm<EventFormUI>({
+const { handleSubmit, errors } = useForm<EventFormData>({
   validationSchema: eventFormSchema,
   initialValues: props.initialData || {
     name: '',
@@ -42,6 +39,7 @@ const { handleSubmit, errors } = useForm<EventFormUI>({
   },
 })
 
+const { loadCommittees, committees } = useEventForm()
 const { value: name } = useField<string>('name')
 const { value: description } = useField<string>('description')
 const { value: committeeId } = useField<string>('committeeId')
@@ -70,6 +68,10 @@ const onSubmit = handleSubmit((values) => {
   }
 
   emit('submit', payload)
+})
+
+onMounted(() => {
+  void loadCommittees()
 })
 
 defineExpose({

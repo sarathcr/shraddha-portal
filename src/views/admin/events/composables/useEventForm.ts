@@ -1,17 +1,17 @@
 import { ref, type Ref } from 'vue'
-import type { Committee, EventFormPayload } from '@/types/event'
+import type { CommitteeList, EventFormPayload } from '@/types/event'
 import { getCommitteeList, createEvent } from '@/views/admin/services/event.services'
 import type { ApiResponse } from '@/types'
 import { useToast } from 'primevue'
 
 export function useEventForm(): {
-  committees: Ref<Committee[]>
+  committees: Ref<CommitteeList[]>
   loading: Ref<boolean>
   error: Ref<string | null>
   loadCommittees: () => Promise<void>
   submitEvent: (payload: EventFormPayload) => Promise<ApiResponse<EventFormPayload>>
 } {
-  const committees = ref<Committee[]>([])
+  const committees = ref<CommitteeList[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
   const toast = useToast()

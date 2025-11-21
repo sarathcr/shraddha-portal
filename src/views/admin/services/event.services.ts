@@ -1,6 +1,6 @@
 import { committeeApi } from '@/constants'
 import type { ApiResponse } from '@/types'
-import type { Committee } from '@/types/event'
+import type { CommitteeList } from '@/types/event'
 import type { Event, EventFormPayload } from '@/types/event'
 import axios, { AxiosError } from 'axios'
 
@@ -43,9 +43,9 @@ export const getEvents = async (
   }
 }
 
-export const getCommitteeList = async (): Promise<Committee[]> => {
+export const getCommitteeList = async (): Promise<CommitteeList[]> => {
   try {
-    const resp = await committeeApi.post<Committee[]>('committee/CommitteeList')
+    const resp = await committeeApi.post<CommitteeList[]>('committee/CommitteeList')
     return resp.data ?? []
   } catch (err: unknown) {
     console.error('Failed to fetch committees', err)

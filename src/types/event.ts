@@ -39,7 +39,7 @@ export type EventStatus =
   | 'Ongoing'
   | 'Completed'
 
-export interface Committee {
+export interface CommitteeList {
   id: string
   name: string
   isactive?: boolean
@@ -55,7 +55,7 @@ export interface EventFormPayload {
   status: EventStatus
 }
 
-export interface EventFormUI {
+export interface EventFormData {
   name: string
   description: string
   committeeId: string
