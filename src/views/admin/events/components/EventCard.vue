@@ -8,14 +8,23 @@ const props = defineProps<{
   status: string
 }>()
 
-const htmlToPlain = (html: string): string => {
-  return html
-    .replace(/<\/h[1-6]>/gi, '\n')
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/p>/gi, '\n')
+const htmlToPlain = (html: string, maxLength = 65): string => {
+  if (!html) return ''
+
+  let text = html
+    .replace(/<\/h[1-6]>/gi, '\n\n')
+    .replace(/<br\s*\/?>/gi, '\n\n')
+    .replace(/<\/p>/gi, '\n\n')
+    .replace(/<\/li>/gi, '\n')
     .replace(/<[^>]+>/g, '')
     .replace(/&nbsp;/g, ' ')
+    .replace(/\n\s*\n+/g, '\n\n')
     .trim()
+  if (text.length > maxLength) {
+    text = text.substring(0, maxLength).trim() + '...'
+  }
+
+  return text
 }
 </script>
 

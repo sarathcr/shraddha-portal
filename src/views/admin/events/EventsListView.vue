@@ -4,12 +4,18 @@ import EventCard from './components/EventCard.vue'
 import EventCardSkeleton from '@/components/Skelton/EventCardSkeleton.vue'
 import { useEvents } from './composables/useEvents'
 import { useRoute } from 'vue-router'
-import { onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref, watch } from 'vue'
 import { Button, Dialog, Toast } from 'primevue'
 import EventForm from './components/EventForm.vue'
 import { useEventForm } from './composables/useEventForm'
 import type { EventFormPayload, EventFormUI } from '@/types/event'
 import DialogFooter from '@/components/DialogFooter.vue'
+import type { ModuleName } from '@/types/permissions'
+import { useModulePermissions } from '@/composables/useModulePermissions'
+
+const MODULE_NAME: ModuleName = 'Events'
+
+const { canCreate } = useModulePermissions(MODULE_NAME)
 
 const route = useRoute()
 const EventFormDialogVisible = ref(false)
@@ -64,6 +70,14 @@ onMounted(() => {
 onUnmounted(() => {
   scrollContainer.value?.removeEventListener('scroll', handleScroll)
 })
+
+watch(EventFormDialogVisible, (visible) => {
+  if (visible && scrollContainer.value) {
+    scrollContainer.value.style.overflowY = 'hidden'
+  } else if (scrollContainer.value) {
+    scrollContainer.value.style.overflowY = 'auto'
+  }
+})
 </script>
 
 <template>
@@ -71,6 +85,7 @@ onUnmounted(() => {
     <div class="flex justify-between">
       <PageTitle :pageName="eventTypeName" />
       <Button
+        v-if="canCreate"
         label="Create Event"
         icon="pi pi-plus"
         severity="help"
@@ -92,11 +107,14 @@ onUnmounted(() => {
         :initialData="formMode === 'edit' ? selectedEvent : null"
         @submit="handleEventSubmit"
         @cancel="EventFormDialogVisible = false"
-      />
-      <DialogFooter
-        @cancel="EventFormDialogVisible = false"
-        @submit="eventFormRef?.onSubmit && eventFormRef.onSubmit()"
-      />
+      >
+      </EventForm>
+      <template #footer>
+        <DialogFooter
+          @cancel="EventFormDialogVisible = false"
+          @submit="eventFormRef?.onSubmit && eventFormRef.onSubmit()"
+        />
+      </template>
     </Dialog>
     <div
       v-if="loading && events.length === 0"
