@@ -5,7 +5,7 @@ import Dialog from 'primevue/dialog'
 import BaseTable from '@/components/baseTable.vue'
 import RoleForm from './RoleForm.vue'
 import { useRoles } from '@/views/admin/roles/composables/useRole'
-import type { PermissionOptions, Role } from '@/types/role'
+import type { Role } from '@/types/role'
 import type { RowData } from '@/types/baseTable.model'
 import { useValidation } from '@/views/admin/roles/composables/useValidation'
 import ToggleSwitch from 'primevue/toggleswitch'
@@ -16,8 +16,9 @@ import { isEqual } from 'lodash'
 import { useHistory } from '@/composables/useHistory'
 import HistoryDrawer from '@/components/HistoryDrawer.vue'
 import DialogFooter from '@/components/DialogFooter.vue'
-
+import { fetchAvailableModules } from '@/views/auth/services/module.service'
 import { useModulePermissions } from '@/composables/useModulePermissions'
+import type { ModuleApiData } from '@/types/module'
 
 const MODULE_NAME: string = 'RolesAndAccess'
 const {
@@ -52,12 +53,43 @@ const deleteDialogVisible = ref(false)
 const roleToDelete = ref<Role | null>(null)
 const { historyDrawerVisible, historyData, loadHistory } = useHistory()
 const toast = useToast()
-const permissions: PermissionOptions[] = [
-  { label: 'Read', value: 'READ' },
-  { label: 'Create', value: 'CREATE' },
-  { label: 'Update', value: 'UPDATE' },
-  { label: 'Delete', value: 'DELETE' },
-]
+
+const moduleIdToNameMap = ref<Record<string, string>>({})
+const moduleDefinitions = ref<ModuleApiData[]>([])
+
+const dialogHeader = ref('Create Role')
+
+const loadModuleMap = async (): Promise<void> => {
+  try {
+    const moduleData = (await fetchAvailableModules()) as ModuleApiData[]
+
+    const map: Record<string, string> = {}
+    moduleData.forEach((item) => {
+      map[item.id] = item.module
+    })
+    moduleIdToNameMap.value = map
+    moduleDefinitions.value = moduleData
+  } catch (error) {
+    console.error('Failed to load module map for roles table:', error)
+  }
+}
+
+const formatModulePermissions = (modulePermissions: Role['modulePermissions']): string[] => {
+  if (!modulePermissions || modulePermissions.length === 0) {
+    return ['No Permissions']
+  }
+
+  const map = moduleIdToNameMap.value
+
+  return modulePermissions
+    .map((mp) => {
+      const moduleIdKey = String(mp.moduleId)
+      const moduleName = map[moduleIdKey] || `Module ID ${mp.moduleId}`
+      const permissionsList = (mp.permissions || []).join(', ')
+      return `${moduleName}: ${permissionsList}`
+    })
+    .filter((item) => item !== null)
+}
 
 watch(
   [roleFormDialogVisible, deleteDialogVisible],
@@ -71,12 +103,19 @@ watch(
 )
 
 const onAddNewRole = (): void => {
+  dialogHeader.value = 'Create Role'
+  editableRole.value = null
   roleFormDialogVisible.value = true
-  roleFormRef.value?.resetForm()
 }
 
 const handleRoleFormSubmit = async (payload: Role): Promise<void> => {
-  const success = await createRole(payload)
+  let success = false
+  if (payload.id) {
+    await editRole(payload)
+    success = true
+  } else {
+    success = await createRole(payload)
+  }
   if (success) {
     roleFormDialogVisible.value = false
   }
@@ -84,35 +123,40 @@ const handleRoleFormSubmit = async (payload: Role): Promise<void> => {
 
 const handleRoleFormCancel = (): void => {
   roleFormDialogVisible.value = false
+  editingRows.value = []
+  editableRole.value = null
 }
 
 const onEditRole = (row: RowData): void => {
-  originalRole.value = JSON.parse(JSON.stringify(row))
-  editableRole.value = JSON.parse(JSON.stringify(row))
-  editingRows.value = [row as Role]
+  if (editingRows.value.length) {
+    onCancelEdit()
+  }
+
+  dialogHeader.value = `Edit Role: ${row.roleName}`
+  editableRole.value = JSON.parse(JSON.stringify(row)) as Role
+  roleFormDialogVisible.value = true
 }
 
 const onSaveRole = async (newData: RowData): Promise<void> => {
   if (!editableRole.value || !originalRole.value) return
 
+  const payload: Role = {
+    ...originalRole.value,
+    ...(newData as Role),
+    modulePermissions: originalRole.value.modulePermissions,
+    isActive: editableRole.value.isActive,
+  }
+
   const originalDataToCompare = {
     roleName: originalRole.value.roleName,
     description: originalRole.value.description,
-    modulePermissions: (originalRole.value.modulePermissions ?? []).map((mp) => ({
-      moduleId: mp.moduleId,
-      permissions: (mp.permissions ?? []).sort(),
-    })),
-
     isActive: originalRole.value.isActive,
   }
 
   const newDataToCompare = {
-    roleName: newData.roleName,
-    description: newData.description,
-    permissions: ((newData.permissions as PermissionOptions[]) ?? [])
-      .map((p) => (typeof p === 'string' ? p : p.value))
-      .sort(),
-    isActive: editableRole.value.isActive,
+    roleName: payload.roleName,
+    description: payload.description,
+    isActive: payload.isActive,
   }
 
   if (isEqual(originalDataToCompare, newDataToCompare)) {
@@ -130,13 +174,8 @@ const onSaveRole = async (newData: RowData): Promise<void> => {
   }
 
   try {
-    await roleSchema.validate(newData, { abortEarly: false })
-
-    if (editableRole.value) {
-      newData.isActive = editableRole.value.isActive
-    }
-
-    await editRole(newData as Role)
+    await roleSchema.validate(payload, { abortEarly: false })
+    await editRole(payload)
     editingRows.value = []
     editableRole.value = null
     originalRole.value = null
@@ -184,30 +223,9 @@ const onDeleteRole = async (): Promise<void> => {
 }
 
 const columns = [
-  {
-    label: 'Role Name',
-    key: 'roleName',
-    filterable: true,
-    required: true,
-  },
-  {
-    label: 'Description',
-    key: 'description',
-    filterable: true,
-    required: true,
-  },
-  {
-    label: 'Permissions',
-    key: 'permissions',
-    filterable: true,
-    useTag: true,
-    useMultiSelect: true,
-    required: true,
-    options: permissions,
-    showFilterMatchModes: false,
-    showFilterOperator: false,
-    showAddButton: false,
-  },
+  { label: 'Role Name', key: 'roleName', filterable: true, required: true },
+  { label: 'Description', key: 'description', filterable: true, required: true },
+  { label: 'Permissions', key: 'permissions', filterable: false, required: true },
   {
     label: 'Status',
     key: 'isActive',
@@ -226,6 +244,7 @@ const showHistoryDrawer = async (row: Role): Promise<void> => {
 
 onMounted(() => {
   void fetchInitialData()
+  void loadModuleMap()
 })
 </script>
 
@@ -233,7 +252,7 @@ onMounted(() => {
   <div class="space-y-4 h-full">
     <Dialog
       v-model:visible="roleFormDialogVisible"
-      header="Create Role"
+      :header="dialogHeader"
       :style="{ width: '50rem' }"
       modal
       @hide="handleRoleFormCancel"
@@ -243,6 +262,7 @@ onMounted(() => {
         <RoleForm
           class="flex-1 overflow-y-auto p-4 max-h-[400px]"
           ref="roleFormRef"
+          :initialData="editableRole"
           @submit="handleRoleFormSubmit"
           @cancel="handleRoleFormCancel"
         />
@@ -302,9 +322,21 @@ onMounted(() => {
           :modelValue="row.isActive"
           @click.stop.prevent="onStatusToggle(row as Role, !row.isActive)"
         />
-        <span v-else>{{ (row as Role).isActive ? 'Active' : 'Inactive' }}</span>
+        <span v-else>{{ (row as Role).isActive ? 'Active' : 'Inactive' }}</span> </template
+      >     
+      <template #body-permissions="{ row }">
+               
+        <div
+          v-for="(permissionLine, index) in formatModulePermissions(
+            (row as Role).modulePermissions,
+          )"
+          :key="index"
+          class="text-xs text-gray-700 whitespace-nowrap"
+        >
+                    {{ permissionLine }}        
+        </div>
+             
       </template>
-
       <template #actions="{ row }">
         <button
           v-if="canViewHistory"
