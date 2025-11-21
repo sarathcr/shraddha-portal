@@ -6,15 +6,19 @@ import Button from 'primevue/button'
 import ConfirmPopup from 'primevue/confirmpopup'
 import Dialog from 'primevue/dialog'
 import Toast from 'primevue/toast'
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
+import * as yup from 'yup'
 import { useValidation } from '../roles/composables/useValidation'
 import type { EventType } from '@/types/eventType.model'
 import EventTypeForm from './components/EventTypeForm.vue'
 import { useEventType } from './composables/useEventType'
 import { useModulePermissions } from '@/composables/useModulePermissions'
+import { useToast } from 'primevue'
+import { isEqual } from 'lodash'
 
 const MODULE_NAME: string = 'Settings'
-const { canDelete } = useModulePermissions(MODULE_NAME)
+const toast = useToast()
+const { canUpdate, canDelete } = useModulePermissions(MODULE_NAME)
 
 const {
   isLoading,
@@ -23,17 +27,20 @@ const {
   editingRows,
   fetchInitialData,
   deleteEventType,
+  handleeditEventType,
   totalRecords,
   pageSize,
   onLazyLoad,
 } = useEventType()
 
-const { isSaveDisabled } = useValidation()
+const { isSaveDisabled, resetValidation } = useValidation()
 const userFormDialogVisible = ref(false)
 const deleteDialogVisible = ref(false)
 const eventTypeToDelete = ref<EventType | null>(null)
 const formMode = ref<'create' | 'edit'>('create')
 const selectedEventType = ref<EventType | null>(null)
+const originalEventType = ref<EventType | null>(null)
+const editableEventType = ref<EventType | null>(null)
 
 const openCreateEventTypeDialog = (): void => {
   formMode.value = 'create'
@@ -65,8 +72,70 @@ const onDeleteEventType = async (): Promise<void> => {
 }
 
 const onEditEvent = (row: EventType): void => {
-  formMode.value = JSON.parse(JSON.stringify(row))
+  originalEventType.value = JSON.parse(JSON.stringify(row))
+  editableEventType.value = JSON.parse(JSON.stringify(row))
+  editingRows.value = [row as EventType]
 }
+const onSaveEventType = async (newData: RowData): Promise<void> => {
+  if (!editableEventType.value || !originalEventType.value) return
+  const originalDataToCompare = {
+    eventTypeName: originalEventType.value.eventTypeName,
+    description: originalEventType.value.description,
+  }
+  const newDataToCompare = {
+    eventTypeName: newData.eventTypeName,
+    description: newData.description,
+  }
+  if (isEqual(originalDataToCompare, newDataToCompare)) {
+    toast.add({
+      severity: 'info',
+      summary: 'No Changes',
+      detail: 'No modifications were made.',
+      life: 3000,
+    })
+    editingRows.value = []
+    editableEventType.value = null
+    originalEventType.value = null
+    resetValidation()
+    return
+  }
+  try {
+    await handleeditEventType(newData as EventType)
+    editingRows.value = []
+    editableEventType.value = null
+    originalEventType.value = null
+    resetValidation()
+  } catch (validationError) {
+    if (validationError instanceof yup.ValidationError) {
+      validationError.inner.forEach((err) => {
+        toast.add({
+          severity: 'error',
+          summary: 'Validation Error',
+          detail: `${err.message}`,
+          life: 5000,
+        })
+      })
+    }
+  }
+}
+
+const onCancelEdit = (): void => {
+  if (originalEventType.value) {
+    const index = eventTypes.value.findIndex((e) => e.id === originalEventType.value!.id)
+    if (index !== -1) {
+      eventTypes.value[index] = originalEventType.value
+    }
+  }
+
+  editingRows.value = []
+  originalEventType.value = null
+  editableEventType.value = null
+  resetValidation()
+}
+
+onMounted(() => {
+  void fetchInitialData()
+})
 </script>
 
 <template>
@@ -99,7 +168,6 @@ const onEditEvent = (row: EventType): void => {
           <Button label="Delete" severity="danger" @click="onDeleteEventType" />
         </template>
       </Dialog>
-
       <BaseTable
         :columns="columns"
         :rows="eventTypes"
@@ -107,6 +175,8 @@ const onEditEvent = (row: EventType): void => {
         :rowsPerPage="pageSize"
         :editableRow="editingRows[0] as RowData"
         :loading="isLoading"
+        @save="onSaveEventType"
+        @cancel="onCancelEdit"
         @lazy:load="onLazyLoad"
         :paginator="true"
         :saveDisabled="isSaveDisabled"
@@ -124,6 +194,7 @@ const onEditEvent = (row: EventType): void => {
             <i class="pi pi-history"></i>
           </button>
           <button
+            v-if="canUpdate"
             @click="onEditEvent(row)"
             class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
           >
