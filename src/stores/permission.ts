@@ -3,13 +3,14 @@ import { defineStore } from 'pinia'
 import type { Permission, UserPermissionsData } from '@/types/permissions'
 
 import { fetchAvailableModules } from '../views/auth/services/module.service'
+import type { ModuleApiData } from '@/types/module'
 
 export const usePermissionStore = defineStore(
   'permission',
   () => {
     const userPermissions = ref<UserPermissionsData[]>([])
 
-    const moduleNames = ref<string[]>([])
+    const moduleNames = ref<ModuleApiData[]>([])
 
     function setPermissions(permissionsData: UserPermissionsData[]): void {
       userPermissions.value = permissionsData

@@ -16,6 +16,45 @@ type LazyLoadEvent = {
   multiSortMeta?: DataTableSortMeta[] | null
 }
 
+const cachedActiveRoles = ref<PermissionOptions[] | null>(null)
+const isFetchingActiveRoles = ref<boolean>(false)
+
+export const fetchActiveRoles = async (
+  forceRefetch: boolean = false,
+): Promise<PermissionOptions[]> => {
+  if (!forceRefetch && cachedActiveRoles.value) {
+    return cachedActiveRoles.value
+  }
+
+  if (isFetchingActiveRoles.value) {
+    return cachedActiveRoles.value || []
+  }
+
+  isFetchingActiveRoles.value = true
+
+  try {
+    const response = await api.post<ApiResponse<Role[]>>('/authorization/Roles/pagination', {
+      pagination: { pageNumber: 1, pageSize: -1 },
+      filterMap: { isActive: '= true' },
+    })
+
+    if (response.data.succeeded && response.data.data) {
+      const rolesData = response.data.data.map((role: Role) => ({
+        label: role.roleName,
+        value: role.id,
+      }))
+      cachedActiveRoles.value = rolesData
+      return rolesData
+    }
+    return []
+  } catch (error) {
+    console.error('Error fetching active roles for lookups:', error)
+    return []
+  } finally {
+    isFetchingActiveRoles.value = false
+  }
+}
+
 export const useRoles = (): {
   roles: Ref<Role[]>
   permissions: Ref<PermissionOptions[]>
@@ -65,6 +104,10 @@ export const useRoles = (): {
         detail: 'Role status updated successfully.',
         life: 3000,
       })
+
+      if (role.isActive !== newStatus) {
+        await fetchActiveRoles(true)
+      }
 
       if (lastLazyLoadEvent.value) await onLazyLoad(lastLazyLoadEvent.value)
     } catch (error) {
@@ -194,6 +237,8 @@ export const useRoles = (): {
         detail: 'Role created successfully.',
         life: 3000,
       })
+
+      await fetchActiveRoles(true)
       if (lastLazyLoadEvent.value) await onLazyLoad(lastLazyLoadEvent.value)
       return true
     } catch (error) {
@@ -220,6 +265,8 @@ export const useRoles = (): {
         detail: 'Role updated successfully.',
         life: 3000,
       })
+
+      await fetchActiveRoles(true)
       if (lastLazyLoadEvent.value) await onLazyLoad(lastLazyLoadEvent.value)
     } catch (error) {
       toast.add({
@@ -244,6 +291,8 @@ export const useRoles = (): {
         detail: 'Role deleted successfully.',
         life: 3000,
       })
+
+      await fetchActiveRoles(true)
       if (lastLazyLoadEvent.value) await onLazyLoad(lastLazyLoadEvent.value)
       return true
     } catch (error) {
