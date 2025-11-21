@@ -2,7 +2,7 @@ import { createRouter, createWebHashHistory, type RouteRecordRaw, type RouteMeta
 import { useAuthStore } from '@/stores/auth'
 import { usePermissionStore } from '@/stores/permission'
 import { hasModuleAccess } from '@/utils/permissionChecker'
-import type { ModuleName, Permission } from '@/types/permissions'
+import type { Permission } from '@/types/permissions'
 import DashboardLayout from '@/layouts/DashboardLayout.vue'
 import CommitteView from '@/views/admin/committe/CommitteView.vue'
 import CommitteeDashboarView from '@/views/admin/committe/dashboard/committeeDashboarView.vue'
@@ -13,10 +13,11 @@ import CommitteeListView from '@/views/admin/committe/CommitteeListView.vue'
 import EventTypesView from '@/views/admin/events/EventTypesView.vue'
 import EventView from '@/views/admin/events/EventView.vue'
 import EventsListView from '@/views/admin/events/EventsListView.vue'
+import EventTypeListView from '@/views/admin/event-type/EventTypeListView.vue'
 
 interface CustomRouteMeta extends RouteMeta {
   requiresAuth: boolean
-  module?: ModuleName
+  module?: string
   permission?: Permission
 }
 
@@ -67,6 +68,12 @@ const routes: CustomRouteRecordRaw[] = [
           { path: '', component: EventTypesView },
           { path: ':id', component: EventsListView },
         ],
+      },
+      {
+        path: 'settings/event-types',
+        component: EventTypeListView,
+        children: [{ path: 'settings/event-types', component: EventTypeListView }],
+        meta: { requiresAuth: true, module: 'Settings', permission: 'READ' },
       },
     ],
   },

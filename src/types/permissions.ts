@@ -1,18 +1,5 @@
 export type Permission = 'READ' | 'CREATE' | 'UPDATE' | 'DELETE' | 'MANAGE' | 'APPROVEREJECT'
 
-export type ModuleName =
-  | 'Dashboard'
-  | 'RolesAndAccess'
-  | 'Events'
-  | 'Committee'
-  | 'Approvals'
-  | 'Finance'
-  | 'BirthdayGifts'
-  | 'Charity'
-  | 'Tournaments'
-  | 'Feedbacks'
-  | 'MeetingMinutes'
-
 export interface ModulePermission {
   moduleId: string
   module: string

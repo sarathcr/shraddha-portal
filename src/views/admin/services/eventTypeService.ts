@@ -1,11 +1,12 @@
 import { committeeApi } from '@/constants'
 import type { ApiResponse } from '@/types'
-import type { EventType } from '@/types/event'
-import axios, { AxiosError } from 'axios'
+import type { EventType } from '@/types/eventType.model'
+import axios, { AxiosError, type AxiosResponse } from 'axios'
 
 export const getEventTypes = async (
   pageNumber = 1,
   pageSize = 10,
+  multiSortedColumns: { active: string | undefined; direction: string }[] = [],
   filterMap: Record<string, string> = {},
 ): Promise<ApiResponse<EventType[]>> => {
   try {
@@ -16,6 +17,7 @@ export const getEventTypes = async (
           pageNumber,
           pageSize,
         },
+        multiSortedColumns,
         filterMap,
       },
     )
@@ -42,5 +44,43 @@ export const getEventTypes = async (
       totalPages: 0,
       totalRecords: 0,
     }
+  }
+}
+
+// Create new Eventype
+export const createEventType = (newEventType: EventType): Promise<AxiosResponse<EventType>> => {
+  return committeeApi.post<EventType>('/committee/EventType', newEventType)
+}
+
+//Edit EventType
+export const editEventType = async (
+  id: string,
+  updatedEventType: EventType,
+): Promise<EventType> => {
+  try {
+    const { data } = await committeeApi.put<EventType>(
+      `/committee/EventType//${id}`,
+      updatedEventType,
+    )
+    return data
+  } catch (err: unknown) {
+    let message = 'Failed to update event type'
+    const axiosErr = err as AxiosError<{ errorValue?: string }>
+    if (axiosErr.response?.data?.errorValue) {
+      message = axiosErr.response.data.errorValue
+    }
+    throw new Error(message)
+  }
+}
+
+// Delete Event Type
+export const handleDeleteEventType = async (
+  id: string,
+): Promise<{ success: boolean; message: string }> => {
+  const { data } = await committeeApi.delete(`/committee/EventType/${id}`)
+
+  return {
+    success: data?.succeeded ?? data?.success ?? true,
+    message: data?.message ?? 'Event type deleted successfully.',
   }
 }

@@ -10,9 +10,10 @@ import { useForm, useField } from 'vee-validate'
 import { roleSchema } from '@/views/admin/schemas/roleSchema'
 import type { Role } from '@/types/role'
 import { fetchAvailableModules } from '@/views/auth/services/module.service'
+import type { ModuleApiData } from '@/types/module'
 
 const props = defineProps<{
-  initialData?: Omit<Role, 'id'>
+  initialData?: Role | null
 }>()
 
 const emit = defineEmits<{
@@ -22,7 +23,8 @@ const emit = defineEmits<{
 
 const { handleSubmit, errors, resetForm, setValues, setFieldValue } = useForm<Role>({
   validationSchema: roleSchema,
-  initialValues: props.initialData || {
+  initialValues: {
+    id: '',
     roleName: '',
     description: '',
     modulePermissions: [],
@@ -41,14 +43,31 @@ const isSubmitted = ref(false)
 const modules = ref<{ id: string; name: string }[]>([])
 const loadingModules = ref(true)
 
+function loadPermissionsForEdit(roleData: Role): void {
+  const selected: string[] = []
+  const permissionsRecord: Record<string, string[]> = {}
+
+  if (roleData.modulePermissions) {
+    roleData.modulePermissions.forEach((mp) => {
+      const moduleId = String(mp.moduleId)
+      selected.push(moduleId)
+      permissionsRecord[moduleId] = mp.permissions.map((p) => p.toLowerCase())
+    })
+  }
+
+  selectedModules.value = selected
+  modulePermissions.value = permissionsRecord
+  setValues(roleData)
+}
+
 async function loadModules(): Promise<void> {
   loadingModules.value = true
   try {
-    const apiData = await fetchAvailableModules()
+    const apiData = (await fetchAvailableModules()) as ModuleApiData[]
 
-    modules.value = apiData.map((m, index) => ({
-      id: String(index + 1),
-      name: m,
+    modules.value = apiData.map((item) => ({
+      id: item.id,
+      name: item.module,
     }))
   } catch (error) {
     console.error('Failed to load modules:', error)
@@ -60,14 +79,12 @@ onMounted(() => {
   loadModules().catch((err) => console.error(err))
 })
 watch(selectedModules, (newModules) => {
-  // Add new modules
   newModules.forEach((id) => {
     if (!modulePermissions.value[id]) {
       modulePermissions.value[id] = []
     }
   })
 
-  // Remove unselected modules
   Object.keys(modulePermissions.value).forEach((id) => {
     if (!newModules.includes(id)) {
       delete modulePermissions.value[id]
@@ -80,7 +97,7 @@ watch(
   (newVal) => {
     const formatted = Object.entries(newVal).map(([moduleId, perms]) => ({
       moduleId,
-      permissions: perms,
+      permissions: perms.map((p) => p.toUpperCase()),
     }))
     setFieldValue('modulePermissions', formatted)
   },
@@ -97,18 +114,28 @@ const onSubmit = handleSubmit(
     console.error('Validation failed:', errors)
   },
 )
+
+const customResetForm = (): void => {
+  resetForm()
+  selectedModules.value = []
+  modulePermissions.value = {}
+}
+
 defineExpose({
-  resetForm,
+  resetForm: customResetForm,
   onSubmit,
 })
 
 watch(
   () => props.initialData,
   (newVal) => {
-    if (newVal) setValues(newVal)
-    else resetForm()
+    if (newVal) {
+      loadPermissionsForEdit(newVal)
+    } else {
+      customResetForm()
+    }
   },
-  { deep: true },
+  { deep: true, immediate: true },
 )
 </script>
 <template>
@@ -175,7 +202,14 @@ watch(
         <!-- Permissions -->
         <div class="flex flex-wrap gap-4 flex-1">
           <div
-            v-for="permissions in ['read', 'create', 'update', 'delete']"
+            v-for="permissions in [
+              'read',
+              'create',
+              'update',
+              'delete',
+              'manage',
+              'approve reject',
+            ]"
             :key="permissions"
             class="flex items-center gap-2 cursor-pointer"
           >
