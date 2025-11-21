@@ -7,7 +7,7 @@ import PanelMenu from 'primevue/panelmenu'
 import router from '@/router'
 
 import { hasModuleAccess } from '@/utils/permissionChecker'
-import type { ModuleName, Permission } from '@/types/permissions'
+import type { Permission } from '@/types/permissions'
 
 interface MenuItem {
   label: string
@@ -16,7 +16,7 @@ interface MenuItem {
   class?: string
   expandIconPosition?: 'right' | 'left'
   items?: MenuItem[]
-  module?: ModuleName
+  module?: string
   permission?: Permission
   to?: string
 }
@@ -186,6 +186,25 @@ const fullMenuItems: MenuItem[] = [
     module: 'MeetingMinutes',
     permission: 'READ',
     to: '/admin/meeting-minutes',
+  },
+  {
+    label: 'Settings',
+    icon: 'pi pi-cog',
+    module: 'Settings',
+    permission: 'READ',
+    expandIconPosition: 'right',
+    items: [
+      {
+        label: 'Event Types',
+        icon: 'pi pi-calendar',
+        command: async (): Promise<void> => {
+          await router.push('/admin/settings/event-types')
+          if (isModal.value) {
+            sidebarStore.isSidebarVisible = false
+          }
+        },
+      },
+    ],
   },
 ]
 

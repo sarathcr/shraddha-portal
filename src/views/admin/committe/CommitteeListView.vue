@@ -14,12 +14,11 @@ import { useRouter } from 'vue-router'
 import { useValidation } from '../roles/composables/useValidation'
 import { useHistory } from '@/composables/useHistory'
 import HistoryDrawer from '@/components/HistoryDrawer.vue'
-import type { ModuleName } from '@/types/permissions'
 
 import { useModulePermissions } from '@/composables/useModulePermissions'
 import DialogFooter from '@/components/DialogFooter.vue'
 
-const MODULE_NAME: ModuleName = 'Committee'
+const MODULE_NAME: string = 'Committee'
 
 const {
   canCreate,

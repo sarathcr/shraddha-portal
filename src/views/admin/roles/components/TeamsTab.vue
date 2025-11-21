@@ -15,11 +15,10 @@ import { teamSchema } from '@/views/admin/schemas/teamSchema'
 import { isEqual } from 'lodash'
 import { useHistory } from '@/composables/useHistory'
 import HistoryDrawer from '@/components/HistoryDrawer.vue'
-import type { ModuleName } from '@/types/permissions'
 import { useModulePermissions } from '@/composables/useModulePermissions'
 import DialogFooter from '@/components/DialogFooter.vue'
 
-const MODULE_NAME: ModuleName = 'RolesAndAccess'
+const MODULE_NAME: string = 'RolesAndAccess'
 
 const {
   canCreate,

@@ -1,6 +1,5 @@
 import { computed } from 'vue'
 import { canPerformAction, hasModuleAccess } from '@/utils/permissionChecker'
-import type { ModuleName } from '@/types/permissions'
 
 interface ModulePermissions {
   canRead: boolean
@@ -11,7 +10,7 @@ interface ModulePermissions {
   canApproveReject: boolean
 }
 
-export function useModulePermissions(moduleName: ModuleName): ModulePermissions {
+export function useModulePermissions(moduleName: string): ModulePermissions {
   const hasAnyAccess = computed(() => hasModuleAccess(moduleName))
 
   const canRead = computed(() => canPerformAction(moduleName, 'READ'))

@@ -1,7 +1,7 @@
 import { committeeApi } from '@/constants'
 import type { ApiResponse } from '@/types'
-import type { EventType } from '@/types/event'
-import axios, { AxiosError } from 'axios'
+import type { EventType } from '@/types/eventType.model'
+import axios, { AxiosError, type AxiosResponse } from 'axios'
 
 export const getEventTypes = async (
   pageNumber = 1,
@@ -42,5 +42,22 @@ export const getEventTypes = async (
       totalPages: 0,
       totalRecords: 0,
     }
+  }
+}
+
+// Create new Eventype
+export const createEventType = (newEventType: EventType): Promise<AxiosResponse<EventType>> => {
+  return committeeApi.post<EventType>('/committee/EventType', newEventType)
+}
+
+// Delete Event Type
+export const removeEventType = async (
+  id: string,
+): Promise<{ success: boolean; message: string }> => {
+  const { data } = await committeeApi.delete(`/committee/EventType/${id}`)
+
+  return {
+    success: data?.succeeded ?? data?.success ?? true,
+    message: data?.message ?? 'Event type deleted successfully.',
   }
 }
