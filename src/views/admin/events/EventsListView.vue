@@ -10,10 +10,9 @@ import EventForm from './components/EventForm.vue'
 import { useEventForm } from './composables/useEventForm'
 import type { EventFormPayload, EventFormData } from '@/types/event'
 import DialogFooter from '@/components/DialogFooter.vue'
-import type { ModuleName } from '@/types/permissions'
 import { useModulePermissions } from '@/composables/useModulePermissions'
 
-const MODULE_NAME: ModuleName = 'Events'
+const MODULE_NAME: string = 'Events'
 
 const { canCreate } = useModulePermissions(MODULE_NAME)
 
