@@ -73,7 +73,7 @@ watch(
           class="w-full"
           :class="{ '!border-red-500': errors.eventTypeName }"
         />
-        <label for="eventTypeName">EventType Name</label>
+        <label for="eventTypeName">Event Type Name</label>
       </FloatLabel>
       <small class="text-red-500">{{ errors.eventTypeName }}</small>
     </div>
@@ -87,7 +87,7 @@ watch(
           class="w-full"
           :class="{ '!border-red-500': errors.description }"
         />
-        <label for="description">EventType Description</label>
+        <label for="description">Event Type Description</label>
       </FloatLabel>
       <small class="text-red-500 leading-none">{{ errors.description }}</small>
     </div>
