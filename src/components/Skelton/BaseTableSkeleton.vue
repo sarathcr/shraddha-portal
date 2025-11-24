@@ -3,18 +3,19 @@ import Skeleton from 'primevue/skeleton'
 import Column from 'primevue/column'
 import DataTable from 'primevue/datatable'
 
-defineProps<{
+const props = defineProps<{
   columnsCount: number
   rowsCount?: number
 }>()
+const visibleRows = props.rowsCount && props.rowsCount < 9 ? props.rowsCount : 9
 </script>
 
 <template>
   <div class="base-table-skeleton">
     <DataTable
-      :value="Array(rowsCount || 10).fill({})"
+      :value="Array(visibleRows).fill({})"
       :paginator="false"
-      :rows="rowsCount || 10"
+      :rows="visibleRows"
       dataKey="id"
       class="min-w-full"
       scrollable
@@ -27,7 +28,7 @@ defineProps<{
 
       <Column v-for="i in columnsCount - 1" :key="i" style="min-width: 200px">
         <template #header>
-          <Skeleton width="7rem" height="1.5rem" />
+          <Skeleton width="7rem" height="2rem" />
         </template>
         <template #body>
           <Skeleton />
@@ -39,7 +40,7 @@ defineProps<{
 
       <Column style="min-width: 150px">
         <template #header>
-          <Skeleton width="5rem" height="1.5rem" />
+          <Skeleton width="5rem" height="2rem" />
         </template>
         <template #body>
           <Skeleton width="5rem" height="2rem" />

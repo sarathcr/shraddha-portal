@@ -1,21 +1,8 @@
-export type Permission = 'READ' | 'WRITE' | 'UPDATE' | 'DELETE' | 'MANAGE' | 'APPROVEREJECT'
-
-export type ModuleName =
-  | 'Dashboard'
-  | 'RolesAndAccess'
-  | 'Events'
-  | 'Committee'
-  | 'Approvals'
-  | 'Finance'
-  | 'BirthdayGifts'
-  | 'Charity'
-  | 'Tournaments'
-  | 'Feedbacks'
-  | 'MeetingMinutes'
+export type Permission = 'READ' | 'CREATE' | 'UPDATE' | 'DELETE' | 'MANAGE' | 'APPROVEREJECT'
 
 export interface ModulePermission {
   moduleId: string
-  module: ModuleName
+  module: string
   permissions: { permissionId: string; permission: Permission }[]
 }
 
@@ -30,4 +17,4 @@ export interface LoginApiResult {
   userPermissions: UserPermissionsData[]
 }
 
-export type PermissionMap = Record<ModuleName, Permission[] | undefined>
+export type PermissionMap = Record<string, Permission[] | undefined>

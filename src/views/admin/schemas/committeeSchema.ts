@@ -24,32 +24,31 @@ export const committeeSchema = (isEdit = false): yup.ObjectSchema<CommitteeFormD
           return end === start + 1
         })
         .defined(),
-
       startDate: isEdit
         ? yup.date().nullable().defined()
         : yup
             .date()
             .required('Start date is required')
-            .min(today, 'Start date must be after today')
-            .defined(),
-
-      endDate: isEdit
-        ? yup.date().nullable().defined()
-        : yup
-            .date()
-            .required('End date is required')
-            .test(
-              'minimum-one-year',
-              'End date must be at least 1 year after start date',
-              function (value) {
-                const startDate = this.parent.startDate
-                if (!startDate || !value) return false
-                const minDate = new Date(startDate)
-                minDate.setFullYear(minDate.getFullYear() + 1)
-                return value >= minDate
-              },
+            .min(
+              new Date(new Date().setHours(0, 0, 0, 0)),
+              'Start date cannot be in the past — it must be today or later',
             )
             .defined(),
+      endDate: yup
+        .date()
+        .required('End date is required')
+        .test(
+          'minimum-one-year',
+          'End date must be at least 1 year after start date',
+          function (value) {
+            const startDate = this.parent.startDate
+            if (!startDate || !value) return false
+            const minDate = new Date(startDate)
+            minDate.setFullYear(minDate.getFullYear() + 1)
+            return value >= minDate
+          },
+        )
+        .defined(),
 
       coreMembers: yup
         .array()

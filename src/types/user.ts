@@ -6,7 +6,7 @@ export interface User extends RowData {
   employeeId: string
   email: string
   team?: string
-  role?: string
+  role?: UserRole[]
   dob?: Date | null
   isActive: boolean
 }
@@ -24,4 +24,8 @@ export interface UserOptionItem {
   roleId: string
   userId?: string
   value: string
+}
+export interface UserRole {
+  role: string
+  roleId: string
 }

@@ -4,12 +4,12 @@ import type { User, OptionItem } from '@/types/user'
 import type { ApiResponse } from '@/types/index'
 import type { DataTableFilterMeta, DataTableSortMeta } from 'primevue/datatable'
 import axios from 'axios'
-import type { Role } from '@/types/role'
 import type { Team } from '@/types/team'
 import { api } from '@/constants'
 import { formatDateForAPI } from '@/utils/dateUtils'
 import { CommitteeRoles } from '@/constants/committeeRoles.enum'
 import { mapMatchModeToOperator } from '@/utils/filterUtils'
+import { fetchActiveRoles } from './useRole'
 
 type LazyLoadEvent = {
   first: number
@@ -75,7 +75,7 @@ export const useUsers = (): {
           axios.isAxiosError(error) && error.response?.data?.errorValue
             ? error.response.data.errorValue
             : 'Failed to update user status.',
-        life: 3000,
+        life: 4000,
       })
       return false
     }
@@ -168,28 +168,19 @@ export const useUsers = (): {
   }
 
   const fetchInitialData = async (): Promise<void> => {
-    isLoading.value = true
     try {
-      const [rolesResponse, teamsResponse] = await Promise.all([
-        api.post<ApiResponse<Role[]>>('/authorization/Roles/pagination', {
-          pagination: { pageNumber: 1, pageSize: -1 },
-          filterMap: { isActive: '= true' },
-        }),
+      const [activeRoles, teamsResponse] = await Promise.all([
+        fetchActiveRoles(),
         api.post<ApiResponse<Team[]>>('/authorization/Departments/pagination', {
           pagination: { pageNumber: 1, pageSize: -1 },
           filterMap: { isActive: '= true' },
         }),
       ])
 
-      if (rolesResponse.data.succeeded && rolesResponse.data.data) {
-        roles.value = rolesResponse.data.data.map((role: Role) => ({
-          label: role.roleName,
-          value: role.id,
-          isCommitteeRole: Object.values(CommitteeRoles).includes(role.roleName as CommitteeRoles),
-        }))
-      } else {
-        roles.value = []
-      }
+      roles.value = activeRoles.map((role: OptionItem) => ({
+        ...role,
+        isCommitteeRole: Object.values(CommitteeRoles).includes(role.label as CommitteeRoles),
+      }))
 
       if (teamsResponse.data.succeeded && teamsResponse.data.data) {
         teams.value = teamsResponse.data.data.map((team: Team) => ({
@@ -201,8 +192,6 @@ export const useUsers = (): {
       }
     } catch (error) {
       console.error(error)
-    } finally {
-      isLoading.value = false
     }
   }
 
@@ -223,13 +212,14 @@ export const useUsers = (): {
         life: 3000,
       })
 
-      await onLazyLoad({
+      const currentLoadEvent = lastLazyLoadEvent.value || {
         first: (pageNumber.value - 1) * pageSize.value,
         rows: pageSize.value,
         filters: undefined,
         sortField: null,
         sortOrder: null,
-      })
+      }
+      await onLazyLoad(currentLoadEvent)
       return true
     } catch (error) {
       const detail =

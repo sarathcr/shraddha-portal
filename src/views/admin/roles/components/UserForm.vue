@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { watch } from 'vue'
 import InputText from 'primevue/inputtext'
-import Button from 'primevue/button'
 import FloatLabel from 'primevue/floatlabel'
 import { useForm, useField } from 'vee-validate'
 import { userSchema } from '@/views/admin/schemas/userSchema'
@@ -16,12 +15,10 @@ interface UserFormValues {
   dob: Date | null
   email: string
   team: string
-  role: string
   status: boolean
 }
 
 const props = defineProps<{
-  roles: OptionItem[]
   teams: OptionItem[]
   initialData?: Omit<User, 'id'>
   isLoading: boolean
@@ -44,7 +41,6 @@ const { value: employeeId } = useField<string>('employeeId')
 const { value: dob } = useField<Date | null>('dob')
 const { value: email } = useField<string>('email')
 const { value: team } = useField<string>('team')
-const { value: role } = useField<string>('role')
 const { value: status } = useField<boolean>('status')
 
 watch(
@@ -61,17 +57,13 @@ watch(
       setFieldValue('employeeId', newVal.employeeId as string)
       setFieldValue('email', newVal.email as string)
       setFieldValue('team', newVal.team as string)
-      setFieldValue('role', newVal.role as string)
       setFieldValue('status', (newVal.status as boolean) ?? true)
     }
   },
   { immediate: true },
 )
 
-defineExpose({ resetForm })
-
 const onSubmit = handleSubmit((values) => {
-  const selectedRole = props.roles.find((r) => r.value === values.role)
   const selectedTeam = props.teams.find((t) => t.value === values.team)
 
   const payload: User = {
@@ -80,17 +72,12 @@ const onSubmit = handleSubmit((values) => {
     email: values.email?.trim() || '',
     dob: values.dob,
     teamId: selectedTeam ? parseInt(selectedTeam.value) : 0,
-    roleId: selectedRole ? parseInt(selectedRole.value) : 0,
     isActive: values.status,
   }
 
   emit('submit', payload)
 })
-
-const onCancel = (): void => {
-  emit('cancel')
-  resetForm()
-}
+defineExpose({ resetForm, onSubmit })
 </script>
 
 <template>
@@ -178,23 +165,6 @@ const onCancel = (): void => {
     </div>
 
     <div class="mb-2">
-      <FloatLabel variant="on">
-        <Select
-          id="role"
-          filter
-          v-model="role"
-          :options="props.roles"
-          optionLabel="label"
-          optionValue="value"
-          class="w-full"
-          :class="{ '!border-red-500': errors.role }"
-        /><label for="role">Role</label>
-      </FloatLabel>
-
-      <small class="text-red-500">{{ errors.role }}</small>
-    </div>
-
-    <div class="mb-2">
       <div>
         <label for="status">Status</label>
       </div>
@@ -202,11 +172,6 @@ const onCancel = (): void => {
       <small v-if="errors.status" class="text-red-500">
         {{ errors.status }}
       </small>
-    </div>
-
-    <div class="flex justify-end gap-2 mt-2">
-      <Button label="Cancel" severity="secondary" @click="onCancel" :disabled="isLoading" />
-      <Button type="submit" label="Save" :loading="isLoading" />
     </div>
   </form>
 </template>

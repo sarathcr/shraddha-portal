@@ -17,6 +17,7 @@ import {
 import axios, { AxiosError } from 'axios'
 import { committeeApi } from '@/constants'
 import { formatDateForAPI } from '@/utils/dateUtils'
+import { mapMatchModeToOperator } from '@/utils/filterUtils'
 
 export const committeeUsers: Ref<CommitteeUser[]> = ref([])
 export const committeeRoles: Ref<OptionItem[]> = ref([])
@@ -176,24 +177,6 @@ export function useCommittee(): {
   const clearFilter = (): void => {
     filters.value.global.value = null
   }
-
-  const mapMatchModeToOperator = (matchMode: string, value: unknown): string => {
-    switch (matchMode) {
-      case FilterMatchMode.CONTAINS:
-        return `like %${value}%`
-      case FilterMatchMode.STARTS_WITH:
-        return `like ${value}%`
-      case FilterMatchMode.ENDS_WITH:
-        return `like %${value}`
-      case FilterMatchMode.EQUALS:
-        return `= ${value}`
-      case FilterMatchMode.NOT_EQUALS:
-        return `!= ${value}`
-      default:
-        return `= ${value}`
-    }
-  }
-
   const onLazyLoad = async (event: LazyLoadEvent): Promise<void> => {
     isLoading.value = true
     lastLazyLoadEvent.value = event

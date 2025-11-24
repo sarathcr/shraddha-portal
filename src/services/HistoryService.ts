@@ -75,6 +75,26 @@ const committeeHistory: HistoryEntry[] = [
   },
 ]
 
+const eventTypeHistory: HistoryEntry[] = [
+  {
+    id: 1,
+    action: 'created',
+    user: 'Admin',
+    field: 'Event Type',
+    newValue: 'Sports & Games',
+    date: '08/11/2025',
+  },
+  {
+    id: 2,
+    action: 'updated',
+    user: 'Admin',
+    field: 'Description',
+    oldValue: 'Old description',
+    newValue: 'Updated event type description',
+    date: '12/11/2025',
+  },
+]
+
 export async function getHistoryByEntity(
   entity: EntityType,
   _id?: string | number,
@@ -90,6 +110,8 @@ export async function getHistoryByEntity(
       return Promise.resolve(roleHistory)
     case 'committee':
       return Promise.resolve(committeeHistory)
+    case 'eventType':
+      return Promise.resolve(eventTypeHistory)
     default:
       return Promise.resolve([])
   }

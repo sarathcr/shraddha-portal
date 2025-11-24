@@ -9,13 +9,25 @@ import { useUsers } from '@/views/admin/roles/composables/useUser'
 import UserForm from './UserForm.vue'
 import { useValidation } from '@/views/admin/roles/composables/useValidation'
 import { useHistory } from '@/composables/useHistory'
-import type { User } from '@/types/user'
+import type { User, UserRole, OptionItem } from '@/types/user'
 import type { RowData, ColumnDef } from '@/types/baseTable.model'
 import { userSchema } from '@/views/admin/schemas/userSchema'
 import * as yup from 'yup'
 import { useToast } from 'primevue'
-import { isEqual } from 'lodash'
+import { isEqual, sortBy } from 'lodash'
 import { CommitteeRoles } from '@/constants/committeeRoles.enum'
+import { formatDateForAPI } from '@/utils/dateUtils'
+import DialogFooter from '@/components/DialogFooter.vue'
+import { useModulePermissions } from '@/composables/useModulePermissions'
+
+const MODULE_NAME: string = 'RolesAndAccess'
+
+const {
+  canCreate,
+  canUpdate,
+  canDelete,
+  canRead: canViewHistory,
+} = useModulePermissions(MODULE_NAME)
 
 const {
   users,
@@ -46,7 +58,7 @@ const { historyDrawerVisible, historyData, loadHistory } = useHistory()
 
 const toast = useToast()
 
-const createRoles = ref([] as typeof roles.value)
+const createRoles = ref<OptionItem[]>([])
 
 watch(userFormDialogVisible, (isVisible) => {
   if (isVisible) {
@@ -65,7 +77,7 @@ watch(userFormDialogVisible, (isVisible) => {
 })
 
 const openCreateUserDialog = (): void => {
-  createRoles.value = roles.value.filter((r) => !r.isCommitteeRole)
+  createRoles.value = roles.value.filter((r: OptionItem) => !r.isCommitteeRole)
 
   userFormDialogVisible.value = true
   userFormRef.value?.resetForm()
@@ -82,38 +94,65 @@ const handleUserFormCancel = (): void => {
 
 const onEdit = (row: User): void => {
   originalUser.value = JSON.parse(JSON.stringify(row))
+
+  const selectedRoleIds =
+    row.roles && Array.isArray(row.roles) ? row.roles.map((r: UserRole) => r.roleId) : []
+
   editableUser.value = {
     ...row,
     teamId: row.teamId ?? null,
     roleId: row.roleId ?? null,
+    roles: selectedRoleIds,
     isActive: row.isActive ?? null,
   }
   editingRows.value = [row]
 }
 
+const getRoleIdsForComparison = (user: User | null): string[] => {
+  if (!user || !user.roles || !Array.isArray(user.roles)) return []
+
+  return sortBy(user.roles.map((r: UserRole) => r.roleId))
+}
+
+const normalizeDOB = (dob: unknown): string | null => {
+  if (!dob) return null
+  let dateObj: Date | null = null
+  if (dob instanceof Date) {
+    dateObj = dob
+  } else if (typeof dob === 'string') {
+    if (dob.includes('T')) {
+      dateObj = new Date(dob)
+    } else if (dob.includes('-')) {
+      const [dd, mm, yyyy] = dob.split('-').map(Number)
+      dateObj = new Date(yyyy, mm - 1, dd)
+    }
+  }
+  return dateObj && !isNaN(dateObj.getTime()) ? formatDateForAPI(dateObj) : null
+}
+
 const onSave = async (newData: RowData): Promise<void> => {
   if (!editableUser.value) return
+  const newRoleIds = Array.isArray(newData.roles) ? sortBy(newData.roles) : []
+  const originalRoleIds = getRoleIdsForComparison(originalUser.value)
 
   const originalDataToCompare = {
     name: originalUser.value?.name,
     employeeId: originalUser.value?.employeeId,
-    dob: originalUser.value?.dob,
+    dob: normalizeDOB(originalUser.value?.dob),
     email: originalUser.value?.email,
     team: teams.value.find((t) => t.value === originalUser.value?.teamId)?.label ?? null,
-    role: roles.value.find((r) => r.value === originalUser.value?.roleId)?.label ?? null,
+    roles: originalRoleIds,
     status: originalUser.value?.isActive,
   }
-
   const newDataToCompare = {
     name: newData.name,
     employeeId: newData.employeeId,
-    dob: newData.dob,
+    dob: normalizeDOB(newData.dob),
     email: newData.email,
     team: newData.team,
-    role: newData.role,
+    roles: newRoleIds,
     status: editableUser.value.isActive,
   }
-
   if (isEqual(originalDataToCompare, newDataToCompare)) {
     toast.add({
       severity: 'info',
@@ -127,14 +166,15 @@ const onSave = async (newData: RowData): Promise<void> => {
     resetValidation()
     return
   }
-
   const dataToValidate = {
     name: newData.name,
     employeeId: newData.employeeId,
     dob: newData.dob,
     email: newData.email,
     team: newData.team,
-    role: newData.role,
+    roles: Array.isArray(newData.roles)
+      ? newData.roles.map((id) => roles.value.find((r) => r.value === id)?.label ?? '').join(', ')
+      : '',
     status: editableUser.value.isActive,
   }
 
@@ -145,7 +185,8 @@ const onSave = async (newData: RowData): Promise<void> => {
       ...editableUser.value,
       ...newData,
       teamId: teams.value.find((t) => t.label === newData.team)?.value ?? editableUser.value.teamId,
-      roleId: roles.value.find((r) => r.label === newData.role)?.value ?? editableUser.value.roleId,
+      roles: newRoleIds as string[],
+      roleId: undefined,
       isActive: editableUser.value.isActive,
     }
     await editUser(userToSave)
@@ -233,14 +274,15 @@ const columns = computed((): ColumnDef[] => [
   },
   {
     label: 'Role',
-    key: 'role',
+    key: 'roles',
     filterable: true,
     filterOption: true,
-    options: roles.value.map((r) => ({ label: r.label, value: r.label })),
+    options: roles.value.map((r) => ({ label: r.label, value: String(r.value) })),
     required: true,
     showFilterMatchModes: false,
     showFilterOperator: false,
     showAddButton: false,
+    useMultiSelect: true,
   },
   {
     label: 'Status',
@@ -254,13 +296,21 @@ const columns = computed((): ColumnDef[] => [
 ])
 const isStatusDisabled = (row: User): boolean => {
   if (!row) return false
-  const roleLabel = roles.value.find((r) => r.label === row.role)?.label
-  return roleLabel ? Object.values(CommitteeRoles).includes(roleLabel as CommitteeRoles) : false
+
+  return row.roles && Array.isArray(row.roles)
+    ? row.roles.some((role: UserRole) =>
+        Object.values(CommitteeRoles).includes(role.role as CommitteeRoles),
+      )
+    : false
 }
 
 const showHistoryDrawer = async (row: User): Promise<void> => {
   await loadHistory('user', row.id)
 }
+
+const normalUserRoleId = computed((): string | null => {
+  return roles.value.find((r) => r.label === 'Normal User')?.value ?? null
+})
 
 onMounted(async () => {
   await fetchInitialData()
@@ -276,14 +326,21 @@ onMounted(async () => {
       modal
       @hide="handleUserFormCancel"
     >
-      <UserForm
-        ref="userFormRef"
-        :roles="createRoles"
-        :teams="teams"
-        :is-loading="isLoading"
-        @submit="handleUserFormSubmit"
-        @cancel="handleUserFormCancel"
-      />
+      <div class="relative flex flex-col">
+        <UserForm
+          class="flex-1 overflow-y-auto p-4"
+          ref="userFormRef"
+          :roles="createRoles"
+          :teams="teams"
+          :is-loading="isLoading"
+          @submit="handleUserFormSubmit"
+          @cancel="handleUserFormCancel"
+        />
+        <DialogFooter
+          @cancel="handleUserFormCancel"
+          @submit="userFormRef?.onSubmit && userFormRef.onSubmit()"
+        />
+      </div>
     </Dialog>
     <Dialog
       v-model:visible="deleteDialogVisible"
@@ -308,13 +365,14 @@ onMounted(async () => {
       :editableRow="editingRows[0] as RowData"
       :loading="isLoading"
       :statusOptions="statusOptions"
+      :unremovableRoleId="normalUserRoleId"
       @save="onSave"
       @cancel="onCancel"
       @lazy:load="onLazyLoad"
       :paginator="true"
       :saveDisabled="isSaveDisabled"
     >
-      <template #table-header>
+      <template #table-header v-if="canCreate">
         <Button label="New User" icon="pi pi-plus" severity="help" @click="openCreateUserDialog" />
       </template>
 
@@ -346,18 +404,21 @@ onMounted(async () => {
 
       <template #actions="{ row }">
         <button
+          v-if="canViewHistory"
           @click="showHistoryDrawer(row)"
           class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
         >
           <i class="pi pi-history"></i>
         </button>
         <button
+          v-if="canUpdate"
           @click="onEdit(row as User)"
           class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
         >
           <i class="pi pi-pencil text-slate-700 text-base"></i>
         </button>
         <button
+          v-if="canDelete"
           @click="handleDeleteConfirmation(row as User)"
           class="p-2 rounded hover:bg-gray-200 transition cursor-pointer"
         >

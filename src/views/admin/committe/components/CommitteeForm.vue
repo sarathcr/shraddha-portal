@@ -4,7 +4,6 @@ import { useForm, useField } from 'vee-validate'
 import FloatLabel from 'primevue/floatlabel'
 import Select from 'primevue/select'
 import MultiSelect from 'primevue/multiselect'
-import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import ToggleSwitch from 'primevue/toggleswitch'
 import DatePicker from 'primevue/datepicker'
@@ -17,7 +16,7 @@ import type {
 import { committeeRoles, getRolesData, getUsersData, useCommittee } from '../composable/useCommitte'
 import { committeeSchema } from '../../schemas/committeeSchema'
 import { formatDateForAPI, parseDDMMYYYY } from '@/utils/dateUtils'
-import { CommitteeRoles } from '@/constants/committeeRoles.enum'
+import { AdministrativeRoles, CommitteeRoles } from '@/constants/committeeRoles.enum'
 import type { OptionItem } from '@/types/user'
 import CommitteeMemberSkelton from '@/components/Skelton/CommiteeMemberSkelton.vue'
 import CommiteeExecutiveSkelton from '@/components/Skelton/CommiteeExecutiveSkelton.vue'
@@ -64,9 +63,16 @@ const originalCommittee = ref<Committee | null>(null)
 onMounted(async () => {
   await Promise.all([getRolesData(), getUsersData()])
   const allUsers = await getUsersData()
-  const filteredUsers = isEditMode.value
-    ? allUsers
-    : allUsers.filter((u) => u.role === 'Normal User')
+  const filteredUsers = allUsers.filter((u) => {
+    if (!Array.isArray(u.roles)) return false
+    const roleNames = u.roles.map((r) => r.role)
+    const hasExcludedRole = [
+      AdministrativeRoles.AdminHR,
+      AdministrativeRoles.Director,
+      AdministrativeRoles.DeliveryManager,
+    ].some((excluded) => roleNames.includes(excluded))
+    return !hasExcludedRole
+  })
   userOptions.value = filteredUsers
     .filter((u): u is CommitteeUser & { name: string; id: string } => !!u.name && !!u.id)
     .map((u) => ({ label: u.name, value: u.id }))
@@ -79,7 +85,6 @@ onMounted(async () => {
     .filter((r): r is { id: string; name: string } => r !== null)
   const exec = committeeRoles.value.find((r) => r.label === CommitteeRoles.ExecutiveMember)
   executiveRole.value = exec ? { id: exec.value, name: exec.label } : null
-
   isLoadingCoremembers.value = false
   isLoadingExecutiveMemebers.value = false
 })
@@ -287,10 +292,9 @@ const onSubmit = async (): Promise<void> => {
 
   if (result) emit('submit', result)
 }
-
-const onCancel = (): void => {
-  emit('cancel')
-}
+defineExpose({
+  onSubmit,
+})
 </script>
 
 <template>
@@ -318,7 +322,7 @@ const onCancel = (): void => {
             dateFormat="dd-mm-yy"
             :inputClass="{ '!border-red-500': isSubmitted && startDateError }"
             class="w-full"
-            :disabled="isEditMode && isActive"
+            :disabled="isEditMode"
           />
           <label>Start Date</label>
         </FloatLabel>
@@ -335,6 +339,7 @@ const onCancel = (): void => {
             dateFormat="dd-mm-yy"
             :inputClass="{ '!border-red-500': isSubmitted && endDateError }"
             class="w-full"
+            :disabled="isEditMode && !isActive"
           />
           <label>End Date</label>
         </FloatLabel>
@@ -420,10 +425,14 @@ const onCancel = (): void => {
       <h4 class="font-semibold mb-2">Status</h4>
       <ToggleSwitch v-model="isActive" :disabled="isStatusDisabled" />
     </div>
-
-    <div class="flex justify-end gap-2 mt-2">
-      <Button label="Cancel" severity="secondary" @click="onCancel" />
-      <Button type="submit" label="Save" />
-    </div>
   </form>
 </template>
+<style>
+.p-dialog-content {
+  overflow-y: unset !important;
+}
+.commiteeForm {
+  overflow-y: auto;
+  max-height: 500px;
+}
+</style>
