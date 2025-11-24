@@ -42,3 +42,6 @@
 .p-select-label {
   white-space: break-spaces !important;
 }
+.p-toast-message .p-toast-message-icon {
+  margin-top: 6px;
+}

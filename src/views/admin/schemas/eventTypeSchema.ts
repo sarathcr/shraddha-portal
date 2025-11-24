@@ -4,9 +4,9 @@ export const eventTypeSchema = yup.object({
   eventTypeName: yup
     .string()
     .trim()
-    .min(2, 'EventTypeName name must be at least 2 characters name must be at least 2 characters')
+    .min(2, 'Event Type Name  must be at least 2 characters')
     .matches(/^[a-zA-Z0-9 ]+$/, 'EventType can only contain letters, numbers and spaces')
-    .required('eventType Name  is required'),
+    .required('Event Type Name  is required'),
   description: yup
     .string()
     .trim()
