@@ -29,10 +29,7 @@ export const committeeSchema = (isEdit = false): yup.ObjectSchema<CommitteeFormD
         : yup
             .date()
             .required('Start date is required')
-            .min(
-              new Date(new Date().setHours(0, 0, 0, 0)),
-              'Start date cannot be in the past — it must be today or later',
-            )
+            .min(new Date(new Date().getFullYear(), 0, 1), 'Start date must be this year or later')
             .defined(),
       endDate: yup
         .date()
