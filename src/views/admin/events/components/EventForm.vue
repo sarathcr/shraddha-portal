@@ -80,7 +80,7 @@ defineExpose({
 </script>
 
 <template>
-  <form @submit.prevent="onSubmit" class="flex flex-col gap-4 overflow-y-auto max-h-150">
+  <form @submit.prevent="onSubmit" class="flex flex-col gap-4 overflow-y-auto max-h-120">
     <div>
       <FloatLabel variant="on">
         <InputText
