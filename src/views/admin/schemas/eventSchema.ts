@@ -18,5 +18,5 @@ export const eventFormSchema = yup.object({
     .date()
     .required('End date is required')
     .min(yup.ref('startDate'), 'End date cannot be before start date'),
-  status: yup.string().required('Select a Status'),
+  status: yup.string().required('Select a status'),
 })

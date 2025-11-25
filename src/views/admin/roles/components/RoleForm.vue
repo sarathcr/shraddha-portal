@@ -233,8 +233,4 @@ watch(
     </div>
   </form>
 </template>
-<style>
-.p-dialog-content {
-  overflow-y: unset;
-}
-</style>
+<style></style>

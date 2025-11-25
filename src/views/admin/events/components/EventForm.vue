@@ -80,7 +80,7 @@ defineExpose({
 </script>
 
 <template>
-  <form @submit.prevent="onSubmit" class="flex flex-col gap-4 overflow-y-auto max-h-120">
+  <form @submit.prevent="onSubmit" class="flex flex-col gap-4">
     <div>
       <FloatLabel variant="on">
         <InputText
@@ -129,7 +129,7 @@ defineExpose({
           v-model="startDate"
           showIcon
           class="w-full"
-          :class="{ '!border-red-500': errors.startDate }"
+          :class="{ 'has-error': errors.endDate }"
         />
         <label for="startDate">Start Date</label>
       </FloatLabel>
@@ -143,7 +143,7 @@ defineExpose({
           v-model="endDate"
           showIcon
           class="w-full"
-          :class="{ '!border-red-500': errors.endDate }"
+          :class="{ 'has-error': errors.endDate }"
         />
         <label for="endDate">End Date</label>
       </FloatLabel>

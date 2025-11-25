@@ -266,11 +266,13 @@ onMounted(() => {
           @submit="handleRoleFormSubmit"
           @cancel="handleRoleFormCancel"
         />
+      </div>
+      <template #footer>
         <DialogFooter
           @cancel="handleRoleFormCancel"
           @submit="roleFormRef?.onSubmit && roleFormRef.onSubmit()"
         />
-      </div>
+      </template>
     </Dialog>
 
     <Dialog
