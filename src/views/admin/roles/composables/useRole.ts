@@ -142,9 +142,18 @@ export const useRoles = (): {
         filterMap: {},
       }
 
+      const sortFieldMap: Record<string, string> = {
+        roleName: 'roleName',
+        description: 'description',
+        isActive: 'isActive',
+        permissions: 'modulePermissions',
+      }
+
       if (event.sortField) {
+        const mappedSortField = sortFieldMap[event.sortField as string] || event.sortField
+
         payload.multiSortedColumns.push({
-          active: event.sortField as string,
+          active: mappedSortField as string,
           direction: event.sortOrder === 1 ? 'asc' : 'desc',
         })
       }

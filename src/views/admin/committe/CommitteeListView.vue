@@ -154,10 +154,11 @@ const showHistoryDrawer = async (row: Committee): Promise<void> => {
           @submit="handleCommitteeFormSubmit"
           :committee="selectedCommittee"
         />
-        <DialogFooter
-          @cancel="handleCommitteeFormCancel"
-          @submit="CommitteeFormRef?.onSubmit && CommitteeFormRef.onSubmit()"
-        />
+        <template #footer>
+          <DialogFooter
+            @cancel="handleCommitteeFormCancel"
+            @submit="CommitteeFormRef?.onSubmit && CommitteeFormRef.onSubmit()"
+        /></template>
       </Dialog>
       <Dialog
         v-model:visible="deleteDialogVisible"
