@@ -3,6 +3,7 @@ import BaseTable from '@/components/baseTable.vue'
 import HistoryDrawer from '@/components/HistoryDrawer.vue'
 import Dialog from 'primevue/dialog'
 import Button from 'primevue/button'
+import Tag from 'primevue/tag'
 import ToggleSwitch from 'primevue/toggleswitch'
 import { ref, computed, watch, onMounted } from 'vue'
 import { useUsers } from '@/views/admin/roles/composables/useUser'
@@ -275,9 +276,10 @@ const columns = computed((): ColumnDef[] => [
   {
     label: 'Role',
     key: 'roles',
+    backendKey: 'role',
     filterable: true,
     filterOption: true,
-    options: roles.value.map((r) => ({ label: r.label, value: String(r.value) })),
+    options: roles.value.map((r) => ({ label: r.label, value: String(r.label) })),
     required: true,
     showFilterMatchModes: false,
     showFilterOperator: false,
@@ -375,7 +377,20 @@ onMounted(async () => {
       <template #table-header v-if="canCreate">
         <Button label="New User" icon="pi pi-plus" severity="help" @click="openCreateUserDialog" />
       </template>
-
+      <template #body-roles="{ row }">
+        <div v-if="row.roles && row.roles.length" class="flex flex-wrap gap-2">
+          <Tag
+            v-for="role in row.roles.length === 1
+              ? row.roles
+              : row.roles.filter((r: UserRole) => r.role !== 'Normal User')"
+            :key="role.roleId"
+            :value="role.role"
+            :severity="role.role === 'Normal User' ? 'secondary' : 'help'"
+            class="mr-2 mb-1"
+          />
+        </div>
+        <div v-else>N/A</div>
+      </template>
       <template #body-isActive="{ row }">
         <div
           tabindex="-1"
