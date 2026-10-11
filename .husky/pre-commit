@@ -1,23 +1,31 @@
 #!/bin/sh
 
-# Type checking
+echo "⚡ [Pre-Commit] 1/5 Running TypeScript type-check..."
 npx vue-tsc --noEmit --project tsconfig.app.json || exit 1
 
-# Lint + format staged files
+echo "⚡ [Pre-Commit] 2/5 Running lint-staged (formatting & fix)..."
 npx lint-staged || {
-  echo "Linting failed. Please fix the issues before committing."
+  echo "❌ Linting failed on staged files."
   exit 1
 }
-echo "Linting passed. Proceeding with commit."
 
-# ESLint full check
-npx eslint --ext .ts,.tsx,.vue src || exit 1
+echo "⚡ [Pre-Commit] 3/5 Running ESLint check..."
+npx eslint . || {
+  echo "❌ ESLint check failed."
+  exit 1
+}
 
-# Prettier check on full codebase (or use only in lint-staged if preferred)
-npx prettier --check . || exit 1
+echo "⚡ [Pre-Commit] 4/5 Running Unit Tests & Coverage verification (min 80%)..."
+npx vitest run --coverage || {
+  echo "❌ Unit tests failed or coverage is below 80% threshold."
+  exit 1
+}
 
-# Run unit tests
-npx vitest run --coverage || exit 1
+echo "⚡ [Pre-Commit] 5/5 Verifying Production Build..."
+npx vite build || {
+  echo "❌ Production build failed."
+  exit 1
+}
 
-# Ensure app builds before commit
-npx vite build || exit 1
+echo "✅ [Pre-Commit] All quality checks passed successfully!"
+

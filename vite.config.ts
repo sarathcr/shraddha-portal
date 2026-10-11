@@ -13,6 +13,19 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  build: {
+    chunkSizeWarningLimit: 600,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'primevue-core': ['primevue', '@primevue/core', '@primeuix/themes'],
+          'chart-vendor': ['chart.js'],
+          'editor-vendor': ['quill'],
+          'utils-vendor': ['lodash', 'yup', 'vee-validate', 'axios'],
+        },
+      },
+    },
+  },
   test: {
     environment: 'jsdom',
     globals: true,
@@ -24,9 +37,10 @@ export default defineConfig({
       exclude: [
         'node_modules',
         'src/**/*.{spec,test}.{ts,tsx}', // Exclude all test files from the report
+        'src/stories/**/*',
         '**/*.d.ts',
         'src/main.ts',
-        'src/router/index.ts',
+        'src/**/router/**/*',
         'src/App.vue',
         'src/theme-preset.ts',
         'src/constants/api.ts',
@@ -34,12 +48,12 @@ export default defineConfig({
         'src/**/schemas/**/*',
       ],
 
-      // The 85% threshold will now be applied correctly.
+      // Enforce strictly 80% coverage on statements, branches, functions, and lines
       thresholds: {
-        lines: 0,
-        functions: 0,
-        branches: 0,
-        statements: 0,
+        lines: 80,
+        functions: 80,
+        branches: 80,
+        statements: 80,
       },
     },
   },

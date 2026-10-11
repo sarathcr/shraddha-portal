@@ -4,30 +4,75 @@ import Aura from '@primeuix/themes/aura'
 export const myPreset = definePreset(Aura, {
   semantic: {
     primary: {
-      50: '#f6f3fe',
-      100: '#ede9fe',
-      200: '#ddd6fe',
-      300: '#c4b5fd',
-      400: '#a78bfa',
-      500: '#A855F7',
-      600: '#9333ea',
-      700: '#7e22ce',
-      800: '#6b21a8',
-      900: '#581c87',
-      950: '#3b0a56',
+      50: '#f0f3ff',
+      100: '#e0e7ff',
+      200: '#c7d2fe',
+      300: '#a5b4fc',
+      400: '#818cf8',
+      500: '#6366f1',
+      600: '#4f46e5',
+      700: '#4338ca',
+      800: '#3730a3',
+      900: '#312e81',
+      950: '#1e1b4b',
     },
     secondary: {
-      50: '#f0fdfa',
-      100: '#ccfbf1',
-      200: '#99f6e4',
-      300: '#5eead4',
-      400: '#2dd4bf',
-      500: '#06B6D4',
-      600: '#0891b2',
-      700: '#0e7490',
-      800: '#155e75',
-      900: '#164e63',
-      950: '#083344',
+      50: '#ecfdf5',
+      100: '#d1fae5',
+      200: '#a7f3d0',
+      300: '#6ee7b7',
+      400: '#34d399',
+      500: '#10b981',
+      600: '#059669',
+      700: '#047857',
+      800: '#065f46',
+      900: '#064e3b',
+      950: '#022c22',
+    },
+    colorScheme: {
+      light: {
+        surface: {
+          0: '#ffffff',
+          50: '#f8fafc',
+          100: '#f1f5f9',
+          200: '#e2e8f0',
+          300: '#cbd5e1',
+          400: '#94a3b8',
+          500: '#64748b',
+          600: '#475569',
+          700: '#334155',
+          800: '#1e293b',
+          900: '#0f172a',
+          950: '#020617',
+        },
+      },
+    },
+  },
+  components: {
+    button: {
+      root: {
+        borderRadius: '0.75rem',
+      },
+    },
+    select: {
+      root: {
+        borderRadius: '{border.radius.md}',
+      },
+    },
+    multiselect: {
+      root: {
+        borderRadius: '{border.radius.md}',
+      },
+    },
+    inputtext: {
+      root: {
+        borderRadius: '{border.radius.md}',
+      },
+    },
+    accordion: {
+      header: {
+        borderRadius: '{border.radius.md}',
+      },
     },
   },
 })

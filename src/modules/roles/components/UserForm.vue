@@ -1,0 +1,177 @@
+<script setup lang="ts">
+import { watch } from 'vue'
+import InputText from 'primevue/inputtext'
+import FloatLabel from 'primevue/floatlabel'
+import { useForm, useField } from 'vee-validate'
+import { userSchema } from '@/modules/roles/schemas/userSchema'
+import type { OptionItem, User } from '@/modules/roles/types/user.types'
+import Select from 'primevue/select'
+import DatePicker from 'primevue/datepicker'
+import ToggleSwitch from 'primevue/toggleswitch'
+
+interface UserFormValues {
+  name: string
+  employeeId: string
+  dob: Date | null
+  email: string
+  team: string
+  status: boolean
+}
+
+const props = defineProps<{
+  teams: OptionItem[]
+  initialData?: Omit<User, 'id'>
+  isLoading: boolean
+}>()
+
+const emit = defineEmits<{
+  (e: 'submit', payload: User): void
+  (e: 'cancel'): void
+}>()
+
+const { handleSubmit, errors, resetForm, setFieldValue } = useForm<UserFormValues>({
+  validationSchema: userSchema,
+  initialValues: {
+    status: true,
+  },
+})
+
+const { value: name } = useField<string>('name')
+const { value: employeeId } = useField<string>('employeeId')
+const { value: dob } = useField<Date | null>('dob')
+const { value: email } = useField<string>('email')
+const { value: team } = useField<string>('team')
+const { value: status } = useField<boolean>('status')
+
+watch(
+  () => props.initialData,
+  (newVal) => {
+    if (newVal) {
+      setFieldValue(
+        'dob',
+        typeof newVal.dob === 'string' && newVal.dob
+          ? new Date(newVal.dob.split('-').reverse().join('-'))
+          : null,
+      )
+      setFieldValue('name', newVal.name as string)
+      setFieldValue('employeeId', newVal.employeeId as string)
+      setFieldValue('email', newVal.email as string)
+      setFieldValue('team', newVal.team as string)
+      setFieldValue('status', (newVal.status as boolean) ?? true)
+    }
+  },
+  { immediate: true },
+)
+
+const onSubmit = handleSubmit((values) => {
+  const selectedTeam = props.teams.find((t) => t.value === values.team)
+
+  const payload: User = {
+    name: values.name?.trim() || '',
+    employeeId: values.employeeId?.trim() || '',
+    email: values.email?.trim() || '',
+    dob: values.dob,
+    teamId: selectedTeam ? String(selectedTeam.value) : '',
+    isActive: values.status,
+  }
+
+  emit('submit', payload)
+})
+defineExpose({ resetForm, onSubmit })
+</script>
+
+<template>
+  <form @submit.prevent="onSubmit" class="flex flex-col gap-4 pt-2">
+    <div class="mb-2">
+      <FloatLabel variant="on"
+        ><InputText
+          id="username"
+          v-model="name"
+          class="w-full"
+          :class="{ '!border-red-500': errors.name }"
+        />
+        <label for="username">User Name</label></FloatLabel
+      >
+
+      <small class="text-red-500">{{ errors.name }}</small>
+    </div>
+    <div class="mb-2">
+      <FloatLabel variant="on">
+        <DatePicker
+          v-model="dob"
+          showIcon
+          fluid
+          iconDisplay="input"
+          id="dob"
+          class="w-full"
+          :class="{
+            'w-full [&>input]:border [&>input]:rounded-md [&>input]:!border-red-500': errors.dob,
+            'w-full [&>input]:border [&>input]:rounded-md': !errors.dob,
+          }"
+          dateFormat="dd/mm/yy"
+        />
+
+        <label for="dob">Date of birth</label></FloatLabel
+      >
+
+      <small class="text-red-500">{{ errors.dob }}</small>
+    </div>
+
+    <div class="mb-2">
+      <FloatLabel variant="on"
+        ><InputText
+          id="employeeId"
+          v-model="employeeId"
+          class="w-full"
+          :class="{ '!border-red-500': errors.employeeId }"
+        />
+        <label for="employeeId">Employee ID</label></FloatLabel
+      >
+
+      <small class="text-red-500">{{ errors.employeeId }}</small>
+    </div>
+
+    <div class="mb-2">
+      <FloatLabel variant="on"
+        ><InputText
+          id="email"
+          v-model="email"
+          class="w-full"
+          :class="{ '!border-red-500': errors.email }"
+        />
+
+        <label for="email">Email</label></FloatLabel
+      >
+
+      <small class="text-red-500">{{ errors.email }}</small>
+    </div>
+
+    <div class="mb-2">
+      <FloatLabel variant="on">
+        <Select
+          id="team"
+          filter
+          v-model="team"
+          :options="props.teams"
+          optionLabel="label"
+          optionValue="value"
+          class="w-full"
+          :class="{ '!border-red-500': errors.team }"
+        />
+        <label for="team" class="font-semibold mb-2">Team</label>
+      </FloatLabel>
+
+      <small class="text-red-500">{{ errors.team }}</small>
+    </div>
+
+    <div class="mb-2">
+      <div>
+        <label for="status">Status</label>
+      </div>
+      <ToggleSwitch v-model="status" :class="{ 'p-invalid': errors.status }" />
+      <small v-if="errors.status" class="text-red-500">
+        {{ errors.status }}
+      </small>
+    </div>
+  </form>
+</template>

@@ -5,7 +5,7 @@ import { createApp } from 'vue'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 import { PrimeVue } from '@primevue/core'
 import App from './App.vue'
-import router from './router'
+import router from '@/core/router'
 import { myPreset } from './theme-preset'
 
 import ToastService from 'primevue/toastservice'
