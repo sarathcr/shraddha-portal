@@ -1,0 +1,31 @@
+import type { RowData } from '@/types/baseTable.model'
+
+export interface User extends RowData {
+  id?: string
+  name: string
+  employeeId: string
+  email: string
+  team?: string
+  role?: UserRole[]
+  dob?: Date | null
+  isActive: boolean
+}
+
+export interface OptionItem {
+  isCommitteeRole?: boolean
+  label: string
+  value: string
+}
+
+export interface UserOptionItem {
+  id?: string
+  name?: string
+  label: string
+  roleId: string
+  userId?: string
+  value: string
+}
+export interface UserRole {
+  role: string
+  roleId: string
+}
