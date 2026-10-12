@@ -2,6 +2,7 @@
 import PageTitle from '@/shared/components/PageTitle.vue'
 import EventCard from '../components/EventCard.vue'
 import EventCardSkeleton from '@/shared/components/skeletons/EventCardSkeleton.vue'
+import EmptyState from '@/shared/components/EmptyState.vue'
 import { useEvents } from '../composables/useEvents'
 import { useRoute } from 'vue-router'
 import { onMounted, onUnmounted, ref, watch } from 'vue'
@@ -125,9 +126,38 @@ watch(EventFormDialogVisible, (visible) => {
       <EventCardSkeleton v-for="i in 4" :key="i" />
     </div>
 
-    <div v-else-if="error" class="text-red-500">{{ error }}</div>
+    <!-- ERROR STATE -->
+    <div
+      v-else-if="error"
+      class="p-8 bg-red-50/60 border border-red-200 rounded-2xl text-center my-6 flex flex-col items-center justify-center gap-2"
+    >
+      <div
+        class="size-12 rounded-xl bg-red-100 text-red-600 flex items-center justify-center text-xl"
+      >
+        <i class="pi pi-exclamation-triangle"></i>
+      </div>
+      <p class="font-semibold text-slate-800 text-sm">Failed to load events</p>
+      <p class="text-xs text-red-600 max-w-md">{{ error }}</p>
+    </div>
 
-    <div class="grid lg:grid-cols-2 xl:grid-cols-4 gap-4 mt-4">
+    <!-- EMPTY STATE -->
+    <EmptyState
+      v-else-if="events.length === 0"
+      title="No Events Found"
+      :description="
+        eventTypeId
+          ? `There are no events listed under &quot;${eventTypeName}&quot; yet. Create a new event to start organizing and engaging your community.`
+          : 'There are currently no events scheduled in the system. Start by creating your first event.'
+      "
+      icon="pi pi-calendar-times"
+      :actionLabel="canCreate ? 'Create Event' : ''"
+      actionIcon="pi pi-plus"
+      :showAction="canCreate"
+      @action="openCreateEventDialog"
+    />
+
+    <!-- EVENTS LIST GRID -->
+    <div v-else class="grid lg:grid-cols-2 xl:grid-cols-4 gap-4 mt-4">
       <EventCard
         v-for="(event, index) in events"
         :key="index"

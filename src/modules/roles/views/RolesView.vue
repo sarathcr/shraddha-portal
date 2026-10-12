@@ -65,15 +65,15 @@ const handleTabChange = (newVal: string | number): void => {
     >
       <Tabs :value="selectedTab" @update:value="handleTabChange">
         <TabList
-          class="sticky !overflow-visible top-0 bg-white border-b border-slate-100 px-2 sm:px-2 pt-1"
+          class="sticky top-0 bg-white border-b border-slate-100 px-1 sm:px-2 pt-1 overflow-hidden"
         >
           <Tab
             v-for="tab in tabs"
             :key="tab.value"
             :value="tab.value"
-            class="flex items-center gap-2 text-xs sm:text-sm font-semibold !py-3 !px-4"
+            class="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-semibold !py-2.5 sm:!py-3 !px-3 sm:!px-4"
           >
-            <i :class="tab.icon" class="text-sm"></i>
+            <i :class="tab.icon" class="text-xs sm:text-sm"></i>
             <span>{{ tab.title }}</span>
           </Tab>
         </TabList>

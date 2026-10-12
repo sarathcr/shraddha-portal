@@ -74,5 +74,10 @@ export const myPreset = definePreset(Aura, {
         borderRadius: '{border.radius.md}',
       },
     },
+    tabs: {
+      navButton: {
+        shadow: 'none',
+      },
+    },
   },
 })

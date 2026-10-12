@@ -283,7 +283,7 @@ const normalUserRoleId = computed((): string | null => {
       :saveDisabled="isSaveDisabled"
     >
       <template #table-header>
-        <div class="flex items-center justify-between w-full">
+        <div class="flex items-center justify-between gap-2.5 w-full flex-wrap sm:flex-nowrap">
           <div class="flex items-center gap-2">
             <span class="text-xs sm:text-sm font-bold text-slate-800">User Accounts</span>
             <span class="text-xs font-medium text-slate-400">({{ totalRecords }} total)</span>

@@ -14,6 +14,10 @@ export interface ColumnDef {
   showFilterMatchModes?: boolean
   showFilterOperator?: boolean
   showAddButton?: boolean
+  style?: any
+  headerClass?: string
+  class?: string
+  minWidth?: string
 }
 
 export interface RowData {

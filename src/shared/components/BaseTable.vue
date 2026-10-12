@@ -32,6 +32,7 @@ const props = defineProps<{
   loading?: boolean
   saveDisabled?: boolean
   paginator?: boolean
+  minWidth?: string
 }>()
 
 const emit = defineEmits<{
@@ -169,7 +170,7 @@ onMounted(() => {
       v-model:filters="tableFilters"
       :value="props.rows"
       dataKey="id"
-      class="p-datatable-sm overflow-x-auto w-full"
+      class="p-datatable-sm w-full"
       :lazy="true"
       :paginator="props.paginator !== false"
       :rows="internalPageSize"
@@ -179,7 +180,8 @@ onMounted(() => {
       :sortField="sortField"
       :sortOrder="sortOrder"
       filterDisplay="menu"
-      responsiveLayout="scroll"
+      scrollable
+      :tableStyle="{ minWidth: props.minWidth || '56rem' }"
       @page="onPageChange"
       @sort="onSortChange"
       @filter="onFilterChange"
@@ -195,6 +197,8 @@ onMounted(() => {
         :field="col.key"
         :header="col.label"
         :sortable="col.sortable ?? true"
+        headerClass="!whitespace-nowrap"
+        :style="col.style"
       >
         <!-- Custom Body Rendering -->
         <template #body="{ data }">
@@ -267,7 +271,8 @@ onMounted(() => {
       <Column
         v-if="hasActionsSlot || props.editableRow !== undefined"
         header="Actions"
-        class="w-[100px]"
+        class="w-[100px] !whitespace-nowrap"
+        headerClass="!whitespace-nowrap"
       >
         <template #body="{ data }">
           <div v-if="isEditing(data)" class="flex items-center gap-1.5">

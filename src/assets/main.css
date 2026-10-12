@@ -136,3 +136,15 @@
     padding-right: 1.5rem !important;
   }
 }
+
+/* Prevent TabList nav buttons from casting a blurry shadow over content */
+.p-tablist-nav-button {
+  box-shadow: none !important;
+}
+
+/* BaseTable responsive table headers: keep text on one line without breaking words */
+.baseTable .p-datatable th,
+.baseTable .p-datatable-header-cell,
+.baseTable .p-datatable-column-title {
+  white-space: nowrap !important;
+}
