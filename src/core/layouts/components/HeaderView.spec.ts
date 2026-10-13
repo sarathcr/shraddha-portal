@@ -5,6 +5,7 @@ import HeaderView from '@/core/layouts/components/HeaderView.vue'
 import { useSidebarStore } from '@/core/sidebar/sidebarStore'
 import { useAuthStore } from '@/core/auth/authStore'
 import PrimeVue from 'primevue/config'
+import { useProfile, resetSharedProfile } from '@/modules/profile/composables/useProfile'
 
 const pushMock = vi.fn()
 vi.mock('@/core/router', () => ({
@@ -16,6 +17,7 @@ vi.mock('@/core/router', () => ({
 describe('HeaderView Component', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
+    resetSharedProfile()
     pushMock.mockClear()
   })
 
@@ -42,6 +44,17 @@ describe('HeaderView Component', () => {
     const wrapper = mountComponent()
     expect(wrapper.exists()).toBe(true)
     expect(wrapper.text()).toContain('System Admin')
+  })
+
+  it('renders user avatar image when avatarUrl is present', () => {
+    const { profile } = useProfile()
+    profile.avatarUrl = 'https://dev-shraddhaportal-security.runasp.net/uploads/avatars/test.png'
+    const wrapper = mountComponent()
+    const img = wrapper.find('img[alt="System Administrator"]')
+    expect(img.exists()).toBe(true)
+    expect(img.attributes('src')).toBe(
+      'https://dev-shraddhaportal-security.runasp.net/uploads/avatars/test.png',
+    )
   })
 
   it('toggles mobile sidebar when menu button clicked', async () => {

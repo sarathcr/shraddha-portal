@@ -23,6 +23,9 @@ app.use(PrimeVue, {
 
 const pinia = createPinia()
 pinia.use(piniaPluginPersistedstate)
+if (import.meta.env.DEV) {
+  ;(window as unknown as { pinia: typeof pinia }).pinia = pinia
+}
 app.directive('tooltip', Tooltip)
 app.use(pinia)
 

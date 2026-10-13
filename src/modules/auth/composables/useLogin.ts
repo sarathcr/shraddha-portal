@@ -4,6 +4,7 @@ import { useAuthStore } from '@/core/auth/authStore'
 import { usePermissionStore } from '@/core/permissions/permissionStore'
 import type { LoginCredentials } from '@/modules/auth/types/login.types'
 import { loginApi } from '@/modules/auth/services/loginService'
+import { resolveAvatarUrl } from '@/modules/profile/services/profileService'
 import { useToast } from 'primevue/usetoast'
 
 export function useLogin() {
@@ -20,6 +21,14 @@ export function useLogin() {
       const response = await loginApi(credentials)
 
       authStore.setTokens(response.accessToken, response.refreshToken)
+
+      if (response.avatarUrl || response.name || response.email) {
+        authStore.setUser({
+          name: response.name,
+          email: response.email,
+          avatarUrl: resolveAvatarUrl(response.avatarUrl),
+        })
+      }
 
       if (response.userPermissions && Array.isArray(response.userPermissions)) {
         permissionStore.setPermissions(response.userPermissions)

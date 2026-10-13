@@ -75,4 +75,26 @@ describe('useLogin Composable', () => {
     )
     expect(isLoading.value).toBe(false)
   })
+
+  it('stores user profile and avatar in authStore upon login', async () => {
+    const authStore = useAuthStore()
+    const permStore = usePermissionStore()
+
+    vi.spyOn(loginService, 'loginApi').mockResolvedValue({
+      accessToken: 'test-token',
+      refreshToken: 'test-refresh',
+      avatarUrl: '/uploads/avatars/my-avatar.png',
+      name: 'System Administrator',
+      email: 'admin@shraddha.com',
+      userPermissions: [],
+    })
+    vi.spyOn(permStore, 'fetchAvailableModules').mockResolvedValue([])
+
+    const { handleLogin } = useLogin()
+    await handleLogin({ email: 'admin@shraddha.com', password: 'password' })
+
+    expect(authStore.user?.avatarUrl).toContain('/uploads/avatars/my-avatar.png')
+    expect(authStore.user?.name).toBe('System Administrator')
+    expect(authStore.user?.email).toBe('admin@shraddha.com')
+  })
 })

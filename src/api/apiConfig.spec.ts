@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { normalizeUrl, buildApiUrl, resolveGatewayBaseUrl } from './apiConfig'
+import {
+  normalizeUrl,
+  buildApiUrl,
+  resolveGatewayBaseUrl,
+  resolveSecurityServiceUrl,
+} from './apiConfig'
 
 describe('apiConfig utility', () => {
   it('normalizes URLs correctly by removing trailing slashes', () => {
@@ -50,5 +55,20 @@ describe('apiConfig utility', () => {
   it('resolves localhost to dev gateway by default', () => {
     expect(resolveGatewayBaseUrl('localhost')).toBe('https://dev-shraddhaportal-gateway.runasp.net')
     expect(resolveGatewayBaseUrl('127.0.0.1')).toBe('https://dev-shraddhaportal-gateway.runasp.net')
+  })
+
+  it('resolves security service base URL correctly across environments', () => {
+    expect(resolveSecurityServiceUrl('pre-shraddha-portal.vercel.app')).toBe(
+      'https://pre-shraddhaportal-security.runasp.net',
+    )
+    expect(resolveSecurityServiceUrl('dev-shraddha-portal.vercel.app')).toBe(
+      'https://dev-shraddhaportal-security.runasp.net',
+    )
+    expect(resolveSecurityServiceUrl('localhost')).toBe(
+      'https://dev-shraddhaportal-security.runasp.net',
+    )
+    expect(resolveSecurityServiceUrl('shraddha-portal.vercel.app')).toBe(
+      'https://shraddhaportal-security.runasp.net',
+    )
   })
 })

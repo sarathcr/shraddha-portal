@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useSidebarStore } from '@/core/sidebar/sidebarStore'
 import AppLogo from '@/shared/components/AppLogo.vue'
 import { useAuthStore } from '@/core/auth/authStore'
 import { usePermissionStore } from '@/core/permissions/permissionStore'
+import { useProfile, filterDisplayRoles } from '@/modules/profile/composables/useProfile'
 import router from '@/core/router'
 import Menu from 'primevue/menu'
 import type { MenuItem } from 'primevue/menuitem'
@@ -11,16 +12,38 @@ import type { MenuItem } from 'primevue/menuitem'
 const sidebarStore = useSidebarStore()
 const authStore = useAuthStore()
 const permissionStore = usePermissionStore()
+const { profile, displayRoles, fetchProfile } = useProfile()
 
 const menuRef = ref<InstanceType<typeof Menu> | null>(null)
+const avatarImageError = ref(false)
+
+watch(
+  () => profile.avatarUrl,
+  () => {
+    avatarImageError.value = false
+  },
+)
+
+onMounted(() => {
+  void fetchProfile()
+})
 
 const userRole = computed((): string => {
-  const firstRole = permissionStore.userPermissions[0]?.role
-  return firstRole || 'Admin HR'
+  if (displayRoles.value && displayRoles.value.length > 0) {
+    return displayRoles.value.join(', ')
+  }
+  const permRoles = permissionStore.userPermissions.map((p) => p.role).filter(Boolean)
+  const filtered = filterDisplayRoles(permRoles)
+  return filtered.length > 0 ? filtered.join(', ') : ''
 })
 
 const userInitials = computed((): string => {
-  return 'SA'
+  if (!profile.name) return 'SA'
+  const parts = profile.name.trim().split(/\s+/)
+  if (parts.length >= 2 && parts[0] && parts[1]) {
+    return `${parts[0][0]}${parts[1][0]}`.toUpperCase()
+  }
+  return profile.name.slice(0, 2).toUpperCase()
 })
 
 const userMenuItems = computed((): MenuItem[] => [
@@ -28,7 +51,7 @@ const userMenuItems = computed((): MenuItem[] => [
     label: 'Signed in as',
     items: [
       {
-        label: 'admin@shraddha.com',
+        label: profile.email || 'admin@shraddha.com',
         icon: 'pi pi-user',
         disabled: true,
       },
@@ -119,15 +142,29 @@ const handleLogout = async (): Promise<void> => {
         @click="toggleUserMenu"
       >
         <div
-          class="size-7 sm:size-8 rounded-full bg-gradient-to-tr from-indigo-600 to-violet-600 text-white font-semibold text-xs flex items-center justify-center shadow-xs"
+          v-if="profile.avatarUrl && !avatarImageError"
+          class="size-7 sm:size-8 rounded-full overflow-hidden shadow-xs shrink-0 border border-slate-200"
+        >
+          <img
+            :src="profile.avatarUrl"
+            :alt="profile.name"
+            class="w-full h-full object-cover"
+            @error="avatarImageError = true"
+          />
+        </div>
+        <div
+          v-else
+          class="size-7 sm:size-8 rounded-full bg-gradient-to-tr from-indigo-600 to-violet-600 text-white font-semibold text-xs flex items-center justify-center shadow-xs select-none"
         >
           {{ userInitials }}
         </div>
         <div class="hidden sm:flex flex-col items-start text-left">
           <span class="text-xs font-semibold text-slate-800 leading-tight">System Admin</span>
-          <span class="text-[11px] font-semibold text-indigo-600 leading-tight">{{
-            userRole
-          }}</span>
+          <span
+            class="text-[11px] font-semibold text-indigo-600 leading-tight truncate max-w-[160px]"
+            :title="userRole"
+            >{{ userRole }}</span
+          >
         </div>
         <i class="pi pi-angle-down text-slate-400 text-xs hidden sm:block"></i>
       </button>

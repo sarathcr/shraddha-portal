@@ -1,0 +1,37 @@
+schema: spec-driven
+
+# Project context (Injected into every artifact, apply, and archive)
+context: |
+  1. Component & Utility Reuse:
+     Always inspect and reuse existing project utilities (e.g. dateUtils, filterUtils), shared components (e.g. DialogFooter, BaseTable, AppButton, ConfirmDialog), PrimeVue UI components (e.g. DatePicker, Dialog, FileUpload, Toast, Tag), and Pinia stores (authStore, permissionStore). Do not invent duplicate utility functions or parallel component abstractions.
+  2. Preserve Existing Functionality:
+     Do not break, regress, or alter established behavior or APIs unless explicitly specified in the change proposal. Maintain strict backwards compatibility.
+  3. Pre-Commit Quality & Git Hook Compliance:
+     All implementations must pass the repository's strict pre-commit quality gates (.husky/pre-commit):
+     - vue-tsc type checking (zero TypeScript errors)
+     - ESLint and Prettier formatting (eslint . --fix)
+     - Unit tests and minimum 80% test coverage threshold (vitest run --coverage)
+     - Production build verification (vite build)
+     Commit messages must follow conventional commits and reference the Redmine issue ID (e.g., 'refs #404' or 'fixes #404').
+
+# Per-artifact rules
+rules:
+  proposal:
+    - Identify and document all existing utilities, services, and components that will be reused.
+    - Explicitly state what is removed, modified, or preserved from existing views.
+  specs:
+    - Define clear, testable requirement scenarios for both new and modified behaviors.
+    - Include negative and regression scenarios to ensure existing features do not break.
+  tasks:
+    - Structure tasks to reuse existing building blocks before creating new files.
+    - Always include pre-commit quality validation (type-check, lint, vitest coverage, and build) in the final verification tasks.
+
+# Per-operation guidance
+operations:
+  apply:
+    guidance:
+      - Run unit tests and type checks regularly during task implementation.
+      - Ensure code passes pre-commit checks before marking tasks complete.
+  archive:
+    guidance:
+      - Verify that all tasks in tasks.md are checked off and all unit tests pass before archiving

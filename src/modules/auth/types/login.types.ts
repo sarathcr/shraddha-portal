@@ -10,4 +10,8 @@ export interface AuthTokens {
 
 export interface LoginResponse extends AuthTokens {
   userPermissions?: any[]
+  avatarUrl?: string | null
+  name?: string
+  email?: string
+  employeeId?: string
 }
